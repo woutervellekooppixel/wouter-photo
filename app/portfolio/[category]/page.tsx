@@ -5,6 +5,7 @@ import type { Metadata } from 'next'
 const validCategories = ['concerts', 'events', 'misc'] as const
 type Category = (typeof validCategories)[number]
 
+// ✅ Alleen voor generateMetadata 1234
 export async function generateMetadata(
   { params }: { params: { category: string } }
 ): Promise<Metadata> {
@@ -29,15 +30,13 @@ export async function generateMetadata(
   }
 }
 
-type PageProps = {
-  params: {
-    category: string
-  }
-}
-
-export default function CategoryPage({ params }: PageProps) {
+// ✅ Alleen voor de page component
+export default function CategoryPage({
+  params,
+}: {
+  params: { category: string }
+}) {
   const category = params.category as Category
-
   if (!validCategories.includes(category)) {
     notFound()
   }
