@@ -1,9 +1,8 @@
-import type { Metadata, PageProps } from 'next'
+import type { Metadata } from 'next'
 import GalleryScroller from '../../../components/GalleryScroller'
 import { notFound } from 'next/navigation'
 
-// ✅ Correct getype: gebruikt standaard Next's PageProps
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: { category: string } }): Promise<Metadata> {
   const titles: Record<string, string> = {
     concerts: 'Concert Photography',
     events: 'Event Photography',
@@ -20,12 +19,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 const validCategories = ['concerts', 'events', 'misc'] as const
 
+// ✅ Let op: dit is géén async functie
 export default function CategoryPage({ params }: { params: { category: string } }) {
-  if (!validCategories.includes(params.category as any)) {
+  const { category } = params
+
+  if (!validCategories.includes(category as any)) {
     notFound()
   }
 
   return (
-    <GalleryScroller category={params.category as 'concerts' | 'events' | 'misc'} />
+    <GalleryScroller category={category as 'concerts' | 'events' | 'misc'} />
   )
 }
