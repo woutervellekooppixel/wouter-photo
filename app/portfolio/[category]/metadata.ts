@@ -3,9 +3,11 @@ import type { Metadata } from 'next'
 const validCategories = ['concerts', 'events', 'misc'] as const
 type Category = (typeof validCategories)[number]
 
-export async function generateMetadata(
-  { params }: { params: { category: string } }
-): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: { category: string }
+}): Promise<Metadata> {
   const category = params.category as Category
 
   if (!validCategories.includes(category)) {
