@@ -5,13 +5,9 @@ import type { Metadata } from 'next'
 const validCategories = ['concerts', 'events', 'misc'] as const
 type Category = (typeof validCategories)[number]
 
-type Props = {
-  params: {
-    category: string
-  }
-}
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(
+  { params }: { params: { category: string } }
+): Promise<Metadata> {
   const category = params.category as Category
 
   if (!validCategories.includes(category)) {
@@ -33,7 +29,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default function CategoryPage({ params }: Props) {
+type PageProps = {
+  params: {
+    category: string
+  }
+}
+
+export default function CategoryPage({ params }: PageProps) {
   const category = params.category as Category
 
   if (!validCategories.includes(category)) {
