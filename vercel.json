@@ -1,0 +1,7 @@
+{
+  "build": {
+    "env": {
+      "NEXT_PRIVATE_IGNORE_TS_CONFIG_REWRITE": "true"
+    }
+  }
+}
