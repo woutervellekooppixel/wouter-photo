@@ -5,30 +5,30 @@ import type { Metadata } from 'next'
 const validCategories = ['concerts', 'events', 'misc'] as const
 type Category = (typeof validCategories)[number]
 
-type PageProps = {
-  params: {
-    category: Category
+export async function generateMetadata({ params }: { params: { category: string } }): Promise<Metadata> {
+  if (!validCategories.includes(params.category as Category)) {
+    return {
+      title: 'Wouter.Photo – Portfolio',
+      description: 'Photography by Wouter Vellekoop',
+    }
   }
-}
 
-// ✅ SEO metadata poging 3
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const titles: Record<Category, string> = {
     concerts: 'Concert Photography',
     events: 'Event Photography',
     misc: 'Miscellaneous Work',
   }
 
-  const category = params.category
+  const category = params.category as Category
+
   return {
     title: `${titles[category]} – Wouter.Photo`,
     description: `Browse ${titles[category].toLowerCase()} by Wouter Vellekoop, professional photographer based in the Netherlands.`,
   }
 }
 
-// ✅ Pagina zelf
-export default function CategoryPage({ params }: PageProps) {
-  const category = params.category
+export default function CategoryPage({ params }: { params: { category: string } }) {
+  const category = params.category as Category
 
   if (!validCategories.includes(category)) {
     notFound()
