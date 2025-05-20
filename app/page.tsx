@@ -1,3 +1,5 @@
+// app/page.tsx
+
 import { redirect } from 'next/navigation'
 
 export const metadata = {
@@ -26,10 +28,6 @@ export const metadata = {
     images: ["https://wouter.photo/social-preview.jpg"],
   },
 }
-
-// app/page.tsx
-
-import { redirect } from 'next/navigation'
 
 export default function HomePage() {
   redirect('/portfolio')
