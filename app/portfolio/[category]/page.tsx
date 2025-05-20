@@ -1,8 +1,15 @@
 import type { Metadata } from 'next'
-import GalleryScroller from '../../../components/GalleryScroller'
 import { notFound } from 'next/navigation'
+import GalleryScroller from '../../../components/GalleryScroller'
 
-export async function generateMetadata({ params }: { params: { category: string } }): Promise<Metadata> {
+type Params = {
+  category: string
+}
+
+const validCategories = ['concerts', 'events', 'misc'] as const
+
+// ✅ Metadata-functie met correct type
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const titles: Record<string, string> = {
     concerts: 'Concert Photography',
     events: 'Event Photography',
@@ -17,10 +24,8 @@ export async function generateMetadata({ params }: { params: { category: string 
   }
 }
 
-const validCategories = ['concerts', 'events', 'misc'] as const
-
-// ✅ Let op: dit is géén async functie
-export default function CategoryPage({ params }: { params: { category: string } }) {
+// ✅ Page component
+export default function CategoryPage({ params }: { params: Params }) {
   const { category } = params
 
   if (!validCategories.includes(category as any)) {
