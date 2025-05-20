@@ -1,38 +1,43 @@
-import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import type { Metadata, ResolvingMetadata } from 'next'
 import GalleryScroller from '../../../components/GalleryScroller'
 
-type Params = {
-  category: string
+// Zorg dat de category types bekend zijn
+const validCategories = ['concerts', 'events', 'misc'] as const
+type Category = (typeof validCategories)[number]
+
+type Props = {
+  params: {
+    category: string
+  }
 }
 
-const validCategories = ['concerts', 'events', 'misc'] as const
-
-// ✅ Metadata-functie met correct type
-export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+// ✅ Metadata functie volgens Next.js 15 regels
+export async function generateMetadata(
+  { params }: Props,
+  _parent: ResolvingMetadata
+): Promise<Metadata> {
   const titles: Record<string, string> = {
     concerts: 'Concert Photography',
     events: 'Event Photography',
     misc: 'Miscellaneous Work',
   }
 
-  const categoryTitle = titles[params.category] || 'Portfolio'
+  const title = titles[params.category] || 'Portfolio'
 
   return {
-    title: `${categoryTitle} – Wouter.Photo`,
-    description: `Browse ${categoryTitle.toLowerCase()} by Wouter Vellekoop, professional photographer based in the Netherlands.`,
+    title: `${title} – Wouter.Photo`,
+    description: `Browse ${title.toLowerCase()} by Wouter Vellekoop, professional photographer based in the Netherlands.`,
   }
 }
 
-// ✅ Page component
-export default function CategoryPage({ params }: { params: Params }) {
+// ✅ De page zelf
+export default function CategoryPage({ params }: Props) {
   const { category } = params
 
-  if (!validCategories.includes(category as any)) {
+  if (!validCategories.includes(category as Category)) {
     notFound()
   }
 
-  return (
-    <GalleryScroller category={category as 'concerts' | 'events' | 'misc'} />
-  )
+  return <GalleryScroller category={category as Category} />
 }
