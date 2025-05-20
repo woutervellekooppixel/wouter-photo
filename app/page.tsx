@@ -27,6 +27,10 @@ export const metadata = {
   },
 }
 
-export default function Home() {
+// app/page.tsx
+
+import { redirect } from 'next/navigation'
+
+export default function HomePage() {
   redirect('/portfolio')
 }

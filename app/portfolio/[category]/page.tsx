@@ -1,49 +1,40 @@
-import { Metadata } from 'next'
-import GalleryScroller from '../../../components/GalleryScroller'
+// app/portfolio/[category]/page.tsx
+
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
+import GalleryScroller from '../../../components/GalleryScroller'
 
-type ValidCategory = 'concerts' | 'events' | 'misc'
+// ✅ Geldige categorieën (alleen deze zijn toegestaan)
+const validCategories = ['concerts', 'events', 'misc'] as const
+type Category = (typeof validCategories)[number]
 
-export async function generateMetadata({ params }: { params: { category: string } }): Promise<Metadata> {
-  const titles: Record<ValidCategory, string> = {
+// ✅ Pagina component
+export default function CategoryPage({ params }: { params: { category: string } }) {
+  if (!validCategories.includes(params.category as Category)) {
+    notFound()
+  }
+
+  return (
+    <GalleryScroller category={params.category as Category} />
+  )
+}
+
+// ✅ Metadata functie (voor SEO per categorie)
+export async function generateMetadata({
+  params,
+}: {
+  params: { category: string }
+}): Promise<Metadata> {
+  const titles: Record<string, string> = {
     concerts: 'Concert Photography',
     events: 'Event Photography',
     misc: 'Miscellaneous Work',
   }
 
-  const category = params.category as ValidCategory
-
-  if (!Object.keys(titles).includes(category)) {
-    return {
-      title: 'Portfolio – Wouter.Photo',
-      description: 'Photography by Wouter Vellekoop.',
-    }
-  }
-
-  const categoryTitle = titles[category]
+  const categoryTitle = titles[params.category] ?? 'Portfolio'
 
   return {
     title: `${categoryTitle} – Wouter.Photo`,
     description: `Browse ${categoryTitle.toLowerCase()} by Wouter Vellekoop, professional photographer based in the Netherlands.`,
   }
-}
-
-type Props = {
-  params: {
-    category: string
-  }
-}
-
-const validCategories = ['concerts', 'events', 'misc'] as const
-
-export default function CategoryPage({ params }: Props) {
-  const { category } = params
-
-  if (!validCategories.includes(category as ValidCategory)) {
-    notFound()
-  }
-
-  return (
-    <GalleryScroller category={category as ValidCategory} />
-  )
 }
