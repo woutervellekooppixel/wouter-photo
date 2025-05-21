@@ -4,26 +4,25 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import GalleryScroller from '../../../components/GalleryScroller';
 
-type Props = {
+interface PageProps {
   params: {
     category: string;
   };
-};
+}
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   return {
     title: `Portfolio - ${params.category}`,
   };
 }
 
-export default function Page({ params }: Props) {
+export default function Page({ params }: PageProps) {
   const { category } = params;
 
-  // Hier kun je eventueel checken of de categorie geldig is
   const validCategories = ['concerts', 'events', 'misc', 'all'];
   if (!validCategories.includes(category)) {
     notFound();
   }
 
-  return <GalleryScroller category={category} />;
+  return <GalleryScroller category={category as any} />;
 }
