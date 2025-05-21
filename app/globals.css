@@ -1,3 +1,20 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.gallery-image-wrapper {
+  position: relative;
+  height: calc(100vh - 40px); /* 20px boven + onder */
+  width: auto;
+  margin: 20px;
+  flex-shrink: 0;
+  scroll-snap-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.gallery-image-wrapper img {
+  height: 100%;
+  object-fit: contain;
+}

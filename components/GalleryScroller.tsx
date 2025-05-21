@@ -1,38 +1,26 @@
 'use client'
 
-import { useEffect, useRef, useState, HTMLAttributes } from 'react'
-import { motion, AnimatePresence, MotionProps } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
 import { photos } from '../data/photos'
-import Image from 'next/image'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 
 type Props = {
   category: 'concerts' | 'events' | 'misc' | 'all'
 }
 
-// ✅ Helper om motion.div correct te gebruiken zonder type errors
-const MotionDiv = motion(function MotionDivBase({
-  className,
-  style,
-  ...rest
-}: HTMLAttributes<HTMLDivElement>) {
-  return <div className={className} style={style} {...rest} />
-})
-
 export default function GalleryScroller({ category }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   const filteredPhotos =
-    category === 'all'
-      ? photos
-      : photos.filter((p) => p.category === category)
+    category === 'all' ? photos : photos.filter((p) => p.category === category)
 
   const scrollToIndex = (index: number) => {
     const container = scrollRef.current
     const item = container?.children[0]?.children[index] as HTMLElement
     if (item) {
-      item.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+      item.scrollIntoView({ behavior: 'smooth', inline: 'center' })
       setActiveIndex(index)
     }
   }
@@ -50,8 +38,8 @@ export default function GalleryScroller({ category }: Props) {
   }, [category])
 
   return (
-    <section className="relative py-6 sm:py-8">
-      {/* Pijlen desktop */}
+    <section className="relative w-full">
+      {/* Navigatieknoppen */}
       {activeIndex > 0 && (
         <button
           onClick={scrollLeft}
@@ -69,79 +57,77 @@ export default function GalleryScroller({ category }: Props) {
         </button>
       )}
 
-      {/* Desktop: horizontale scroll */}
+      {/* Desktop */}
       <div
-        className="hidden xl:flex overflow-x-auto scroll-smooth snap-x snap-mandatory gap-2 px-4"
         ref={scrollRef}
+        className="hidden xl:flex h-[calc(100vh-96px)] w-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth"
       >
-        <AnimatePresence mode="popLayout">
-          <MotionDiv layout className="flex gap-2" key={category}>
-            {filteredPhotos.map((photo, index) => (
-              <MotionDiv
-                key={photo.id}
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{
-                  duration: 0.5,
-                  ease: 'easeOut',
-                  delay: index * 0.02,
-                }}
-                className="flex-shrink-0 snap-center bg-white flex justify-center items-center"
-                style={{
-                  width: 'calc(100vw - 10vw)',
-                  maxWidth: '1200px',
-                  height: 'calc(100vh - 96px)',
-                  marginTop: '18px',
-                  marginBottom: '18px',
-                }}
-              >
-                <Image
-                  src={photo.src}
-                  alt={photo.alt}
-                  width={9999}
-                  height={9999}
-                  loading={index < 3 ? 'eager' : 'lazy'}
-                  className="max-h-full max-w-full object-contain"
-                />
-              </MotionDiv>
-            ))}
-          </MotionDiv>
-        </AnimatePresence>
+        <div className="flex items-center h-full gap-x-4 px-4">
+          {filteredPhotos.map((photo) => (
+            <div
+              key={photo.id}
+              className="flex-shrink-0 snap-center flex justify-center items-center max-w-[1200px] h-full"
+            >
+              <img
+                src={photo.src}
+                alt={photo.alt}
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Tablet: 2 kolommen */}
-      <div className="hidden sm:grid xl:hidden grid-cols-2 gap-6 px-6">
+      {/* Tablet */}
+      <div className="hidden sm:grid xl:hidden grid-cols-2 gap-6 px-4 sm:px-6 py-6">
         {filteredPhotos.map((photo, index) => (
-          <div key={photo.id} className="flex justify-center items-center">
-            <Image
+          <div
+            key={photo.id}
+            className="flex justify-center items-center cursor-pointer"
+            onClick={() => setLightboxIndex(index)}
+          >
+            <img
               src={photo.src}
               alt={photo.alt}
-              width={9999}
-              height={9999}
-              loading="lazy"
               className="max-w-full max-h-[80vh] object-contain"
             />
           </div>
         ))}
       </div>
 
-      {/* Mobiel: 1 kolom */}
-      <div className="grid sm:hidden grid-cols-1 gap-6 px-4">
+      {/* Mobiel */}
+      <div className="grid sm:hidden grid-cols-1 gap-6 px-4 py-6">
         {filteredPhotos.map((photo, index) => (
-          <div key={photo.id} className="flex justify-center items-center">
-            <Image
+          <div
+            key={photo.id}
+            className="flex justify-center items-center cursor-pointer"
+            onClick={() => setLightboxIndex(index)}
+          >
+            <img
               src={photo.src}
               alt={photo.alt}
-              width={9999}
-              height={9999}
-              loading="lazy"
               className="max-w-full max-h-[80vh] object-contain"
             />
           </div>
         ))}
       </div>
+
+      {/* Lightbox */}
+      {lightboxIndex !== null && (
+        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+          <button
+            className="absolute top-4 right-4 text-white p-2"
+            onClick={() => setLightboxIndex(null)}
+          >
+            <X size={32} />
+          </button>
+          <img
+            src={filteredPhotos[lightboxIndex].src}
+            alt={filteredPhotos[lightboxIndex].alt}
+            className="max-w-full max-h-full object-contain"
+          />
+        </div>
+      )}
     </section>
   )
 }
