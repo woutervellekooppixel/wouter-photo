@@ -9,6 +9,7 @@
     "postbuild": "next-sitemap"
   },
   "dependencies": {
+    "@netlify/plugin-nextjs": "^5.11.1",
     "autoprefixer": "^10.4.0",
     "framer-motion": "^10.18.0",
     "lucide-react": "^0.510.0",
