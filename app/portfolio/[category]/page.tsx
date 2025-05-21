@@ -2,27 +2,24 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import GalleryScroller from '../../../components/GalleryScroller';
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { category: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  context: any
+): Promise<Metadata> {
+  const category = context?.params?.category;
   return {
-    title: `Portfolio - ${params.category}`,
+    title: `Portfolio - ${category}`,
   };
 }
 
-export default function PortfolioPage({
-  params,
-}: {
-  params: { category: string };
-}) {
-  const { category } = params;
+export default function PortfolioPage(
+  context: any
+) {
+  const category = context?.params?.category;
 
   const validCategories = ['concerts', 'events', 'misc', 'all'];
   if (!validCategories.includes(category)) {
     notFound();
   }
 
-  return <GalleryScroller category={category as any} />;
+  return <GalleryScroller category={category} />;
 }
