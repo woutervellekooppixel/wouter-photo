@@ -1,34 +1,29 @@
 // app/portfolio/[category]/page.tsx
 
-import { notFound } from 'next/navigation'
-import type { PageProps } from 'next'
-import type { Metadata } from 'next'
-import GalleryScroller from '../../../components/GalleryScroller'
+import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
+import GalleryScroller from '../../../components/GalleryScroller';
 
-const validCategories = ['concerts', 'events', 'misc'] as const
-type Category = typeof validCategories[number]
+type Props = {
+  params: {
+    category: string;
+  };
+};
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const category = params.category as Category
-
-  const titles: Record<Category, string> = {
-    concerts: 'Concert Photography',
-    events: 'Event Photography',
-    misc: 'Miscellaneous Work',
-  }
-
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
-    title: `${titles[category]} – Wouter.Photo`,
-    description: `Browse ${titles[category].toLowerCase()} by Wouter Vellekoop, professional photographer based in the Netherlands.`,
-  }
+    title: `Portfolio - ${params.category}`,
+  };
 }
 
-export default function CategoryPage({ params }: PageProps) {
-  const category = params.category as Category
+export default function Page({ params }: Props) {
+  const { category } = params;
 
+  // Hier kun je eventueel checken of de categorie geldig is
+  const validCategories = ['landscape', 'portrait', 'street']; // voorbeeld
   if (!validCategories.includes(category)) {
-    notFound()
+    notFound();
   }
 
-  return <GalleryScroller category={category} />
+  return <GalleryScroller category={category} />;
 }
