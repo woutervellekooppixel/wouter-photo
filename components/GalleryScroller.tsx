@@ -8,6 +8,11 @@ type GalleryScrollerProps = {
   category: 'concerts' | 'events' | 'misc' | 'all'
 }
 
+// ✅ Type-safe motion.div wrapper
+const MotionDiv = motion.div as React.FC<
+  React.HTMLAttributes<HTMLDivElement> & React.ComponentProps<typeof motion.div>
+>
+
 export default function GalleryScroller({ category }: GalleryScrollerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -17,13 +22,7 @@ export default function GalleryScroller({ category }: GalleryScrollerProps) {
   return (
     <div className="overflow-x-auto whitespace-nowrap px-4 py-6" ref={containerRef}>
       <AnimatePresence mode="popLayout">
-        <motion.div
-          layout
-          key={category}
-          {...({
-            className: 'flex gap-4',
-          } as React.HTMLAttributes<HTMLDivElement>)}
-        >
+        <MotionDiv layout key={category} className="flex gap-4">
           {filteredPhotos.map((photo, index) => (
             <motion.div
               key={photo.id}
@@ -40,7 +39,7 @@ export default function GalleryScroller({ category }: GalleryScrollerProps) {
               />
             </motion.div>
           ))}
-        </motion.div>
+        </MotionDiv>
       </AnimatePresence>
     </div>
   )
