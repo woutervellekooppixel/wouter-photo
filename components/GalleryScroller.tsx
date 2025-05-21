@@ -1,17 +1,19 @@
 'use client'
 import { useRef } from 'react'
 import { photos } from '../data/photos'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, MotionProps } from 'framer-motion'
 import Image from 'next/image'
+import { HTMLAttributes } from 'react'
 
 type GalleryScrollerProps = {
   category: 'concerts' | 'events' | 'misc' | 'all'
 }
 
-// ✅ Type-safe motion.div wrapper
-const MotionDiv = motion.div as React.FC<
-  React.HTMLAttributes<HTMLDivElement> & React.ComponentProps<typeof motion.div>
->
+// ✅ Combineer HTMLProps en MotionProps netjes
+type DivWithMotionProps = HTMLAttributes<HTMLDivElement> & MotionProps
+const MotionDiv = motion<HTMLDivElement>(function MotionDivBase(props: DivWithMotionProps) {
+  return <div {...props} />
+})
 
 export default function GalleryScroller({ category }: GalleryScrollerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
