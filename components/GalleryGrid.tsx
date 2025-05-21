@@ -4,11 +4,11 @@ import { photos } from '../data/photos'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 
-type Props = {
+type GalleryGridProps = {
   category: 'concerts' | 'events' | 'misc' | 'all'
 }
 
-export default function GalleryGrid({ category }: Props) {
+export default function GalleryGrid({ category }: GalleryGridProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   const filteredPhotos =

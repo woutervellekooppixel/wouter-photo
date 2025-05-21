@@ -5,13 +5,13 @@ import { photos } from '../data/photos'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-type Props = {
+type GalleryScrollerProps = {
   category: 'concerts' | 'events' | 'misc' | 'all';
 };
 
 
 
-export default function GalleryScroller({ category }: Props) {
+export default function GalleryScroller({ category }: GalleryScrollerProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
 
