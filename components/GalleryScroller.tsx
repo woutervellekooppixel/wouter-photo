@@ -6,8 +6,10 @@ import Image from 'next/image'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 type Props = {
-  category: 'concerts' | 'events' | 'misc' | 'all'
-}
+  category: 'concerts' | 'events' | 'misc' | 'all';
+};
+
+
 
 export default function GalleryScroller({ category }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
