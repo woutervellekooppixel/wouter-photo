@@ -7,24 +7,26 @@ export type Photo = {
 
 export const photos: Photo[] = [
   // Concerts
-  ...Array.from({ length: 114 }, (_, i) => ({
+  ...Array.from({ length: 117 }, (_, i) => ({
     id: `portfolio-concerts${i + 1}.webp`,
     src: `/photos/concerts/portfolio-concerts${i + 1}.webp`,
     alt: `portfolio-concerts${i + 1}`,
-    category: 'concerts',
+    category: 'concerts' as const,
   })),
+
   // Events
   ...Array.from({ length: 101 }, (_, i) => ({
     id: `portfolio-events${i + 1}.webp`,
     src: `/photos/events/portfolio-events${i + 1}.webp`,
     alt: `portfolio-events${i + 1}`,
-    category: 'events',
+    category: 'events' as const,
   })),
+
   // Misc
   ...Array.from({ length: 42 }, (_, i) => ({
     id: `portfolio-misc${i + 1}.webp`,
     src: `/photos/misc/portfolio-misc${i + 1}.webp`,
     alt: `portfolio-misc${i + 1}`,
-    category: 'misc',
+    category: 'misc' as const,
   })),
 ]
