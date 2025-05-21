@@ -37,15 +37,17 @@ export default function GalleryGrid({ category }: GalleryGridProps) {
       {/* Lightbox */}
       <AnimatePresence>
         {lightboxIndex !== null && (
-          <motion.div
-            className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setLightboxIndex(null)}
-            // 👇 dit is het enige dat nodig is:
-            {...({} as React.HTMLAttributes<HTMLDivElement>)}
-          >
+<motion.div
+  className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  exit={{ opacity: 0 }}
+  onClick={() => setLightboxIndex(null)}
+  {...({
+    onAnimationStart: undefined,
+    onDragStart: undefined,
+  } as any)}
+>
             <Image
               src={filteredPhotos[lightboxIndex].src}
               alt={filteredPhotos[lightboxIndex].alt}
