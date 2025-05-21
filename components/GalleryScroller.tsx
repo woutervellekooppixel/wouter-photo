@@ -74,7 +74,7 @@ export default function GalleryScroller({ category }: Props) {
                 src={photo.src}
                 alt={photo.alt}
                 fill
-                loading={index < 3 ? 'eager' : 'lazy'}
+                loading={index < 2 ? 'eager' : 'lazy'}
                 className="object-contain"
               />
             </div>

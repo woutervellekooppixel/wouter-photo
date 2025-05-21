@@ -7,7 +7,7 @@ export type Photo = {
 
 export const photos: Photo[] = [
   // Concerts
-  ...Array.from({ length: 117 }, (_, i) => ({
+  ...Array.from({ length: 113 }, (_, i) => ({
     id: `portfolio-concerts${i + 1}.webp`,
     src: `/photos/concerts/portfolio-concerts${i + 1}.webp`,
     alt: `portfolio-concerts${i + 1}`,
