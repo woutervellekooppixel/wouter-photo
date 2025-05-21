@@ -43,6 +43,8 @@ export default function GalleryGrid({ category }: GalleryGridProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setLightboxIndex(null)}
+            // 👇 dit is het enige dat nodig is:
+            {...({} as React.HTMLAttributes<HTMLDivElement>)}
           >
             <Image
               src={filteredPhotos[lightboxIndex].src}
