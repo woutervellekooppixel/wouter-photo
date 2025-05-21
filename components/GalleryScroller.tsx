@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { photos } from '../data/photos'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
+import Image from 'next/image'
 
 type Props = {
   category: 'concerts' | 'events' | 'misc' | 'all'
@@ -58,24 +59,27 @@ export default function GalleryScroller({ category }: Props) {
       )}
 
       {/* Desktop */}
+<div
+  ref={scrollRef}
+  className="hidden xl:flex h-[calc(100vh-96px)] w-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth"
+>
+  <div className="flex items-center h-full gap-x-4 px-4">
+    {filteredPhotos.map((photo, index) => (
       <div
-        ref={scrollRef}
-        className="hidden xl:flex h-[calc(100vh-96px)] w-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth"
+        key={photo.id}
+        className="relative flex-shrink-0 snap-center justify-center items-center max-w-[1200px] h-full w-[calc(100vw-32px)]"
       >
-        <div className="flex items-center h-full gap-x-4 px-4">
-          {filteredPhotos.map((photo) => (
-            <div
-              key={photo.id}
-              className="flex-shrink-0 snap-center flex justify-center items-center max-w-[1200px] h-full"
-            >
-              <img
-                src={photo.src}
-                alt={photo.alt}
-                className="max-h-full max-w-full object-contain"
-              />
-            </div>
-          ))}
-        </div>
+        <Image
+          src={photo.src}
+          alt={photo.alt}
+          fill
+          loading={index < 3 ? 'eager' : 'lazy'}
+          className="object-contain"
+        />
+      </div>
+    ))}
+  </div>
+</div>>
       </div>
 
       {/* Tablet */}
