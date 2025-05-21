@@ -1,22 +1,22 @@
-// app/portfolio/[category]/page.tsx
-
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import GalleryScroller from '../../../components/GalleryScroller';
 
-interface PortfolioPageParams {
-  params: {
-    category: string;
-  };
-}
-
-export async function generateMetadata({ params }: PortfolioPageParams): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: { category: string };
+}): Promise<Metadata> {
   return {
     title: `Portfolio - ${params.category}`,
   };
 }
 
-export default function PortfolioPage({ params }: PortfolioPageParams) {
+export default function PortfolioPage({
+  params,
+}: {
+  params: { category: string };
+}) {
   const { category } = params;
 
   const validCategories = ['concerts', 'events', 'misc', 'all'];
