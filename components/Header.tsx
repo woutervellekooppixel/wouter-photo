@@ -4,6 +4,16 @@ import { usePathname } from 'next/navigation'
 import { FaInstagram, FaLinkedin, FaEnvelope } from 'react-icons/fa'
 import { motion, AnimatePresence } from 'framer-motion'
 import MobileMenu from './MobileMenu'
+import type { HTMLAttributes } from 'react'
+
+// Type-safe span wrapper zodat className werkt
+const MotionSpan = motion(function MotionSpanBase({
+  className,
+  style,
+  ...rest
+}: HTMLAttributes<HTMLSpanElement>) {
+  return <span className={className} style={style} {...rest} />
+})
 
 export default function Header() {
   const pathname = usePathname()
@@ -21,16 +31,16 @@ export default function Header() {
       <Link href="/portfolio" className="text-xl tracking-tight text-black flex items-baseline gap-1">
         <span className="font-extrabold">WOUTER</span>
         <AnimatePresence mode="wait">
-          <motion.span
-            key={suffix}
-            className="font-light inline-block"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-          >
-            .{suffix}
-          </motion.span>
+          <MotionSpan
+  key={suffix}
+  className="font-light inline-block"
+  initial={{ opacity: 0, y: 10 }}
+  animate={{ opacity: 1, y: 0 }}
+  exit={{ opacity: 0, y: -10 }}
+  transition={{ duration: 0.3, ease: 'easeOut' }}
+>
+  .{suffix}
+</MotionSpan>
         </AnimatePresence>
       </Link>
       <nav className="hidden sm:flex items-center space-x-6 text-sm text-black">

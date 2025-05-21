@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://wouter.photo
+
+# Sitemaps
+Sitemap: https://wouter.photo/sitemap.xml

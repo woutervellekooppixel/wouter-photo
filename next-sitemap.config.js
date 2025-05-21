@@ -2,6 +2,7 @@
 module.exports = {
   siteUrl: 'https://wouter.photo',
   generateRobotsTxt: true,
-  changefreq: 'monthly',
-  priority: 0.8,
+  changefreq: 'weekly',
+  priority: 0.7,
+  sitemapSize: 5000,
 }
