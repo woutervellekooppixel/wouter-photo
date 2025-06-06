@@ -78,7 +78,7 @@ export default function Header() {
   </div>
 </div>
         <Link href="/about" className="hover:text-gray-600">About</Link>
-        <a href="https://instagram.com/woutervellekoop.nl" target="_blank" className="hover:text-gray-600"><FaInstagram size={16} /></a>
+        <a href="https://instagram.com/woutervellekoop" target="_blank" className="hover:text-gray-600"><FaInstagram size={16} /></a>
         <a href="https://linkedin.com/in/woutervellekoop" target="_blank" className="hover:text-gray-600"><FaLinkedin size={16} /></a>
         <a href="mailto:hello@wouter.photo" className="hover:text-gray-600"><FaEnvelope size={16} /></a>
         </nav>
