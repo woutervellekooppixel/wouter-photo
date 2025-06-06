@@ -18,30 +18,72 @@ export default function GalleryScroller({ category }: Props) {
       ? photos
       : photos.filter((p) => p.category === category)
 
-  const scrollToIndex = (index: number) => {
+  const getItemWidth = () => {
     const container = scrollRef.current
-    const item = container?.children[index] as HTMLElement
-    if (item) {
-      item.scrollIntoView({ behavior: 'smooth', inline: 'center' })
-      setActiveIndex(index)
-    }
+    const firstItem = container?.querySelector(':scope > div > div:first-child') as HTMLElement
+    return firstItem?.getBoundingClientRect().width || 0
   }
 
   const scrollLeft = () => {
-    if (activeIndex > 0) scrollToIndex(activeIndex - 1)
+    const container = scrollRef.current
+    const scrollAmount = getItemWidth()
+
+    if (container) {
+      container.scrollBy({ left: -scrollAmount, behavior: 'smooth' })
+    }
   }
 
   const scrollRight = () => {
-    if (activeIndex < filteredPhotos.length - 1) scrollToIndex(activeIndex + 1)
+    const container = scrollRef.current
+    const scrollAmount = getItemWidth()
+
+    if (container) {
+      container.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+    }
   }
 
+  // Reset scrollpositie bij categorie-wissel
   useEffect(() => {
     setActiveIndex(0)
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ left: 0, behavior: 'auto' })
+    }
   }, [category])
+
+  // 📌 Houd actieve index bij voor pijltjes
+  useEffect(() => {
+    const container = scrollRef.current
+    if (!container) return
+
+    const handleScroll = () => {
+      const itemWidth = getItemWidth()
+      const newIndex = Math.round(container.scrollLeft / itemWidth)
+      setActiveIndex(Math.max(0, Math.min(newIndex, filteredPhotos.length - 1)))
+    }
+
+    container.addEventListener('scroll', handleScroll)
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [filteredPhotos.length])
+
+  // ↕️ naar ↔️: scroll omlaag = horizontaal scrollen
+  useEffect(() => {
+    const container = scrollRef.current
+    if (!container) return
+
+    const handleWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        e.preventDefault()
+        container.scrollBy({ left: e.deltaY, behavior: 'smooth' })
+      }
+    }
+
+    container.addEventListener('wheel', handleWheel, { passive: false })
+    return () => container.removeEventListener('wheel', handleWheel)
+  }, [])
 
   return (
     <section className="relative w-full">
-      {/* Navigatieknoppen (alleen desktop) */}
+      {/* Navigatieknoppen */}
       {activeIndex > 0 && (
         <button
           onClick={scrollLeft}
@@ -59,7 +101,7 @@ export default function GalleryScroller({ category }: Props) {
         </button>
       )}
 
-      {/* Desktop: horizontale scroll met locked height */}
+      {/* Desktop: horizontaal scrollen */}
       <div
         ref={scrollRef}
         className="hidden xl:flex h-[calc(100vh-96px)] w-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth"
