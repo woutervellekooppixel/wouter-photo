@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { photos } from '../data/photos'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
@@ -24,25 +24,22 @@ export default function GalleryScroller({ category }: Props) {
     return firstItem?.getBoundingClientRect().width || 0
   }
 
-  const scrollLeft = () => {
+  const scrollLeft = useCallback(() => {
     const container = scrollRef.current
     const scrollAmount = getItemWidth()
-
     if (container) {
       container.scrollBy({ left: -scrollAmount, behavior: 'smooth' })
     }
-  }
+  }, [])
 
-  const scrollRight = () => {
+  const scrollRight = useCallback(() => {
     const container = scrollRef.current
     const scrollAmount = getItemWidth()
-
     if (container) {
       container.scrollBy({ left: scrollAmount, behavior: 'smooth' })
     }
-  }
+  }, [])
 
-  // Reset scrollpositie bij categorie-wissel
   useEffect(() => {
     setActiveIndex(0)
     if (scrollRef.current) {
@@ -50,7 +47,6 @@ export default function GalleryScroller({ category }: Props) {
     }
   }, [category])
 
-  // 📌 Houd actieve index bij voor pijltjes
   useEffect(() => {
     const container = scrollRef.current
     if (!container) return
@@ -65,7 +61,6 @@ export default function GalleryScroller({ category }: Props) {
     return () => container.removeEventListener('scroll', handleScroll)
   }, [filteredPhotos.length])
 
-  // ↕️ naar ↔️: scroll omlaag = horizontaal scrollen
   useEffect(() => {
     const container = scrollRef.current
     if (!container) return
@@ -77,13 +72,22 @@ export default function GalleryScroller({ category }: Props) {
       }
     }
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') scrollRight()
+      else if (e.key === 'ArrowLeft') scrollLeft()
+    }
+
     container.addEventListener('wheel', handleWheel, { passive: false })
-    return () => container.removeEventListener('wheel', handleWheel)
-  }, [])
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      container.removeEventListener('wheel', handleWheel)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [scrollLeft, scrollRight])
 
   return (
     <section className="relative w-full">
-      {/* Navigatieknoppen */}
       {activeIndex > 0 && (
         <button
           onClick={scrollLeft}
@@ -117,7 +121,12 @@ export default function GalleryScroller({ category }: Props) {
                 alt={photo.alt}
                 fill
                 loading={index < 2 ? 'eager' : 'lazy'}
-                className="object-contain"
+                placeholder="blur"
+                blurDataURL={photo.blurDataURL}
+                onLoadingComplete={(img) => {
+                  img.dataset.loaded = 'true'
+                }}
+                className="object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
               />
             </div>
           ))}
@@ -134,7 +143,12 @@ export default function GalleryScroller({ category }: Props) {
               width={1200}
               height={1800}
               loading="lazy"
-              className="max-w-full max-h-[80vh] object-contain"
+              placeholder="blur"
+              blurDataURL={photo.blurDataURL}
+              onLoadingComplete={(img) => {
+                img.dataset.loaded = 'true'
+              }}
+              className="max-w-full max-h-[80vh] object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
             />
           </div>
         ))}
@@ -150,7 +164,12 @@ export default function GalleryScroller({ category }: Props) {
               width={800}
               height={1200}
               loading="lazy"
-              className="max-w-full max-h-[80vh] object-contain"
+              placeholder="blur"
+              blurDataURL={photo.blurDataURL}
+              onLoadingComplete={(img) => {
+                img.dataset.loaded = 'true'
+              }}
+              className="max-w-full max-h-[80vh] object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
             />
           </div>
         ))}
