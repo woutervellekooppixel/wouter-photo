@@ -114,7 +114,7 @@ export default function GalleryScroller({ category }: Props) {
           {filteredPhotos.map((photo, index) => (
             <div
               key={photo.id}
-              className="relative flex-shrink-0 snap-center justify-center items-center max-w-[1200px] h-full w-[calc(100vw-32px)]"
+              className="relative flex-shrink-0 snap-center justify-center items-center aspect-[3/2] h-[calc(100vh-96px)] max-w-[1200px]"
             >
               <Image
                 src={photo.src}
@@ -123,8 +123,8 @@ export default function GalleryScroller({ category }: Props) {
                 loading={index < 2 ? 'eager' : 'lazy'}
                 placeholder="blur"
                 blurDataURL={photo.blurDataURL}
-                onLoadingComplete={(img) => {
-                  img.dataset.loaded = 'true'
+                onLoad={(e) => {
+                  e.currentTarget.dataset.loaded = 'true'
                 }}
                 className="object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
               />
@@ -145,8 +145,8 @@ export default function GalleryScroller({ category }: Props) {
               loading="lazy"
               placeholder="blur"
               blurDataURL={photo.blurDataURL}
-              onLoadingComplete={(img) => {
-                img.dataset.loaded = 'true'
+              onLoad={(e) => {
+                e.currentTarget.dataset.loaded = 'true'
               }}
               className="max-w-full max-h-[80vh] object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
             />
@@ -166,8 +166,8 @@ export default function GalleryScroller({ category }: Props) {
               loading="lazy"
               placeholder="blur"
               blurDataURL={photo.blurDataURL}
-              onLoadingComplete={(img) => {
-                img.dataset.loaded = 'true'
+              onLoad={(e) => {
+                e.currentTarget.dataset.loaded = 'true'
               }}
               className="max-w-full max-h-[80vh] object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
             />
