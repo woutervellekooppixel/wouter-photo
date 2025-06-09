@@ -1,3 +1,5 @@
+// Bestand: app/api/webhook/route.ts
+
 import { NextResponse } from 'next/server'
 import mollie from '@mollie/api-client'
 import { sendEmails } from '@/lib/sendEmails'
@@ -26,7 +28,7 @@ export async function POST(req: Request) {
         postalCode: string
         city: string
         total: number
-        cart: { name: string; quantity: number; price: number }[]
+        cart: { name: string; quantity: number; price: number | string }[]
       }
 
       await sendEmails({
@@ -37,7 +39,10 @@ export async function POST(req: Request) {
         zip: meta.postalCode,
         city: meta.city,
         amount: meta.total,
-        cart: meta.cart,
+        cart: meta.cart.map(item => ({
+          ...item,
+          price: Number(item.price), // 👈 fix hier
+        })),
       })
 
       console.log(`✅ E-mail verzonden voor betaling: ${paymentId}`)
