@@ -18,14 +18,26 @@ export async function POST(req: Request) {
     const payment = await mollieClient.payments.get(paymentId)
 
     if (payment.status === 'paid') {
-      const meta = payment.metadata as any
+      const meta = payment.metadata as {
+        name: string
+        email: string
+        phone?: string
+        address: string
+        postalCode: string
+        city: string
+        total: number
+        cart: { name: string; quantity: number; price: number }[]
+      }
 
       await sendEmails({
-        to: meta.email,
-        fromName: 'Wouter.Photo',
-        subject: 'Bevestiging van je bestelling',
-        text: `Bedankt ${meta.name} voor je bestelling van €${meta.total}.`,
-        internalNote: `Bestelling ontvangen van ${meta.name}\nEmail: ${meta.email}\nTel: ${meta.phone}\nAdres: ${meta.address}, ${meta.postalCode} ${meta.city}`,
+        name: meta.name,
+        email: meta.email,
+        phone: meta.phone,
+        address: meta.address,
+        zip: meta.postalCode,
+        city: meta.city,
+        amount: meta.total,
+        cart: meta.cart,
       })
 
       console.log(`✅ E-mail verzonden voor betaling: ${paymentId}`)
