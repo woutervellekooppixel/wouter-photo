@@ -58,9 +58,10 @@ export default function OrderConfirmationEmail({
             <ul style={{ paddingLeft: '20px', margin: '16px 0' }}>
               {cart.map((item, index) => (
                 <li key={index} style={{ marginBottom: '6px' }}>
-                  {item.name} (x{item.quantity}) – €
-                  {Number(item.price).toFixed(2)}
-                </li>
+  {item.name}
+  {item.quantity > 1 ? ` (x${item.quantity})` : ''} – €
+  {Number(item.price).toFixed(2)}
+</li>
               ))}
             </ul>
 
