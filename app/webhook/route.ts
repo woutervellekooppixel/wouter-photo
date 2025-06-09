@@ -1,7 +1,6 @@
-// Bestand: app/api/webhook/route.ts
 import { NextResponse } from 'next/server'
 import mollie from '@mollie/api-client'
-import { sendEmails } from '@/lib/sendEmails' //
+import { sendEmails } from '@/lib/sendEmails'
 
 const mollieClient = mollie({ apiKey: process.env.MOLLIE_API_KEY! })
 
@@ -18,7 +17,7 @@ export async function POST(req: Request) {
 
     const payment = await mollieClient.payments.get(paymentId)
 
-    if (payment.isPaid()) {
+    if (payment.status === 'paid') {
       const meta = payment.metadata as any
 
       await sendEmails({
