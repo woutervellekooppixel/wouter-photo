@@ -1,15 +1,13 @@
 import './globals.css'
 import Header from '../components/Header'
+import Cart from '../components/Cart'
 import Script from 'next/script'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
-        {/* Favicon */}
         <link rel="icon" href="/favicon.png" />
-
-        {/* Google Tag Manager */}
         <Script id="gtm-script" strategy="afterInteractive">
           {`
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -21,7 +19,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Script>
       </head>
       <body>
-        {/* Google Tag Manager (noscript) */}
         <noscript>
           <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-K55DF7SN"
@@ -32,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </noscript>
 
         <Header />
+        <Cart />
         {children}
       </body>
     </html>
