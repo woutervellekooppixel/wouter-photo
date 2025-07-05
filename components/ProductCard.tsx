@@ -8,9 +8,10 @@ type Props = {
   name: string
   price: number
   image: string
+  description: string
 }
 
-export default function ProductCard({ id, name, price, image }: Props) {
+export default function ProductCard({ id, name, price, image, description }: Props) {
   const { addToCart } = useCartStore()
 
   return (
@@ -24,7 +25,8 @@ export default function ProductCard({ id, name, price, image }: Props) {
       />
       <div className="text-center">
         <h3 className="font-semibold text-lg">{name}</h3>
-        <p className="text-gray-600 mb-2">€ {price.toFixed(2)}</p>
+        <p className="text-gray-600 mb-1">€ {price.toFixed(2)}</p>
+        <p className="text-sm text-gray-700 mb-2">{description}</p>
         <button
           onClick={() => addToCart({ id, name, price })}
           className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition"
