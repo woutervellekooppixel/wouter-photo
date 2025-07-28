@@ -22,7 +22,7 @@ export const metadata = {
 
 export default function AboutPage() {
   return (
-    <main className="py-20 px-6 max-w-6xl mx-auto text-black">
+    <main className="py-20 px-6 max-w-6xl mx-auto text-black dark:text-white bg-white dark:bg-black min-h-screen">
 
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
@@ -31,7 +31,7 @@ export default function AboutPage() {
           <img
             src="/2022_NSJF-Fri_1179.jpg"
             alt="Wouter Vellekoop"
-            className="shadow-lg w-full h-auto object-cover"
+            className="shadow-lg w-full h-auto object-cover rounded-lg"
           />
         </div>
 
@@ -51,7 +51,7 @@ export default function AboutPage() {
             MOJO, Radio 538, North Sea Jazz, Ahoy', Talpa, BNN VARA, Residentie Orkest, UNICEF Nederland and many more.
           </p>
           <p className="text-sm">
-            <a href="mailto:hello@wouter.photo" className="underline">hello@wouter.photo</a><br />
+            <a href="mailto:hello@wouter.photo" className="underline hover:text-gray-600 dark:hover:text-gray-300">hello@wouter.photo</a><br />
             +31 (0)6 16 290 418
           </p>
         </div>

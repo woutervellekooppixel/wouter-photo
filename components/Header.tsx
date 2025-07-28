@@ -4,9 +4,10 @@ import { usePathname } from 'next/navigation'
 import { FaInstagram, FaLinkedin, FaEnvelope } from 'react-icons/fa'
 import { motion, AnimatePresence } from 'framer-motion'
 import MobileMenu from './MobileMenu'
-import { ShoppingCart } from 'lucide-react'
+import { ShoppingCart, Sun, Moon } from 'lucide-react'
 import { useCartStore } from '@/stores/cartStore'
 import { useState, useEffect } from 'react'
+import { useTheme } from 'next-themes'
 import type { HTMLAttributes } from 'react'
 
 const MotionSpan = motion(function MotionSpanBase({
@@ -22,6 +23,7 @@ export default function Header() {
   const { toggleCart, cart } = useCartStore()
   const itemCount = cart.length
   const [currentSuffixIndex, setCurrentSuffixIndex] = useState(0)
+  const { theme, setTheme } = useTheme()
 
   const isActive = (slug: string) => pathname === `/portfolio/${slug}`
 
@@ -69,8 +71,8 @@ export default function Header() {
   }, [pathname])
 
   return (
-    <header className="sticky top-0 z-50 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
-      <Link href="/portfolio" className="text-xl tracking-tight text-black flex items-baseline">
+    <header className="sticky top-0 z-50 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white dark:bg-black dark:border-gray-700">
+      <Link href="/portfolio" className="text-xl tracking-tight text-black dark:text-white flex items-baseline">
         <span className="font-extrabold">WOUTER</span>
         <AnimatePresence mode="wait">
           <MotionSpan
@@ -86,11 +88,11 @@ export default function Header() {
         </AnimatePresence>
       </Link>
 
-      <nav className="hidden sm:flex items-center space-x-6 text-sm text-black">
+      <nav className="hidden sm:flex items-center space-x-6 text-sm text-black dark:text-white">
         <div className="relative group">
-          <div className="font-medium hover:text-black cursor-pointer">Portfolio</div>
+          <div className="font-medium hover:text-black dark:hover:text-white cursor-pointer">Portfolio</div>
           <div className="absolute left-0 top-full pt-1 z-50">
-            <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-200 bg-white shadow-md rounded border border-gray-200 min-w-[140px] space-y-1 py-1 px-2">
+            <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-200 bg-white dark:bg-black shadow-md rounded border border-gray-200 dark:border-gray-600 min-w-[140px] space-y-1 py-1 px-2">
               <Link href="/portfolio/concerts" className={`block text-sm py-1 ${isActive('concerts') ? 'font-semibold underline' : ''}`}>Concerts</Link>
               <Link href="/portfolio/events" className={`block text-sm py-1 ${isActive('events') ? 'font-semibold underline' : ''}`}>Events</Link>
               <Link href="/portfolio/misc" className={`block text-sm py-1 ${isActive('misc') ? 'font-semibold underline' : ''}`}>Misc</Link>
@@ -98,12 +100,21 @@ export default function Header() {
           </div>
         </div>
 
-        <Link href="/about" className="hover:text-gray-600">About</Link> 
+        <Link href="/about" className="hover:text-gray-600 dark:hover:text-gray-300">About</Link> 
         {/*  <Link href="/shop" className="hover:text-gray-600">Shop</Link> */}
 
-        <a href="https://instagram.com/woutervellekoop" target="_blank" className="hover:text-gray-600"><FaInstagram size={16} /></a>
-        <a href="https://linkedin.com/in/woutervellekoop" target="_blank" className="hover:text-gray-600"><FaLinkedin size={16} /></a>
-        <a href="mailto:hello@wouter.photo" className="hover:text-gray-600"><FaEnvelope size={16} /></a>
+        <a href="https://instagram.com/woutervellekoop" target="_blank" className="hover:text-gray-600 dark:hover:text-gray-300"><FaInstagram size={16} /></a>
+        <a href="https://linkedin.com/in/woutervellekoop" target="_blank" className="hover:text-gray-600 dark:hover:text-gray-300"><FaLinkedin size={16} /></a>
+        <a href="mailto:hello@wouter.photo" className="hover:text-gray-600 dark:hover:text-gray-300"><FaEnvelope size={16} /></a>
+
+        {/* Theme toggle button */}
+        <button 
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          aria-label="Toggle theme"
+        >
+          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+        </button>
 
         {/* 🛒 Winkelwagen */}
         {/*  <button onClick={() => toggleCart(true)} className="relative hover:text-gray-600">

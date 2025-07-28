@@ -2,10 +2,11 @@ import './globals.css'
 import Header from '../components/Header'
 import Cart from '../components/Cart'
 import Script from 'next/script'
+import { ThemeProvider } from 'next-themes'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.png" />
         <Script id="gtm-script" strategy="afterInteractive">
@@ -19,18 +20,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Script>
       </head>
       <body>
-        <noscript>
-          <iframe
-            src="https://www.googletagmanager.com/ns.html?id=GTM-K55DF7SN"
-            height="0"
-            width="0"
-            style={{ display: 'none', visibility: 'hidden' }}
-          ></iframe>
-        </noscript>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <noscript>
+            <iframe
+              src="https://www.googletagmanager.com/ns.html?id=GTM-K55DF7SN"
+              height="0"
+              width="0"
+              style={{ display: 'none', visibility: 'hidden' }}
+            ></iframe>
+          </noscript>
 
-        <Header />
-        <Cart />
-        {children}
+          <Header />
+          <Cart />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   )

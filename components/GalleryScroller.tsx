@@ -87,11 +87,11 @@ export default function GalleryScroller({ category }: Props) {
   }, [scrollLeft, scrollRight])
 
   return (
-    <section className="relative w-full">
+    <section className="relative w-full bg-white dark:bg-black">
       {activeIndex > 0 && (
         <button
           onClick={scrollLeft}
-          className="hidden xl:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100"
+          className="hidden xl:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-black bg-opacity-80 dark:bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 dark:hover:bg-opacity-100 text-black dark:text-white"
         >
           <ChevronLeft />
         </button>
@@ -99,7 +99,7 @@ export default function GalleryScroller({ category }: Props) {
       {activeIndex < filteredPhotos.length - 1 && (
         <button
           onClick={scrollRight}
-          className="hidden xl:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100"
+          className="hidden xl:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-black bg-opacity-80 dark:bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 dark:hover:bg-opacity-100 text-black dark:text-white"
         >
           <ChevronRight />
         </button>
