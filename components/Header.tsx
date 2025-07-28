@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import MobileMenu from './MobileMenu'
 import { ShoppingCart } from 'lucide-react'
 import { useCartStore } from '@/stores/cartStore'
+import { useState, useEffect } from 'react'
 import type { HTMLAttributes } from 'react'
 
 const MotionSpan = motion(function MotionSpanBase({
@@ -20,13 +21,43 @@ export default function Header() {
   const pathname = usePathname()
   const { toggleCart, cart } = useCartStore()
   const itemCount = cart.length
+  const [currentSuffixIndex, setCurrentSuffixIndex] = useState(0)
 
   const isActive = (slug: string) => pathname === `/portfolio/${slug}`
 
-  let suffix = 'PHOTO'
-  if (pathname.startsWith('/portfolio/concerts')) suffix = 'CONCERTS'
-  else if (pathname.startsWith('/portfolio/events')) suffix = 'EVENTS'
-  else if (pathname.startsWith('/portfolio/misc')) suffix = 'MISC'
+  // Bepaal de suffixes op basis van de huidige pagina
+  const getSuffixes = () => {
+    if (pathname === '/') {
+      return ['CONCERTS', 'EVENTS', 'MISC', 'PHOTO']
+    } else if (pathname.startsWith('/portfolio/concerts')) {
+      return ['PHOTO', 'EVENTS', 'MISC', 'CONCERTS']
+    } else if (pathname.startsWith('/portfolio/events')) {
+      return ['PHOTO', 'CONCERTS', 'MISC', 'EVENTS']
+    } else if (pathname.startsWith('/portfolio/misc')) {
+      return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC']
+    } else if (pathname === '/about') {
+      return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC', 'ABOUT']
+    } else {
+      return ['PHOTO']
+    }
+  }
+
+  const suffixes = getSuffixes()
+  const currentSuffix = suffixes[currentSuffixIndex]
+
+  // Cyclisch door de suffixes gaan
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSuffixIndex((prevIndex) => (prevIndex + 1) % suffixes.length)
+    }, 800)
+
+    return () => clearInterval(interval)
+  }, [suffixes.length])
+
+  // Reset index wanneer pathname verandert
+  useEffect(() => {
+    setCurrentSuffixIndex(0)
+  }, [pathname])
 
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
@@ -34,14 +65,14 @@ export default function Header() {
         <span className="font-extrabold">WOUTER</span>
         <AnimatePresence mode="wait">
           <MotionSpan
-            key={suffix}
+            key={currentSuffix}
             className="font-light inline-block"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
           >
-            .{suffix}
+            .{currentSuffix}
           </MotionSpan>
         </AnimatePresence>
       </Link>
