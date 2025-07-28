@@ -1,13 +1,68 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { FaInstagram, FaLinkedin, FaEnvelope } from 'react-icons/fa'
 import { X, Menu, Sun, Moon } from 'lucide-react'
 import { useTheme } from 'next-themes'
+import { motion, AnimatePresence } from 'framer-motion'
+import type { HTMLAttributes } from 'react'
+
+const MotionSpan = motion(function MotionSpanBase({
+  className,
+  style,
+  ...rest
+}: HTMLAttributes<HTMLSpanElement>) {
+  return <span className={className} style={style} {...rest} />
+})
 
 export default function MobileMenu() {
   const [open, setOpen] = useState(false)
   const { theme, setTheme } = useTheme()
+  const pathname = usePathname()
+  const [currentSuffixIndex, setCurrentSuffixIndex] = useState(0)
+
+  // Bepaal de suffixes op basis van de huidige pagina (zelfde logica als Header)
+  const getSuffixes = () => {
+    if (pathname === '/') {
+      return ['CONCERTS', 'EVENTS', 'MISC', 'PHOTO']
+    } else if (pathname.startsWith('/portfolio/concerts')) {
+      return ['PHOTO', 'EVENTS', 'MISC', 'CONCERTS']
+    } else if (pathname.startsWith('/portfolio/events')) {
+      return ['PHOTO', 'CONCERTS', 'MISC', 'EVENTS']
+    } else if (pathname.startsWith('/portfolio/misc')) {
+      return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC']
+    } else if (pathname === '/about') {
+      return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC', 'ABOUT']
+    } else {
+      return ['PHOTO']
+    }
+  }
+
+  const suffixes = getSuffixes()
+  const currentSuffix = suffixes[currentSuffixIndex]
+
+  // Cyclisch door de suffixes gaan en stoppen op de laatste (huidige pagina)
+  useEffect(() => {
+    if (!open || currentSuffixIndex >= suffixes.length - 1) return // Stop als menu niet open is of bij de laatste suffix
+
+    const interval = setInterval(() => {
+      setCurrentSuffixIndex((prevIndex) => {
+        const nextIndex = prevIndex + 1
+        if (nextIndex >= suffixes.length - 1) {
+          return suffixes.length - 1
+        }
+        return nextIndex
+      })
+    }, 800)
+
+    return () => clearInterval(interval)
+  }, [suffixes.length, currentSuffixIndex, open])
+
+  // Reset index wanneer pathname verandert of menu opent
+  useEffect(() => {
+    setCurrentSuffixIndex(0)
+  }, [pathname, open])
 
   return (
     <div className="md:hidden">
@@ -24,6 +79,23 @@ export default function MobileMenu() {
           >
             <X size={28} />
           </button>
+
+          {/* Animated Logo */}
+          <div className="text-3xl tracking-tight text-black dark:text-white flex items-baseline mb-4">
+            <span className="font-extrabold">WOUTER</span>
+            <AnimatePresence mode="wait">
+              <MotionSpan
+                key={currentSuffix}
+                className="font-light inline-block"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+              >
+                .{currentSuffix}
+              </MotionSpan>
+            </AnimatePresence>
+          </div>
 
           <div className="flex flex-col items-center space-y-2">
   <Link href="/portfolio" onClick={() => setOpen(false)} className="text-lg font-medium">
