@@ -70,7 +70,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
-      <Link href="/portfolio" className="text-xl tracking-tight text-black flex items-baseline gap-1">
+      <Link href="/portfolio" className="text-xl tracking-tight text-black flex items-baseline">
         <span className="font-extrabold">WOUTER</span>
         <AnimatePresence mode="wait">
           <MotionSpan
