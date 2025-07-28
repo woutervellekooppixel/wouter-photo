@@ -45,14 +45,23 @@ export default function Header() {
   const suffixes = getSuffixes()
   const currentSuffix = suffixes[currentSuffixIndex]
 
-  // Cyclisch door de suffixes gaan
+  // Cyclisch door de suffixes gaan en stoppen op de laatste (huidige pagina)
   useEffect(() => {
+    if (currentSuffixIndex >= suffixes.length - 1) return // Stop als we bij de laatste zijn
+
     const interval = setInterval(() => {
-      setCurrentSuffixIndex((prevIndex) => (prevIndex + 1) % suffixes.length)
+      setCurrentSuffixIndex((prevIndex) => {
+        const nextIndex = prevIndex + 1
+        if (nextIndex >= suffixes.length - 1) {
+          // Als we de laatste suffix bereiken, stop de interval
+          return suffixes.length - 1
+        }
+        return nextIndex
+      })
     }, 800)
 
     return () => clearInterval(interval)
-  }, [suffixes.length])
+  }, [suffixes.length, currentSuffixIndex])
 
   // Reset index wanneer pathname verandert
   useEffect(() => {
