@@ -6,5 +6,9 @@ export const metadata = {
 import GalleryScroller from '../../components/GalleryScroller'
 
 export default function PortfolioPage() {
-  return <GalleryScroller category="all" />
+  return (
+    <div className="min-h-screen bg-white dark:bg-black">
+      <GalleryScroller category="all" />
+    </div>
+  )
 }

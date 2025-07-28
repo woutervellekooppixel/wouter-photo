@@ -21,5 +21,9 @@ export default function PortfolioPage(
     notFound();
   }
 
-  return <GalleryScroller category={category} />;
+  return (
+    <div className="min-h-screen bg-white dark:bg-black">
+      <GalleryScroller category={category} />
+    </div>
+  );
 }
