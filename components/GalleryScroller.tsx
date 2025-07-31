@@ -93,30 +93,16 @@ export default function GalleryScroller({ category }: Props) {
   const scrollLeft = useCallback(() => {
     const container = scrollRef.current
     if (container) {
-      // Calculate the width of one photo container + gap
-      const photoContainer = container.querySelector('div > div') as HTMLElement
-      if (photoContainer) {
-        const photoWidth = photoContainer.offsetWidth + 16 // 16px = gap-x-4
-        container.scrollBy({ left: -photoWidth, behavior: 'smooth' })
-      } else {
-        // Fallback if calculation fails
-        container.scrollBy({ left: -400, behavior: 'smooth' })
-      }
+      // Fixed scroll amount for exactly 1 photo movement
+      container.scrollBy({ left: -400, behavior: 'smooth' })
     }
   }, [])
 
   const scrollRight = useCallback(() => {
     const container = scrollRef.current
     if (container) {
-      // Calculate the width of one photo container + gap
-      const photoContainer = container.querySelector('div > div') as HTMLElement
-      if (photoContainer) {
-        const photoWidth = photoContainer.offsetWidth + 16 // 16px = gap-x-4
-        container.scrollBy({ left: photoWidth, behavior: 'smooth' })
-      } else {
-        // Fallback if calculation fails
-        container.scrollBy({ left: 400, behavior: 'smooth' })
-      }
+      // Fixed scroll amount for exactly 1 photo movement
+      container.scrollBy({ left: 400, behavior: 'smooth' })
     }
   }, [])
 
