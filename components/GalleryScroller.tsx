@@ -225,7 +225,7 @@ export default function GalleryScroller({ category }: Props) {
   }, [filteredPhotos.length, activeIndex])
 
   return (
-    <section className="relative w-full bg-white dark:bg-black h-screen flex items-center pt-[60px]">
+    <section className="relative w-full bg-white dark:bg-black xl:h-screen xl:flex xl:items-center pt-[60px]">
       {activeIndex > 0 && (
         <button
           onClick={scrollLeft}
@@ -292,73 +292,29 @@ export default function GalleryScroller({ category }: Props) {
         ))}
       </div>
 
-      {/* Mobiel: horizontaal scrollen met touch support */}
-      <div className="sm:hidden relative w-full">
-        {/* Mobile navigation arrows */}
-        {activeIndex > 0 && (
-          <button
-            onClick={scrollLeft}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-black bg-opacity-80 dark:bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 dark:hover:bg-opacity-100 text-black dark:text-white"
-          >
-            <ChevronLeft size={16} />
-          </button>
-        )}
-        {activeIndex < filteredPhotos.length - 1 && (
-          <button
-            onClick={scrollRight}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-black bg-opacity-80 dark:bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 dark:hover:bg-opacity-100 text-black dark:text-white"
-          >
-            <ChevronRight size={16} />
-          </button>
-        )}
-        
-        {/* Mobile navigation dots */}
-        <div className="flex justify-center space-x-2 mb-4">
-          {filteredPhotos.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => scrollToIndex(index)}
-              className={`w-2 h-2 rounded-full transition-colors ${
-                index === activeIndex 
-                  ? 'bg-black dark:bg-white' 
-                  : 'bg-gray-300 dark:bg-gray-600'
-              }`}
-            />
+      {/* Mobiel: 1 kolom vertical scroll */}
+      <div className="sm:hidden w-full">
+        <div className="space-y-6 px-4 py-6">
+          {filteredPhotos.map((photo, index) => (
+            <div
+              key={photo.id}
+              className="w-full flex justify-center items-center"
+            >
+              <Image
+                src={photo.src}
+                alt={photo.alt}
+                width={1200}
+                height={1800}
+                loading={index < 3 ? 'eager' : 'lazy'}
+                placeholder="blur"
+                blurDataURL={photo.blurDataURL}
+                onLoad={(e) => {
+                  e.currentTarget.dataset.loaded = 'true'
+                }}
+                className="max-w-full max-h-[70vh] object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
+              />
+            </div>
           ))}
-        </div>
-        
-        <div
-          ref={mobileScrollRef}
-          className="flex overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory"
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
-          style={{
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-          }}
-        >
-          <div className="flex gap-4 px-4">
-            {filteredPhotos.map((photo, index) => (
-              <div
-                key={photo.id}
-                className="flex-shrink-0 snap-center w-[85vw] h-[60vh] relative flex items-center justify-center"
-              >
-                <Image
-                  src={photo.src}
-                  alt={photo.alt}
-                  fill
-                  loading={index < 3 ? 'eager' : 'lazy'}
-                  placeholder="blur"
-                  blurDataURL={photo.blurDataURL}
-                  onLoad={(e) => {
-                    e.currentTarget.dataset.loaded = 'true'
-                  }}
-                  className="object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
-                />
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </section>
