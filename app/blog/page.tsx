@@ -5,6 +5,10 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
+import { Metadata } from 'next'
+
+// Note: Since this is a client component, metadata should be handled in layout.tsx or a separate page wrapper
+// For now, we'll add SEO via next/head in useEffect
 
 type BlogPost = {
   id: string
