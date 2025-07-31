@@ -39,15 +39,15 @@ export default function GalleryScroller({ category }: Props) {
     const container = scrollRef.current
     if (!container) return 0
     
-    // Get the actual photo container, not just the first div
+    // Get the actual photo container wrapper divs
     const photoItems = container.querySelectorAll(':scope > div > div')
     if (photoItems.length === 0) return 0
     
     const firstPhoto = photoItems[0] as HTMLElement
     const rect = firstPhoto.getBoundingClientRect()
     
-    // Add gap between items (4px * 2 for gap-x-4)
-    const gap = 16 // 4px gap on each side
+    // Add gap between items (gap-x-4 = 16px)
+    const gap = 16
     return rect.width + gap
   }
 
@@ -70,6 +70,11 @@ export default function GalleryScroller({ category }: Props) {
       if (itemWidth > 0) {
         const targetScroll = index * itemWidth
         container.scrollTo({ left: targetScroll, behavior: 'smooth' })
+      } else {
+        // Fallback: scroll by viewport width
+        const fallbackWidth = window.innerWidth * 0.8
+        const targetScroll = index * fallbackWidth
+        container.scrollTo({ left: targetScroll, behavior: 'smooth' })
       }
     }
     
@@ -85,14 +90,18 @@ export default function GalleryScroller({ category }: Props) {
   }, [])
 
   const scrollLeft = useCallback(() => {
-    const newIndex = Math.max(0, activeIndex - 1)
-    scrollToIndex(newIndex)
-  }, [activeIndex, scrollToIndex])
+    const container = scrollRef.current
+    if (container) {
+      container.scrollBy({ left: -window.innerWidth * 0.7, behavior: 'smooth' })
+    }
+  }, [])
 
   const scrollRight = useCallback(() => {
-    const newIndex = Math.min(filteredPhotos.length - 1, activeIndex + 1)
-    scrollToIndex(newIndex)
-  }, [activeIndex, filteredPhotos.length, scrollToIndex])
+    const container = scrollRef.current
+    if (container) {
+      container.scrollBy({ left: window.innerWidth * 0.7, behavior: 'smooth' })
+    }
+  }, [])
 
   useEffect(() => {
     setActiveIndex(0)
@@ -240,35 +249,36 @@ export default function GalleryScroller({ category }: Props) {
 
   return (
     <section className="relative w-full bg-white dark:bg-black xl:h-screen xl:fixed xl:inset-0 xl:flex xl:items-center pt-4 sm:pt-6 xl:pt-0">
-      {activeIndex > 0 && (
-        <button
-          onClick={scrollLeft}
-          className="hidden xl:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-black bg-opacity-80 dark:bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 dark:hover:bg-opacity-100 text-black dark:text-white"
-        >
-          <ChevronLeft />
-        </button>
-      )}
-      {activeIndex < filteredPhotos.length - 1 && (
-        <button
-          onClick={scrollRight}
-          className="hidden xl:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-black bg-opacity-80 dark:bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 dark:hover:bg-opacity-100 text-black dark:text-white"
-        >
-          <ChevronRight />
-        </button>
-      )}
+      <button
+        onClick={scrollLeft}
+        className="hidden xl:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-black bg-opacity-80 dark:bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 dark:hover:bg-opacity-100 text-black dark:text-white"
+      >
+        <ChevronLeft />
+      </button>
+      <button
+        onClick={scrollRight}
+        className="hidden xl:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-black bg-opacity-80 dark:bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 dark:hover:bg-opacity-100 text-black dark:text-white"
+      >
+        <ChevronRight />
+      </button>
 
       {/* Desktop: horizontaal scrollen */}
       <div
         ref={scrollRef}
-        className="hidden xl:flex h-full w-full overflow-x-auto overflow-y-hidden"
+        className="hidden xl:flex h-full w-full overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory"
         style={{ height: 'calc(100vh - 80px)' }}
       >
-        <div className="flex items-center h-full gap-x-4 px-4">
+        <div className="flex items-center h-full gap-x-6 px-6" style={{ minWidth: 'max-content' }}>
           {filteredPhotos.map((photo, index) => (
             <div
               key={photo.id}
-              className="relative flex-shrink-0 flex justify-center items-center max-w-[1200px]"
-              style={{ height: 'calc(100vh - 120px)' }}
+              className="relative flex-shrink-0 h-full flex justify-center items-center snap-center"
+              style={{ 
+                height: 'calc(100vh - 120px)',
+                width: 'auto',
+                minWidth: '60vw',
+                maxWidth: '90vw'
+              }}
             >
               <OptimizedImage
                 src={photo.src}
@@ -279,7 +289,7 @@ export default function GalleryScroller({ category }: Props) {
                 fill={true}
                 aspectRatio=""
                 className="object-contain"
-                sizes="(max-width: 1280px) 100vw, 80vw"
+                sizes="90vw"
               />
             </div>
           ))}
