@@ -93,14 +93,30 @@ export default function GalleryScroller({ category }: Props) {
   const scrollLeft = useCallback(() => {
     const container = scrollRef.current
     if (container) {
-      container.scrollBy({ left: -200, behavior: 'smooth' })
+      // Calculate the width of one photo container + gap
+      const photoContainer = container.querySelector('div > div') as HTMLElement
+      if (photoContainer) {
+        const photoWidth = photoContainer.offsetWidth + 16 // 16px = gap-x-4
+        container.scrollBy({ left: -photoWidth, behavior: 'smooth' })
+      } else {
+        // Fallback if calculation fails
+        container.scrollBy({ left: -400, behavior: 'smooth' })
+      }
     }
   }, [])
 
   const scrollRight = useCallback(() => {
     const container = scrollRef.current
     if (container) {
-      container.scrollBy({ left: 200, behavior: 'smooth' })
+      // Calculate the width of one photo container + gap
+      const photoContainer = container.querySelector('div > div') as HTMLElement
+      if (photoContainer) {
+        const photoWidth = photoContainer.offsetWidth + 16 // 16px = gap-x-4
+        container.scrollBy({ left: photoWidth, behavior: 'smooth' })
+      } else {
+        // Fallback if calculation fails
+        container.scrollBy({ left: 400, behavior: 'smooth' })
+      }
     }
   }, [])
 
@@ -250,7 +266,7 @@ export default function GalleryScroller({ category }: Props) {
   }, [filteredPhotos.length, activeIndex])
 
   return (
-    <section className="relative w-full bg-white dark:bg-black xl:h-screen xl:fixed xl:inset-0 xl:flex xl:items-center pt-4 sm:pt-6 xl:pt-0">
+    <section className="relative w-full bg-white dark:bg-black xl:h-screen xl:fixed xl:inset-0 xl:flex xl:items-center pt-4 sm:pt-6 xl:pt-6">
       <button
         onClick={scrollLeft}
         className="hidden xl:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-black bg-opacity-80 dark:bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 dark:hover:bg-opacity-100 text-black dark:text-white"
