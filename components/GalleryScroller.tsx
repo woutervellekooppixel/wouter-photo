@@ -164,13 +164,13 @@ export default function GalleryScroller({ category }: Props) {
       {/* Desktop: horizontaal scrollen */}
       <div
         ref={scrollRef}
-        className="hidden xl:flex h-[calc(100vh-96px)] w-full overflow-x-auto overflow-y-hidden"
+        className="hidden xl:flex h-[calc(100vh-192px)] w-full overflow-x-auto overflow-y-hidden my-12"
       >
         <div className="flex items-center h-full gap-x-4 px-4">
           {filteredPhotos.map((photo, index) => (
             <div
               key={photo.id}
-              className="relative flex-shrink-0 justify-center items-center aspect-[3/2] h-[calc(100vh-96px)] max-w-[1200px]"
+              className="relative flex-shrink-0 justify-center items-center aspect-[3/2] h-[calc(100vh-192px)] max-w-[1200px]"
             >
               <Image
                 src={photo.src}
