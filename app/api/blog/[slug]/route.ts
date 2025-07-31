@@ -943,9 +943,10 @@ Remember that composition serves the story you're trying to tell. Every composit
 
 export async function GET(
   request: Request,
-  { params }: { params: { slug: string } }
+  context: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const params = await context.params
     const post = mockPosts.find(p => p.slug === params.slug)
     
     if (!post) {
