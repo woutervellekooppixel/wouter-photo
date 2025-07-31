@@ -24,21 +24,25 @@ export default function GalleryScroller({ category }: Props) {
     return firstItem?.getBoundingClientRect().width || 0
   }
 
-  const scrollLeft = useCallback(() => {
+  const scrollToIndex = useCallback((index: number) => {
     const container = scrollRef.current
-    const scrollAmount = getItemWidth()
-    if (container) {
-      container.scrollBy({ left: -scrollAmount, behavior: 'smooth' })
-    }
+    if (!container) return
+    
+    const itemWidth = getItemWidth()
+    const targetScroll = index * itemWidth
+    container.scrollTo({ left: targetScroll, behavior: 'smooth' })
+    setActiveIndex(index)
   }, [])
 
+  const scrollLeft = useCallback(() => {
+    const newIndex = Math.max(0, activeIndex - 1)
+    scrollToIndex(newIndex)
+  }, [activeIndex, scrollToIndex])
+
   const scrollRight = useCallback(() => {
-    const container = scrollRef.current
-    const scrollAmount = getItemWidth()
-    if (container) {
-      container.scrollBy({ left: scrollAmount, behavior: 'smooth' })
-    }
-  }, [])
+    const newIndex = Math.min(filteredPhotos.length - 1, activeIndex + 1)
+    scrollToIndex(newIndex)
+  }, [activeIndex, filteredPhotos.length, scrollToIndex])
 
   useEffect(() => {
     setActiveIndex(0)
@@ -51,14 +55,26 @@ export default function GalleryScroller({ category }: Props) {
     const container = scrollRef.current
     if (!container) return
 
+    let scrollTimeout: NodeJS.Timeout
+
     const handleScroll = () => {
-      const itemWidth = getItemWidth()
-      const newIndex = Math.round(container.scrollLeft / itemWidth)
-      setActiveIndex(Math.max(0, Math.min(newIndex, filteredPhotos.length - 1)))
+      // Debounce scroll events to avoid conflicts with button clicks
+      clearTimeout(scrollTimeout)
+      scrollTimeout = setTimeout(() => {
+        const itemWidth = getItemWidth()
+        if (itemWidth > 0) {
+          const newIndex = Math.round(container.scrollLeft / itemWidth)
+          const clampedIndex = Math.max(0, Math.min(newIndex, filteredPhotos.length - 1))
+          setActiveIndex(clampedIndex)
+        }
+      }, 100)
     }
 
     container.addEventListener('scroll', handleScroll)
-    return () => container.removeEventListener('scroll', handleScroll)
+    return () => {
+      container.removeEventListener('scroll', handleScroll)
+      clearTimeout(scrollTimeout)
+    }
   }, [filteredPhotos.length])
 
   useEffect(() => {
