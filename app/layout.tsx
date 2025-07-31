@@ -1,6 +1,7 @@
 import './globals.css'
 import Header from '../components/Header'
 import Cart from '../components/Cart'
+import PWAHandler from '../components/PWAHandler'
 import Script from 'next/script'
 import { ThemeProvider } from 'next-themes'
 import { Metadata } from 'next'
@@ -118,6 +119,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/favicon.png" />
         <link rel="canonical" href="https://wouter.photo" />
         
+        {/* PWA Meta Tags */}
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#ffffff" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Wouter.Photo" />
+        <link rel="apple-touch-icon" href="/favicon.png" />
+        
         {/* Structured Data */}
         <script
           type="application/ld+json"
@@ -166,6 +175,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             ></iframe>
           </noscript>
 
+          <PWAHandler />
           <Header />
           <Cart />
           {children}
