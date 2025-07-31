@@ -152,9 +152,10 @@ export default function GalleryScroller({ category }: Props) {
       // Always prevent default and convert any scroll to horizontal
       e.preventDefault()
       
-      // Use deltaY (vertical scroll) to control horizontal movement, but limit the speed much more
-      const scrollAmount = (e.deltaY || e.deltaX) * 0.1 // Much slower - only 10% of original speed
-      container.scrollBy({ left: scrollAmount, behavior: 'auto' })
+      // Fixed scroll amount regardless of trackpad sensitivity
+      const scrollDirection = e.deltaY > 0 ? 1 : -1
+      const fixedScrollAmount = scrollDirection * 50 // Fixed 50px per scroll step
+      container.scrollBy({ left: fixedScrollAmount, behavior: 'auto' })
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
