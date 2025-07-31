@@ -199,10 +199,29 @@ export default function GalleryScroller({ category }: Props) {
       }
     }
 
+    // Handle wheel events to make vertical scroll move gallery horizontally
+    const handleWheel = (e: WheelEvent) => {
+      // Only apply on desktop horizontal gallery
+      if (window.innerWidth >= 1280) {
+        // Convert any scroll direction to horizontal movement
+        const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX
+        
+        if (delta > 0) {
+          // Scroll down or right = move gallery right
+          scrollRight()
+        } else if (delta < 0) {
+          // Scroll up or left = move gallery left
+          scrollLeft()
+        }
+      }
+    }
+
     window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('wheel', handleWheel, { passive: true })
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('wheel', handleWheel)
     }
   }, [scrollLeft, scrollRight])
 
@@ -229,6 +248,52 @@ export default function GalleryScroller({ category }: Props) {
       scrollRight()
     } else if (isRightSwipe) {
       scrollLeft()
+    }
+  }
+
+  // Handle touch events for vertical swipes on desktop
+  const [touchStartY, setTouchStartY] = useState<number | null>(null)
+  const [touchEndY, setTouchEndY] = useState<number | null>(null)
+
+  const onTouchStartDesktop = (e: React.TouchEvent) => {
+    // Only on desktop horizontal gallery
+    if (window.innerWidth >= 1280) {
+      setTouchStart(e.targetTouches[0].clientX)
+      setTouchStartY(e.targetTouches[0].clientY)
+      setTouchEnd(null)
+      setTouchEndY(null)
+    }
+  }
+
+  const onTouchMoveDesktop = (e: React.TouchEvent) => {
+    if (window.innerWidth >= 1280) {
+      setTouchEnd(e.targetTouches[0].clientX)
+      setTouchEndY(e.targetTouches[0].clientY)
+    }
+  }
+
+  const onTouchEndDesktop = () => {
+    if (window.innerWidth >= 1280 && touchStartY && touchEndY) {
+      const verticalDistance = touchStartY - touchEndY
+      const horizontalDistance = touchStart ? touchStart - (touchEnd || 0) : 0
+      
+      // Check if it's primarily a vertical swipe
+      if (Math.abs(verticalDistance) > Math.abs(horizontalDistance) && Math.abs(verticalDistance) > minSwipeDistance) {
+        if (verticalDistance > 0) {
+          // Swipe up = move gallery right
+          scrollRight()
+        } else {
+          // Swipe down = move gallery right too
+          scrollRight()
+        }
+      } else if (Math.abs(horizontalDistance) > minSwipeDistance) {
+        // Regular horizontal swipe
+        if (horizontalDistance > 0) {
+          scrollRight()
+        } else {
+          scrollLeft()
+        }
+      }
     }
   }
 
@@ -284,6 +349,9 @@ export default function GalleryScroller({ category }: Props) {
           isTransitioning ? 'opacity-0' : 'opacity-100'
         }`}
         style={{ height: 'calc(100vh - 80px)' }}
+        onTouchStart={onTouchStartDesktop}
+        onTouchMove={onTouchMoveDesktop}
+        onTouchEnd={onTouchEndDesktop}
       >
         <div className="flex items-center h-full gap-x-4 px-4">
           {displayedPhotos.map((photo, index) => (
