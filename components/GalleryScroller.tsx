@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { photos } from '../data/photos'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import Image from 'next/image'
 import OptimizedImage from './OptimizedImage'
 
 type Props = {
@@ -280,16 +281,19 @@ export default function GalleryScroller({ category }: Props) {
                 maxWidth: '90vw'
               }}
             >
-              <OptimizedImage
+              <Image
                 src={photo.src}
                 alt={photo.alt}
-                blurDataURL={photo.blurDataURL}
+                fill
                 priority={index < 2}
                 loading={index < 2 ? 'eager' : 'lazy'}
-                fill={true}
-                aspectRatio=""
-                className="object-contain"
+                placeholder="blur"
+                blurDataURL={photo.blurDataURL}
+                className="object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
                 sizes="90vw"
+                onLoad={(e: any) => {
+                  e.currentTarget.dataset.loaded = 'true'
+                }}
               />
             </div>
           ))}
