@@ -30,11 +30,24 @@ export default function Header() {
   useEffect(() => {
     async function checkLocation() {
       try {
+        // Probeer eerst CloudFlare's service (sneller en betrouwbaarder)
+        const cfResponse = await fetch('https://cloudflare.com/cdn-cgi/trace')
+        const cfText = await cfResponse.text()
+        const cfCountry = cfText.match(/loc=([A-Z]{2})/)?.[1]
+        
+        if (cfCountry) {
+          setIsInNetherlands(cfCountry === 'NL')
+          return
+        }
+
+        // Fallback naar ipapi als CloudFlare faalt
         const response = await fetch('https://ipapi.co/json/')
         const data = await response.json()
         setIsInNetherlands(data.country_code === 'NL')
       } catch (error) {
-        setIsInNetherlands(false) // Default to showing blog if location check fails
+        // Als beide falen, assumeer Nederlandse bezoeker voor veiligheid
+        console.log('Geolocation check failed, assuming Netherlands for safety')
+        setIsInNetherlands(true)
       }
     }
     checkLocation()
