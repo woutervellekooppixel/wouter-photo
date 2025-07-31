@@ -93,14 +93,14 @@ export default function GalleryScroller({ category }: Props) {
   const scrollLeft = useCallback(() => {
     const container = scrollRef.current
     if (container) {
-      container.scrollBy({ left: -window.innerWidth * 0.7, behavior: 'smooth' })
+      container.scrollBy({ left: -600, behavior: 'smooth' })
     }
   }, [])
 
   const scrollRight = useCallback(() => {
     const container = scrollRef.current
     if (container) {
-      container.scrollBy({ left: window.innerWidth * 0.7, behavior: 'smooth' })
+      container.scrollBy({ left: 600, behavior: 'smooth' })
     }
   }, [])
 
@@ -152,8 +152,8 @@ export default function GalleryScroller({ category }: Props) {
       // Always prevent default and convert any scroll to horizontal
       e.preventDefault()
       
-      // Use deltaY (vertical scroll) to control horizontal movement
-      const scrollAmount = e.deltaY || e.deltaX
+      // Use deltaY (vertical scroll) to control horizontal movement, but limit the speed
+      const scrollAmount = (e.deltaY || e.deltaX) * 0.5 // Reduce scroll speed by half
       container.scrollBy({ left: scrollAmount, behavior: 'auto' })
     }
 
