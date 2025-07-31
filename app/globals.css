@@ -18,6 +18,15 @@
     margin: 0;
     padding: 0;
   }
+
+  /* Disable scroll on desktop for gallery pages */
+  @media (min-width: 1280px) {
+    html.gallery-page,
+    body.gallery-page {
+      overflow: hidden;
+      height: 100vh;
+    }
+  }
 }
 
 @layer utilities {
