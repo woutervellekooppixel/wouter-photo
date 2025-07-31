@@ -3,12 +3,128 @@ import Header from '../components/Header'
 import Cart from '../components/Cart'
 import Script from 'next/script'
 import { ThemeProvider } from 'next-themes'
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  metadataBase: new URL('https://wouter.photo'),
+  title: {
+    default: 'Wouter Vellekoop – Professional Concert & Event Photographer',
+    template: '%s | Wouter.Photo'
+  },
+  description: 'Professional concert, event, and advertising photographer based in the Netherlands. Capturing raw energy of live performances with speed, consistency and style.',
+  keywords: [
+    'concert photographer',
+    'event photographer', 
+    'professional photography',
+    'live music photography',
+    'Netherlands photographer',
+    'advertising photography',
+    'corporate events',
+    'festival photography',
+    'North Sea Jazz',
+    'music photography'
+  ],
+  authors: [{ name: 'Wouter Vellekoop' }],
+  creator: 'Wouter Vellekoop',
+  publisher: 'Wouter Vellekoop Photography',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://wouter.photo',
+    siteName: 'Wouter Vellekoop Photography',
+    title: 'Wouter Vellekoop – Professional Concert & Event Photographer',
+    description: 'Professional concert, event, and advertising photographer based in the Netherlands. Capturing raw energy of live performances.',
+    images: [
+      {
+        url: '/2022_NSJF-Fri_1179.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Wouter Vellekoop - Professional Photographer',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Wouter Vellekoop – Professional Concert & Event Photographer',
+    description: 'Professional concert, event, and advertising photographer based in the Netherlands.',
+    images: ['/2022_NSJF-Fri_1179.jpg'],
+  },
+  verification: {
+    // Voeg hier je Google Search Console verificatiecode toe
+    // google: 'jouw-verificatie-code-hier',
+  },
+  alternates: {
+    canonical: 'https://wouter.photo',
+  },
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: 'Wouter Vellekoop',
+    jobTitle: 'Professional Photographer',
+    description: 'Professional concert, event, and advertising photographer based in the Netherlands',
+    url: 'https://wouter.photo',
+    image: 'https://wouter.photo/2022_NSJF-Fri_1179.jpg',
+    address: {
+      '@type': 'PostalAddress',
+      addressCountry: 'NL',
+      addressLocality: 'Netherlands'
+    },
+    contactPoint: {
+      '@type': 'ContactPoint',
+      email: 'hello@wouter.photo',
+      contactType: 'Business Inquiries'
+    },
+    sameAs: [
+      'https://instagram.com/woutervellekoop',
+      'https://linkedin.com/in/woutervellekoop'
+    ],
+    knowsAbout: [
+      'Concert Photography',
+      'Event Photography', 
+      'Live Music Photography',
+      'Corporate Events',
+      'Advertising Photography',
+      'Festival Photography'
+    ],
+    hasCredential: [
+      'MOJO',
+      'Radio 538', 
+      'North Sea Jazz',
+      'Ahoy',
+      'Talpa',
+      'BNN VARA',
+      'Residentie Orkest',
+      'UNICEF Nederland'
+    ]
+  }
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.png" />
+        <link rel="canonical" href="https://wouter.photo" />
+        
+        {/* Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        
+        {/* Google Tag Manager */}
         <Script id="gtm-script" strategy="afterInteractive">
           {`
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
