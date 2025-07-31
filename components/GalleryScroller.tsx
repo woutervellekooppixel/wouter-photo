@@ -115,18 +115,38 @@ export default function GalleryScroller({ category }: Props) {
     const container = scrollRef.current
     if (!container) return
 
+    let wheelTimeout: NodeJS.Timeout | null = null
+    let isWheeling = false
+
     const handleWheel = (e: WheelEvent) => {
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
         e.preventDefault()
         
+        // Prevent rapid-fire wheel events
+        if (isWheeling) {
+          console.log('🖱️ Wheel event blocked (already processing)')
+          return
+        }
+        
+        isWheeling = true
+        console.log('🖱️ Wheel event:', { deltaY: e.deltaY, deltaX: e.deltaX })
+        
         // Use our precise scroll logic instead of scrollBy
         if (e.deltaY > 0) {
           // Scroll down = move right
+          console.log('🖱️ Wheel scroll right triggered')
           scrollRight()
         } else {
           // Scroll up = move left  
+          console.log('🖱️ Wheel scroll left triggered')
           scrollLeft()
         }
+        
+        // Reset wheel lock after a delay
+        wheelTimeout = setTimeout(() => {
+          isWheeling = false
+          console.log('🖱️ Wheel lock released')
+        }, 500)
       }
     }
 
@@ -151,15 +171,19 @@ export default function GalleryScroller({ category }: Props) {
       const touchDuration = Date.now() - touchStartTime
       const touchDistance = Math.abs(touchEndX - touchStartX)
       
+      console.log('👆 Touch end:', { touchDuration, touchDistance, startX: touchStartX, endX: touchEndX })
+      
       // Only trigger on quick swipes (not slow drags) and sufficient distance
       if (touchDuration < 300 && touchDistance > 50) {
         e.preventDefault()
         
         if (touchEndX < touchStartX) {
           // Swipe left = move right
+          console.log('👆 Touch swipe right triggered')
           scrollRight()
         } else {
           // Swipe right = move left
+          console.log('👆 Touch swipe left triggered')
           scrollLeft()
         }
       }
@@ -175,6 +199,11 @@ export default function GalleryScroller({ category }: Props) {
       container.removeEventListener('touchstart', handleTouchStart)
       container.removeEventListener('touchend', handleTouchEnd)
       window.removeEventListener('keydown', handleKeyDown)
+      
+      // Clean up wheel timeout
+      if (wheelTimeout) {
+        clearTimeout(wheelTimeout)
+      }
     }
   }, [scrollLeft, scrollRight])
 
