@@ -267,19 +267,17 @@ export default function GalleryScroller({ category }: Props) {
       {/* Desktop: horizontaal scrollen */}
       <div
         ref={scrollRef}
-        className="hidden xl:flex h-full w-full overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory"
+        className="hidden xl:flex h-full w-full overflow-x-auto overflow-y-hidden scrollbar-hide"
         style={{ height: 'calc(100vh - 80px)' }}
       >
-        <div className="flex items-center h-full gap-x-4 px-4" style={{ minWidth: 'max-content' }}>
+        <div className="flex items-center h-full gap-x-4 px-4">
           {filteredPhotos.map((photo, index) => (
             <div
               key={photo.id}
-              className="relative flex-shrink-0 h-full flex justify-center items-center snap-center"
+              className="relative flex-shrink-0 max-w-[90vw]"
               style={{ 
                 height: 'calc(100vh - 120px)',
-                width: 'auto',
-                minWidth: '60vw',
-                maxWidth: '90vw'
+                aspectRatio: '3/2'
               }}
             >
               <Image
