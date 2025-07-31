@@ -149,7 +149,7 @@ export default function Header() {
           {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
         </button>
 
-        {/* 🛒 Winkelwagen */}
+        {/* 🛒 Winkelwagen 
         <button onClick={() => toggleCart(true)} className="relative hover:text-gray-600">
           <ShoppingCart size={18} />
           {itemCount > 0 && (
@@ -157,7 +157,7 @@ export default function Header() {
               {itemCount}
             </span>
           )}
-        </button>
+        </button> */}
       </nav>
 
       <div className="sm:hidden">
