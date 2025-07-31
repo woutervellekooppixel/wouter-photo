@@ -118,7 +118,15 @@ export default function GalleryScroller({ category }: Props) {
     const handleWheel = (e: WheelEvent) => {
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
         e.preventDefault()
-        container.scrollBy({ left: e.deltaY, behavior: 'smooth' })
+        
+        // Use our precise scroll logic instead of scrollBy
+        if (e.deltaY > 0) {
+          // Scroll down = move right
+          scrollRight()
+        } else {
+          // Scroll up = move left  
+          scrollLeft()
+        }
       }
     }
 
@@ -127,11 +135,45 @@ export default function GalleryScroller({ category }: Props) {
       else if (e.key === 'ArrowLeft') scrollLeft()
     }
 
+    // Touch swipe support for trackpads
+    let touchStartX = 0
+    let touchStartTime = 0
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX = e.touches[0].clientX
+      touchStartTime = Date.now()
+    }
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (!e.changedTouches[0]) return
+      
+      const touchEndX = e.changedTouches[0].clientX
+      const touchDuration = Date.now() - touchStartTime
+      const touchDistance = Math.abs(touchEndX - touchStartX)
+      
+      // Only trigger on quick swipes (not slow drags) and sufficient distance
+      if (touchDuration < 300 && touchDistance > 50) {
+        e.preventDefault()
+        
+        if (touchEndX < touchStartX) {
+          // Swipe left = move right
+          scrollRight()
+        } else {
+          // Swipe right = move left
+          scrollLeft()
+        }
+      }
+    }
+
     container.addEventListener('wheel', handleWheel, { passive: false })
+    container.addEventListener('touchstart', handleTouchStart, { passive: true })
+    container.addEventListener('touchend', handleTouchEnd, { passive: false })
     window.addEventListener('keydown', handleKeyDown)
 
     return () => {
       container.removeEventListener('wheel', handleWheel)
+      container.removeEventListener('touchstart', handleTouchStart)
+      container.removeEventListener('touchend', handleTouchEnd)
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [scrollLeft, scrollRight])
