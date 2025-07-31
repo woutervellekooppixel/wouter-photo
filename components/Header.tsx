@@ -24,6 +24,21 @@ export default function Header() {
   const itemCount = cart.length
   const [currentSuffixIndex, setCurrentSuffixIndex] = useState(0)
   const { theme, setTheme } = useTheme()
+  const [isInNetherlands, setIsInNetherlands] = useState<boolean | null>(null)
+
+  // Check user's location
+  useEffect(() => {
+    async function checkLocation() {
+      try {
+        const response = await fetch('https://ipapi.co/json/')
+        const data = await response.json()
+        setIsInNetherlands(data.country_code === 'NL')
+      } catch (error) {
+        setIsInNetherlands(false) // Default to showing blog if location check fails
+      }
+    }
+    checkLocation()
+  }, [])
 
   const isActive = (slug: string) => pathname === `/portfolio/${slug}`
 
@@ -39,6 +54,8 @@ export default function Header() {
       return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC']
     } else if (pathname === '/about') {
       return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC', 'ABOUT']
+    } else if (pathname.startsWith('/blog')) {
+      return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC', 'BLOG']
     } else {
       return ['PHOTO']
     }
@@ -101,6 +118,9 @@ export default function Header() {
         </div>
 
         <Link href="/about" className="hover:text-gray-600 dark:hover:text-gray-300">About</Link> 
+        {!isInNetherlands && (
+          <Link href="/blog" className="hover:text-gray-600 dark:hover:text-gray-300">Blog</Link>
+        )}
         {/*  <Link href="/shop" className="hover:text-gray-600">Shop</Link> */}
 
         <a href="https://instagram.com/woutervellekoop" target="_blank" className="hover:text-gray-600 dark:hover:text-gray-300"><FaInstagram size={16} /></a>
@@ -117,14 +137,14 @@ export default function Header() {
         </button>
 
         {/* 🛒 Winkelwagen */}
-        {/*  <button onClick={() => toggleCart(true)} className="relative hover:text-gray-600">
+        <button onClick={() => toggleCart(true)} className="relative hover:text-gray-600">
           <ShoppingCart size={18} />
           {itemCount > 0 && (
             <span className="absolute -top-1 -right-2 bg-black text-white text-xs px-1 rounded-full">
               {itemCount}
             </span>
           )}
-        </button> */}
+        </button>
       </nav>
 
       <div className="sm:hidden">

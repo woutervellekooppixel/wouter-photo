@@ -12,6 +12,15 @@
   }
 }
 
+@layer utilities {
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
 .gallery-image-wrapper {
   position: relative;
   height: calc(100vh - 40px); /* 20px boven + onder */
