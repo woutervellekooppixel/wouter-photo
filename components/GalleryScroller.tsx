@@ -143,7 +143,7 @@ export default function GalleryScroller({ category }: Props) {
   }, [scrollLeft, scrollRight])
 
   return (
-    <section className="relative w-full bg-white dark:bg-black h-[calc(100vh-96px)] flex items-center">
+    <section className="relative w-full bg-white dark:bg-black h-screen flex items-center pt-[80px]">
       {activeIndex > 0 && (
         <button
           onClick={scrollLeft}
@@ -164,13 +164,13 @@ export default function GalleryScroller({ category }: Props) {
       {/* Desktop: horizontaal scrollen */}
       <div
         ref={scrollRef}
-        className="hidden xl:flex h-[70vh] w-full overflow-x-auto overflow-y-hidden"
+        className="hidden xl:flex h-[60vh] w-full overflow-x-auto overflow-y-hidden"
       >
         <div className="flex items-center h-full gap-x-4 px-4">
           {filteredPhotos.map((photo, index) => (
             <div
               key={photo.id}
-              className="relative flex-shrink-0 justify-center items-center aspect-[3/2] h-[70vh] max-w-[1200px]"
+              className="relative flex-shrink-0 justify-center items-center aspect-[3/2] h-[60vh] max-w-[1200px]"
             >
               <Image
                 src={photo.src}
