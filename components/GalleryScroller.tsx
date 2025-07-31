@@ -127,16 +127,30 @@ export default function GalleryScroller({ category }: Props) {
   const scrollLeft = useCallback(() => {
     const container = scrollRef.current
     if (container) {
-      // Fixed scroll amount for exactly 1 photo movement
-      container.scrollBy({ left: -400, behavior: 'smooth' })
+      const itemWidth = getItemWidth()
+      if (itemWidth > 0) {
+        // Smooth scroll exactly one photo width
+        container.scrollBy({ left: -itemWidth, behavior: 'smooth' })
+      } else {
+        // Fallback to viewport-based scroll
+        const fallbackWidth = window.innerWidth * 0.6
+        container.scrollBy({ left: -fallbackWidth, behavior: 'smooth' })
+      }
     }
   }, [])
 
   const scrollRight = useCallback(() => {
     const container = scrollRef.current
     if (container) {
-      // Fixed scroll amount for exactly 1 photo movement
-      container.scrollBy({ left: 400, behavior: 'smooth' })
+      const itemWidth = getItemWidth()
+      if (itemWidth > 0) {
+        // Smooth scroll exactly one photo width
+        container.scrollBy({ left: itemWidth, behavior: 'smooth' })
+      } else {
+        // Fallback to viewport-based scroll
+        const fallbackWidth = window.innerWidth * 0.6
+        container.scrollBy({ left: fallbackWidth, behavior: 'smooth' })
+      }
     }
   }, [])
 
@@ -178,10 +192,13 @@ export default function GalleryScroller({ category }: Props) {
       // Always prevent default and convert any scroll to horizontal
       e.preventDefault()
       
-      // Very small fixed scroll amount
+      // More responsive scroll amount based on wheel delta
       const scrollDirection = e.deltaY > 0 ? 1 : -1
-      const fixedScrollAmount = scrollDirection * 20 // Much smaller: 20px per scroll step
-      container.scrollBy({ left: fixedScrollAmount, behavior: 'auto' })
+      const baseScrollAmount = Math.abs(e.deltaY) * 0.5 // Scale wheel input
+      const clampedScrollAmount = Math.min(Math.max(baseScrollAmount, 15), 60) // Between 15-60px
+      const finalScrollAmount = scrollDirection * clampedScrollAmount
+      
+      container.scrollBy({ left: finalScrollAmount, behavior: 'auto' })
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
