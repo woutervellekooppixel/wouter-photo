@@ -22,31 +22,31 @@ And don't forget that with the market shifting to mirrorless, you can find some 
 So, what's in my bag when I'm heading to a gig? It's all about balance—speed, versatility, and image quality. Here's my complete setup that has never let me down:
 
 **Camera Bodies & Lenses:**
-- Two [Canon R5 Mark II](https://amzn.to/canonr5ii) bodies with dual card slots for peace of mind
-- [RF 14-35mm f/2.8 L IS USM](https://amzn.to/rf1435) for those wide, epic stage shots
-- [RF 24-70mm f/2.8 L IS USM](https://amzn.to/rf2470) - my workhorse lens for most scenarios
-- [RF 70-200mm f/2.8 L IS USM](https://amzn.to/rf70200) - perfect for tight shots from the photo pit
-- [RF 100-500mm f/4.5-7.1 L IS USM](https://amzn.to/rf100500) when I need serious reach
+- Two Canon R5 Mark II bodies with dual card slots for peace of mind
+- RF 14-35mm f/2.8 L IS USM for those wide, epic stage shots
+- RF 24-70mm f/2.8 L IS USM - my workhorse lens for most scenarios
+- RF 70-200mm f/2.8 L IS USM - perfect for tight shots from the photo pit
+- RF 100-500mm f/4.5-7.1 L IS USM when I need serious reach
 
 **Storage & Power:**
-- 2x [SanDisk Extreme Pro SD cards (512GB)](https://amzn.to/sandisk512) each
-- 2x [CFexpress Type B cards (512GB)](https://amzn.to/cfexpress512) each 
-- 6 [Canon LP-E6NH batteries](https://amzn.to/canonbattery)
+- 2x SanDisk Extreme Pro SD cards (512GB) each
+- 2x CFexpress Type B cards (512GB) each 
+- 6 Canon LP-E6NH batteries
 - Custom 3D-printed battery holder to keep them organized
 
 **Support & Accessories:**
-- [Sirui monopod](https://amzn.to/siruimonopod) for those long festival days
-- [Peak Design camera straps](https://amzn.to/peakdesignstrap) - reliable and comfortable
-- [Alpine custom-molded earplugs](https://amzn.to/alpineearplugs) (protect your hearing!)
-- [Leatherman multi-tool](https://amzn.to/leathermanmulti) - you'd be surprised how often this comes in handy
+- Sirui monopod for those long festival days
+- Peak Design camera straps - reliable and comfortable
+- Alpine custom-molded earplugs (protect your hearing!)
+- Leatherman multi-tool - you'd be surprised how often this comes in handy
 
 **Lighting & Flash:**
 - Compact LED light for emergency fill
-- [Godox flash system](https://amzn.to/godoxflash) when permitted
+- Godox flash system when permitted
 
 **Bag & Protection:**
-- [Pelican 1510 hard case](https://amzn.to/pelican1510) for travel protection
-- [Peak Design Travel Roller Pro Black](https://amzn.to/peakdesignroller) with [Camera Cube V2 XL](https://amzn.to/cameracube) for daily carrying
+- Pelican 1510 hard case for travel protection
+- Peak Design Travel Roller Pro Black with Camera Cube V2 XL for daily carrying
 
 **The Unsung Heroes: Additional Essentials**
 
