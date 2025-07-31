@@ -122,46 +122,44 @@ export default function BlogPostPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="text-black dark:text-white">
-          {/* Back button - full width */}
-          <Link 
-            href="/blog" 
-            className="inline-flex items-center text-black dark:text-white hover:underline mb-8"
-          >
-            ← Back to blog
-          </Link>
-
-          {/* Post header - full width */}
-          <header className="mb-8">
-            <div className="flex items-center gap-4 mb-4">
-              <span className="bg-black text-white dark:bg-white dark:text-black px-3 py-1 rounded text-sm">
-                {post.category}
-              </span>
-              <time className="text-gray-600 dark:text-gray-400">
-                {new Date(post.date).toLocaleDateString('nl-NL', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </time>
-            </div>
-            
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              {post.title}
-            </h1>
-            
-            <p className="text-xl text-gray-700 dark:text-gray-300">
-              {post.excerpt}
-            </p>
-          </header>
-        </div>
-
-        {/* Content with sidebar - starts from featured image */}
+        {/* Content with sidebar - consistent 75/25 layout */}
         <div className="lg:grid lg:grid-cols-4 lg:gap-8">
           
           {/* Main Content */}
           <div className="lg:col-span-3">
             <div className="text-black dark:text-white">
+              {/* Back button */}
+              <Link 
+                href="/blog" 
+                className="inline-flex items-center text-black dark:text-white hover:underline mb-8"
+              >
+                ← Back to blog
+              </Link>
+
+              {/* Post header */}
+              <header className="mb-8">
+                <div className="flex items-center gap-4 mb-4">
+                  <span className="bg-black text-white dark:bg-white dark:text-black px-3 py-1 rounded text-sm">
+                    {post.category}
+                  </span>
+                  <time className="text-gray-600 dark:text-gray-400">
+                    {new Date(post.date).toLocaleDateString('nl-NL', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </time>
+                </div>
+                
+                <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                  {post.title}
+                </h1>
+                
+                <p className="text-xl text-gray-700 dark:text-gray-300">
+                  {post.excerpt}
+                </p>
+              </header>
+
               {/* Featured image */}
               {post.image && (
                 <div className="mb-8 rounded-lg overflow-hidden">
@@ -207,7 +205,7 @@ export default function BlogPostPage() {
             </div>
           </div>
 
-          {/* Sidebar - starts at featured image level */}
+          {/* Sidebar - starts at same level as content */}
           <div className="lg:col-span-1">
             {/* Desktop: Regular sidebar */}
             <div className="hidden lg:block">
