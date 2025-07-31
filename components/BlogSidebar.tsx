@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { FaInstagram, FaLinkedin, FaEnvelope } from 'react-icons/fa'
 
 export default function BlogSidebar() {
@@ -36,11 +37,15 @@ export default function BlogSidebar() {
     <aside className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 space-y-6">
       {/* Profile Image */}
       <div className="flex justify-center">
-        <img
-          src="/2022_NSJF-Fri_1179.jpg"
-          alt="Wouter Vellekoop"
-          className="w-24 h-24 rounded-full object-cover shadow-md"
-        />
+        <div className="relative w-24 h-24">
+          <Image
+            src="/2022_NSJF-Fri_1179.jpg"
+            alt="Wouter Vellekoop - Professional Photographer"
+            fill
+            className="rounded-full object-cover shadow-md"
+            sizes="96px"
+          />
+        </div>
       </div>
 
       {/* About Content */}

@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
+import Image from 'next/image'
 import Link from 'next/link'
 import { trackBlogView, pageview } from '../../../lib/analytics'
 import BlogSidebar from '../../../components/BlogSidebar'
@@ -162,11 +163,14 @@ export default function BlogPostPage() {
 
               {/* Featured image */}
               {post.image && (
-                <div className="mb-8 rounded-lg overflow-hidden">
-                  <img
+                <div className="mb-8 rounded-lg overflow-hidden relative aspect-video">
+                  <Image
                     src={post.image}
                     alt={post.title}
-                    className="w-full h-auto object-cover"
+                    fill
+                    priority
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 75vw"
                   />
                 </div>
               )}
