@@ -37,7 +37,21 @@ export const pageview = (url: string, title?: string) => {
   }
   
   logEvent('Page View', data)
+  
+  // Send to both GTM dataLayer and direct gtag
   pushToDataLayer(data)
+  
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('config', 'G-SGRS9782NB', {
+      page_title: title,
+      page_location: window.location.origin + url
+    })
+    window.gtag('event', 'page_view', {
+      page_title: title,
+      page_location: window.location.origin + url
+    })
+    console.log('🔵 Direct gtag page_view sent:', url)
+  }
 }
 
 // Track blog post views
@@ -52,6 +66,17 @@ export const trackBlogView = (slug: string, title: string, category: string) => 
   
   logEvent('Blog View', data)
   pushToDataLayer(data)
+  
+  // Also send direct gtag event
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('event', 'view_item', {
+      item_category: 'blog_post',
+      item_name: title,
+      content_type: 'blog',
+      custom_parameter_1: category
+    })
+    console.log('🔵 Direct gtag blog_view sent:', title)
+  }
 }
 
 // Track affiliate link clicks
