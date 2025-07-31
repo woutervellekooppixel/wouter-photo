@@ -99,12 +99,12 @@ export default function GalleryScroller({ category }: Props) {
     if (!container) return
 
     const handleWheel = (e: WheelEvent) => {
-      // Convert vertical scroll to horizontal for natural scrolling
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-        e.preventDefault()
-        // Use scrollBy for smoother scrolling
-        container.scrollBy({ left: e.deltaY, behavior: 'auto' })
-      }
+      // Always prevent default and convert any scroll to horizontal
+      e.preventDefault()
+      
+      // Use deltaY (vertical scroll) to control horizontal movement
+      const scrollAmount = e.deltaY || e.deltaX
+      container.scrollBy({ left: scrollAmount, behavior: 'auto' })
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -118,13 +118,27 @@ export default function GalleryScroller({ category }: Props) {
       }
     }
 
-    // Allow natural touch scrolling on the container
+    // Prevent page scroll when hovering over gallery
+    const handleMouseEnter = () => {
+      document.body.style.overflow = 'hidden'
+    }
+    
+    const handleMouseLeave = () => {
+      document.body.style.overflow = 'auto'
+    }
+
     container.addEventListener('wheel', handleWheel, { passive: false })
+    container.addEventListener('mouseenter', handleMouseEnter)
+    container.addEventListener('mouseleave', handleMouseLeave)
     window.addEventListener('keydown', handleKeyDown)
 
     return () => {
       container.removeEventListener('wheel', handleWheel)
+      container.removeEventListener('mouseenter', handleMouseEnter)  
+      container.removeEventListener('mouseleave', handleMouseLeave)
       window.removeEventListener('keydown', handleKeyDown)
+      // Restore scroll when component unmounts
+      document.body.style.overflow = 'auto'
     }
   }, [scrollLeft, scrollRight])
 
