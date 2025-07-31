@@ -192,10 +192,10 @@ export default function GalleryScroller({ category }: Props) {
       // Always prevent default and convert any scroll to horizontal
       e.preventDefault()
       
-      // Faster, more responsive scroll amount
+      // Much faster, more responsive scroll amount
       const scrollDirection = e.deltaY > 0 ? 1 : -1
-      const baseScrollAmount = Math.abs(e.deltaY) * 1.5 // Increased from 0.5 to 1.5
-      const clampedScrollAmount = Math.min(Math.max(baseScrollAmount, 30), 120) // Increased range: 30-120px
+      const baseScrollAmount = Math.abs(e.deltaY) * 8 // VEEL sneller: van 1.5 naar 8!
+      const clampedScrollAmount = Math.min(Math.max(baseScrollAmount, 80), 400) // Veel grotere range: 80-400px
       const finalScrollAmount = scrollDirection * clampedScrollAmount
       
       container.scrollBy({ left: finalScrollAmount, behavior: 'auto' })
