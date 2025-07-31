@@ -209,8 +209,8 @@ export default function BlogPostPage() {
 
           {/* Sidebar - starts at featured image level */}
           <div className="lg:col-span-1">
-            {/* Desktop: Sticky sidebar */}
-            <div className="hidden lg:block lg:sticky lg:top-8">
+            {/* Desktop: Regular sidebar */}
+            <div className="hidden lg:block">
               <BlogSidebar />
             </div>
             
