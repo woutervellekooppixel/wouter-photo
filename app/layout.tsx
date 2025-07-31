@@ -134,6 +134,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             })(window,document,'script','dataLayer','GTM-K55DF7SN');
           `}
         </Script>
+        
+        {/* Google Analytics 4 Direct */}
+        <Script 
+          src={`https://www.googletagmanager.com/gtag/js?id=G-SGRS9782NB`} 
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-SGRS9782NB', {
+              page_title: document.title,
+              page_location: window.location.href
+            });
+            
+            // Debug logging
+            console.log('🔵 Google Analytics geïnitialiseerd:', 'G-SGRS9782NB');
+          `}
+        </Script>
       </head>
       <body>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
