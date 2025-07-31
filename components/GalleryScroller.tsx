@@ -252,7 +252,7 @@ export default function GalleryScroller({ category }: Props) {
           {filteredPhotos.map((photo, index) => (
             <div
               key={photo.id}
-              className="relative flex-shrink-0 justify-center items-center aspect-[3/2] h-[75vh] max-w-[1200px]"
+              className="relative flex-shrink-0 flex justify-center items-center aspect-[3/2] h-[75vh] max-w-[1200px]"
             >
               <Image
                 src={photo.src}
