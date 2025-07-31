@@ -4,8 +4,8 @@ import { usePathname } from 'next/navigation'
 import { FaInstagram, FaLinkedin, FaEnvelope } from 'react-icons/fa'
 import { motion, AnimatePresence } from 'framer-motion'
 import MobileMenu from './MobileMenu'
-import { ShoppingCart, Sun, Moon } from 'lucide-react'
-import { useCartStore } from '@/stores/cartStore'
+import { Sun, Moon } from 'lucide-react'
+// import { useCartStore } from '@/stores/cartStore' // Temporarily disabled
 import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
 import type { HTMLAttributes } from 'react'
@@ -20,8 +20,8 @@ const MotionSpan = motion(function MotionSpanBase({
 
 export default function Header() {
   const pathname = usePathname()
-  const { toggleCart, cart } = useCartStore()
-  const itemCount = cart.length
+  // const { toggleCart, cart } = useCartStore() // Temporarily disabled
+  // const itemCount = cart.length // Temporarily disabled
   const [currentSuffixIndex, setCurrentSuffixIndex] = useState(0)
   const { theme, setTheme } = useTheme()
   const [isInNetherlands, setIsInNetherlands] = useState<boolean | null>(null)

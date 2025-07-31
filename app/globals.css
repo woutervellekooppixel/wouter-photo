@@ -3,12 +3,20 @@
 @tailwind utilities;
 
 @layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
   html {
     @apply bg-white dark:bg-black;
   }
   
   body {
     @apply text-black dark:text-white bg-white dark:bg-black;
+    margin: 0;
+    padding: 0;
   }
 }
 
