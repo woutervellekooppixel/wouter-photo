@@ -239,7 +239,7 @@ export default function GalleryScroller({ category }: Props) {
   }, [filteredPhotos.length, activeIndex])
 
   return (
-    <section className="relative w-full bg-white dark:bg-black xl:h-screen xl:fixed xl:inset-0 xl:flex xl:items-center pt-[60px] xl:pt-0">
+    <section className="relative w-full bg-white dark:bg-black xl:h-screen xl:fixed xl:inset-0 xl:flex xl:items-center pt-4 sm:pt-6 xl:pt-0">
       {activeIndex > 0 && (
         <button
           onClick={scrollLeft}
