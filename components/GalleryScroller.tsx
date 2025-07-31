@@ -265,19 +265,23 @@ export default function GalleryScroller({ category }: Props) {
       >
         <div className="flex items-center h-full gap-x-4 px-4">
           {filteredPhotos.map((photo, index) => (
-            <OptimizedImage
+            <div
               key={photo.id}
-              src={photo.src}
-              alt={photo.alt}
-              blurDataURL={photo.blurDataURL}
-              priority={index < 2}
-              loading={index < 2 ? 'eager' : 'lazy'}
-              containerClassName="flex-shrink-0 max-w-[1200px]"
-              aspectRatio=""
-              className="object-contain"
-              sizes="(max-width: 1280px) 100vw, 80vw"
+              className="relative flex-shrink-0 flex justify-center items-center max-w-[1200px]"
               style={{ height: 'calc(100vh - 120px)' }}
-            />
+            >
+              <OptimizedImage
+                src={photo.src}
+                alt={photo.alt}
+                blurDataURL={photo.blurDataURL}
+                priority={index < 2}
+                loading={index < 2 ? 'eager' : 'lazy'}
+                fill={true}
+                aspectRatio=""
+                className="object-contain"
+                sizes="(max-width: 1280px) 100vw, 80vw"
+              />
+            </div>
           ))}
         </div>
       </div>
@@ -285,19 +289,20 @@ export default function GalleryScroller({ category }: Props) {
       {/* Tablet: 2 kolommen */}
       <div className="hidden sm:grid xl:hidden grid-cols-2 gap-6 px-4 sm:px-6 py-6">
         {filteredPhotos.map((photo) => (
-          <OptimizedImage
-            key={photo.id}
-            src={photo.src}
-            alt={photo.alt}
-            blurDataURL={photo.blurDataURL}
-            fill={false}
-            width={1200}
-            height={1800}
-            priority={false}
-            containerClassName="flex justify-center items-center"
-            className="max-w-full max-h-[80vh] object-contain"
-            sizes="(max-width: 640px) 100vw, 50vw"
-          />
+          <div key={photo.id} className="flex justify-center items-center">
+            <OptimizedImage
+              src={photo.src}
+              alt={photo.alt}
+              blurDataURL={photo.blurDataURL}
+              fill={false}
+              width={1200}
+              height={1800}
+              priority={false}
+              aspectRatio=""
+              className="max-w-full max-h-[80vh] object-contain"
+              sizes="(max-width: 640px) 100vw, 50vw"
+            />
+          </div>
         ))}
       </div>
 
@@ -305,19 +310,23 @@ export default function GalleryScroller({ category }: Props) {
       <div className="sm:hidden w-full">
         <div className="space-y-6 px-4 py-6">
           {filteredPhotos.map((photo, index) => (
-            <OptimizedImage
+            <div
               key={photo.id}
-              src={photo.src}
-              alt={photo.alt}
-              blurDataURL={photo.blurDataURL}
-              fill={false}
-              width={1200}
-              height={1800}
-              priority={index < 3}
-              containerClassName="w-full flex justify-center items-center"
-              className="max-w-full max-h-[70vh] object-contain"
-              sizes="100vw"
-            />
+              className="w-full flex justify-center items-center"
+            >
+              <OptimizedImage
+                src={photo.src}
+                alt={photo.alt}
+                blurDataURL={photo.blurDataURL}
+                fill={false}
+                width={1200}
+                height={1800}
+                priority={index < 3}
+                aspectRatio=""
+                className="max-w-full max-h-[70vh] object-contain"
+                sizes="100vw"
+              />
+            </div>
           ))}
         </div>
       </div>
