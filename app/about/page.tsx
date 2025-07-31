@@ -58,7 +58,7 @@ export default function AboutPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
         {/* FOTO */}
-        <div className="w-full relative aspect-[4/3]">
+        <div className="w-full relative aspect-[2/3]">
           <Image
             src="/2022_NSJF-Fri_1179.jpg"
             alt="Wouter Vellekoop - Professional Photographer"
