@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { photos } from '../data/photos'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import Image from 'next/image'
+import OptimizedImage from './OptimizedImage'
 
 type Props = {
   category: 'concerts' | 'events' | 'misc' | 'all'
@@ -265,24 +265,19 @@ export default function GalleryScroller({ category }: Props) {
       >
         <div className="flex items-center h-full gap-x-4 px-4">
           {filteredPhotos.map((photo, index) => (
-            <div
+            <OptimizedImage
               key={photo.id}
-              className="relative flex-shrink-0 flex justify-center items-center aspect-[3/2] max-w-[1200px]"
+              src={photo.src}
+              alt={photo.alt}
+              blurDataURL={photo.blurDataURL}
+              priority={index < 2}
+              loading={index < 2 ? 'eager' : 'lazy'}
+              containerClassName="flex-shrink-0 max-w-[1200px]"
+              aspectRatio=""
+              className="object-contain"
+              sizes="(max-width: 1280px) 100vw, 80vw"
               style={{ height: 'calc(100vh - 120px)' }}
-            >
-              <Image
-                src={photo.src}
-                alt={photo.alt}
-                fill
-                loading={index < 2 ? 'eager' : 'lazy'}
-                placeholder="blur"
-                blurDataURL={photo.blurDataURL}
-                onLoad={(e) => {
-                  e.currentTarget.dataset.loaded = 'true'
-                }}
-                className="object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
-              />
-            </div>
+            />
           ))}
         </div>
       </div>
@@ -290,21 +285,19 @@ export default function GalleryScroller({ category }: Props) {
       {/* Tablet: 2 kolommen */}
       <div className="hidden sm:grid xl:hidden grid-cols-2 gap-6 px-4 sm:px-6 py-6">
         {filteredPhotos.map((photo) => (
-          <div key={photo.id} className="flex justify-center items-center">
-            <Image
-              src={photo.src}
-              alt={photo.alt}
-              width={1200}
-              height={1800}
-              loading="lazy"
-              placeholder="blur"
-              blurDataURL={photo.blurDataURL}
-              onLoad={(e) => {
-                e.currentTarget.dataset.loaded = 'true'
-              }}
-              className="max-w-full max-h-[80vh] object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
-            />
-          </div>
+          <OptimizedImage
+            key={photo.id}
+            src={photo.src}
+            alt={photo.alt}
+            blurDataURL={photo.blurDataURL}
+            fill={false}
+            width={1200}
+            height={1800}
+            priority={false}
+            containerClassName="flex justify-center items-center"
+            className="max-w-full max-h-[80vh] object-contain"
+            sizes="(max-width: 640px) 100vw, 50vw"
+          />
         ))}
       </div>
 
@@ -312,24 +305,19 @@ export default function GalleryScroller({ category }: Props) {
       <div className="sm:hidden w-full">
         <div className="space-y-6 px-4 py-6">
           {filteredPhotos.map((photo, index) => (
-            <div
+            <OptimizedImage
               key={photo.id}
-              className="w-full flex justify-center items-center"
-            >
-              <Image
-                src={photo.src}
-                alt={photo.alt}
-                width={1200}
-                height={1800}
-                loading={index < 3 ? 'eager' : 'lazy'}
-                placeholder="blur"
-                blurDataURL={photo.blurDataURL}
-                onLoad={(e) => {
-                  e.currentTarget.dataset.loaded = 'true'
-                }}
-                className="max-w-full max-h-[70vh] object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
-              />
-            </div>
+              src={photo.src}
+              alt={photo.alt}
+              blurDataURL={photo.blurDataURL}
+              fill={false}
+              width={1200}
+              height={1800}
+              priority={index < 3}
+              containerClassName="w-full flex justify-center items-center"
+              className="max-w-full max-h-[70vh] object-contain"
+              sizes="100vw"
+            />
           ))}
         </div>
       </div>
