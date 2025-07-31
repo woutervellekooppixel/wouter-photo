@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { trackBlogView, pageview } from '../../../lib/analytics'
+import BlogSidebar from '../../../components/BlogSidebar'
 
 type BlogPost = {
   id: string
@@ -87,88 +88,136 @@ export default function BlogPostPage() {
     )
   }
 
+  if (loading) {
+    return (
+      <main className="max-w-7xl mx-auto px-4 py-8 bg-white dark:bg-black min-h-screen">
+        <div className="text-center text-black dark:text-white">
+          <p>Blog post aan het laden...</p>
+        </div>
+      </main>
+    )
+  }
+
+  if (error || !post) {
+    return (
+      <main className="max-w-7xl mx-auto px-4 py-8 bg-white dark:bg-black min-h-screen">
+        <div className="text-center text-black dark:text-white">
+          <h1 className="text-2xl font-bold mb-4">Post niet gevonden</h1>
+          <p className="text-red-500 mb-4">{error}</p>
+          <Link 
+            href="/blog" 
+            className="text-black dark:text-white hover:underline"
+          >
+            ← Terug naar blog
+          </Link>
+        </div>
+      </main>
+    )
+  }
+
   return (
-    <main className="max-w-4xl mx-auto px-4 py-8 bg-white dark:bg-black min-h-screen">
+    <main className="max-w-7xl mx-auto px-4 py-8 bg-white dark:bg-black min-h-screen">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="text-black dark:text-white">
-        {/* Back button */}
-        <Link 
-          href="/blog" 
-          className="inline-flex items-center text-black dark:text-white hover:underline mb-8"
-        >
-          ← Back to blog
-        </Link>
-
-        {/* Post header */}
-        <header className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
-            <span className="bg-black text-white dark:bg-white dark:text-black px-3 py-1 rounded text-sm">
-              {post.category}
-            </span>
-            <time className="text-gray-600 dark:text-gray-400">
-              {new Date(post.date).toLocaleDateString('nl-NL', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </time>
-          </div>
+        {/* Desktop: sidebar layout, Mobile: stacked layout */}
+        <div className="lg:grid lg:grid-cols-4 lg:gap-8">
           
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            {post.title}
-          </h1>
-          
-          <p className="text-xl text-gray-700 dark:text-gray-300">
-            {post.excerpt}
-          </p>
-        </header>
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            <div className="text-black dark:text-white">
+              {/* Back button */}
+              <Link 
+                href="/blog" 
+                className="inline-flex items-center text-black dark:text-white hover:underline mb-8"
+              >
+                ← Back to blog
+              </Link>
 
-        {/* Featured image */}
-        {post.image && (
-          <div className="mb-8 rounded-lg overflow-hidden">
-            <img
-              src={post.image}
-              alt={post.title}
-              className="w-full h-auto object-cover"
-            />
-          </div>
-        )}
+              {/* Post header */}
+              <header className="mb-8">
+                <div className="flex items-center gap-4 mb-4">
+                  <span className="bg-black text-white dark:bg-white dark:text-black px-3 py-1 rounded text-sm">
+                    {post.category}
+                  </span>
+                  <time className="text-gray-600 dark:text-gray-400">
+                    {new Date(post.date).toLocaleDateString('nl-NL', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </time>
+                </div>
+                
+                <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                  {post.title}
+                </h1>
+                
+                <p className="text-xl text-gray-700 dark:text-gray-300">
+                  {post.excerpt}
+                </p>
+              </header>
 
-        {/* Post content */}
-        <div className="prose prose-lg max-w-none dark:prose-invert">
-          <div 
-            className="whitespace-pre-wrap leading-relaxed"
-            dangerouslySetInnerHTML={{
-              __html: post.content
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\n/g, '<br>')
-            }}
-          />
-        </div>
+              {/* Featured image */}
+              {post.image && (
+                <div className="mb-8 rounded-lg overflow-hidden">
+                  <img
+                    src={post.image}
+                    alt={post.title}
+                    className="w-full h-auto object-cover"
+                  />
+                </div>
+              )}
 
-        {/* Footer */}
-        <footer className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
-          <div className="flex items-center justify-between">
-            <Link 
-              href="/blog" 
-              className="text-black dark:text-white hover:underline"
-            >
-              ← More blog posts
-            </Link>
-            
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              Published on {new Date(post.date).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
+              {/* Post content */}
+              <div className="prose prose-lg max-w-none dark:prose-invert">
+                <div 
+                  className="whitespace-pre-wrap leading-relaxed"
+                  dangerouslySetInnerHTML={{
+                    __html: post.content
+                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                      .replace(/\n/g, '<br>')
+                  }}
+                />
+              </div>
+
+              {/* Footer */}
+              <footer className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
+                <div className="flex items-center justify-between">
+                  <Link 
+                    href="/blog" 
+                    className="text-black dark:text-white hover:underline"
+                  >
+                    ← More blog posts
+                  </Link>
+                  
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Published on {new Date(post.date).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </div>
+                </div>
+              </footer>
             </div>
           </div>
-        </footer>
+
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            {/* Desktop: Sticky sidebar */}
+            <div className="hidden lg:block lg:sticky lg:top-8">
+              <BlogSidebar />
+            </div>
+            
+            {/* Mobile: Below content */}
+            <div className="lg:hidden mt-12">
+              <BlogSidebar />
+            </div>
+          </div>
+
         </div>
       </motion.div>
     </main>
