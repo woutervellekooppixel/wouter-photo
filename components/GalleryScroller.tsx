@@ -93,14 +93,14 @@ export default function GalleryScroller({ category }: Props) {
   const scrollLeft = useCallback(() => {
     const container = scrollRef.current
     if (container) {
-      container.scrollBy({ left: -300, behavior: 'smooth' })
+      container.scrollBy({ left: -200, behavior: 'smooth' })
     }
   }, [])
 
   const scrollRight = useCallback(() => {
     const container = scrollRef.current
     if (container) {
-      container.scrollBy({ left: 300, behavior: 'smooth' })
+      container.scrollBy({ left: 200, behavior: 'smooth' })
     }
   }, [])
 
@@ -152,9 +152,9 @@ export default function GalleryScroller({ category }: Props) {
       // Always prevent default and convert any scroll to horizontal
       e.preventDefault()
       
-      // Fixed scroll amount regardless of trackpad sensitivity
+      // Very small fixed scroll amount
       const scrollDirection = e.deltaY > 0 ? 1 : -1
-      const fixedScrollAmount = scrollDirection * 50 // Fixed 50px per scroll step
+      const fixedScrollAmount = scrollDirection * 20 // Much smaller: 20px per scroll step
       container.scrollBy({ left: fixedScrollAmount, behavior: 'auto' })
     }
 
@@ -270,7 +270,7 @@ export default function GalleryScroller({ category }: Props) {
         className="hidden xl:flex h-full w-full overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory"
         style={{ height: 'calc(100vh - 80px)' }}
       >
-        <div className="flex items-center h-full gap-x-6 px-6" style={{ minWidth: 'max-content' }}>
+        <div className="flex items-center h-full gap-x-4 px-4" style={{ minWidth: 'max-content' }}>
           {filteredPhotos.map((photo, index) => (
             <div
               key={photo.id}
