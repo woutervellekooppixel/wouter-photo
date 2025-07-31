@@ -1,8 +1,37 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { FaInstagram, FaLinkedin, FaEnvelope } from 'react-icons/fa'
 
 export default function BlogSidebar() {
+  const [isInNetherlands, setIsInNetherlands] = useState<boolean | null>(null)
+
+  // Check user's location for phone number visibility
+  useEffect(() => {
+    async function checkLocation() {
+      try {
+        // Probeer eerst CloudFlare's service (sneller en betrouwbaarder)
+        const cfResponse = await fetch('https://cloudflare.com/cdn-cgi/trace')
+        const cfText = await cfResponse.text()
+        const cfCountry = cfText.match(/loc=([A-Z]{2})/)?.[1]
+        
+        if (cfCountry) {
+          setIsInNetherlands(cfCountry === 'NL')
+          return
+        }
+
+        // Fallback naar ipapi als CloudFlare faalt
+        const response = await fetch('https://ipapi.co/json/')
+        const data = await response.json()
+        setIsInNetherlands(data.country_code === 'NL')
+      } catch (error) {
+        // Als beide falen, assumeer niet-Nederlandse bezoeker voor privacy
+        console.log('Geolocation check failed, hiding phone number for privacy')
+        setIsInNetherlands(false)
+      }
+    }
+    checkLocation()
+  }, [])
   return (
     <aside className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 space-y-6">
       {/* Profile Image */}
@@ -43,7 +72,10 @@ export default function BlogSidebar() {
             >
               hello@wouter.photo
             </a>
-            <span className="block">+31 (0)6 16 290 418</span>
+            {/* Phone number only visible for Dutch visitors */}
+            {isInNetherlands && (
+              <span className="block">+31 (0)6 16 290 418</span>
+            )}
           </div>
 
           {/* Social Links */}
