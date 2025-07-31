@@ -143,7 +143,7 @@ export default function GalleryScroller({ category }: Props) {
   }, [scrollLeft, scrollRight])
 
   return (
-    <section className="relative w-full bg-white dark:bg-black min-h-[calc(100vh-96px)] flex items-center">
+    <section className="relative w-full bg-white dark:bg-black h-[calc(100vh-96px)] flex items-center">
       {activeIndex > 0 && (
         <button
           onClick={scrollLeft}
