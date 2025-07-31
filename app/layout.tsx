@@ -1,6 +1,6 @@
 import './globals.css'
 import Header from '../components/Header'
-import Cart from '../components/Cart'
+// import Cart from '../components/Cart' // Temporarily disabled
 import PWAHandler from '../components/PWAHandler'
 import Script from 'next/script'
 import { ThemeProvider } from 'next-themes'
@@ -177,7 +177,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
           <PWAHandler />
           <Header />
-          <Cart />
+          {/* <Cart /> Temporarily disabled due to rendering issues */}
           {children}
         </ThemeProvider>
       </body>
