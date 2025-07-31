@@ -98,7 +98,7 @@ export default function OptimizedImage({
   return (
     <div 
       ref={imgRef}
-      className={`relative ${aspectRatio} ${containerClassName} ${onClick ? 'cursor-pointer' : ''}`}
+      className={`relative ${aspectRatio ? aspectRatio : ''} ${containerClassName} ${onClick ? 'cursor-pointer' : ''}`}
       onClick={onClick}
       style={style}
     >
