@@ -16,6 +16,20 @@ export default function GalleryScroller({ category }: Props) {
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
 
+  // Disable body scroll on desktop
+  useEffect(() => {
+    const isDesktop = window.matchMedia('(min-width: 1280px)').matches
+    if (isDesktop) {
+      document.documentElement.classList.add('gallery-page')
+      document.body.classList.add('gallery-page')
+    }
+    
+    return () => {
+      document.documentElement.classList.remove('gallery-page')
+      document.body.classList.remove('gallery-page')
+    }
+  }, [])
+
   const filteredPhotos =
     category === 'all'
       ? photos
@@ -225,7 +239,7 @@ export default function GalleryScroller({ category }: Props) {
   }, [filteredPhotos.length, activeIndex])
 
   return (
-    <section className="relative w-full bg-white dark:bg-black xl:h-screen xl:flex xl:items-center pt-[60px] xl:pt-4">
+    <section className="relative w-full bg-white dark:bg-black xl:h-screen xl:fixed xl:inset-0 xl:flex xl:items-center pt-[60px] xl:pt-0">
       {activeIndex > 0 && (
         <button
           onClick={scrollLeft}
@@ -246,13 +260,15 @@ export default function GalleryScroller({ category }: Props) {
       {/* Desktop: horizontaal scrollen */}
       <div
         ref={scrollRef}
-        className="hidden xl:flex h-[75vh] w-full overflow-x-auto overflow-y-hidden"
+        className="hidden xl:flex h-full w-full overflow-x-auto overflow-y-hidden"
+        style={{ height: 'calc(100vh - 80px)' }}
       >
         <div className="flex items-center h-full gap-x-4 px-4">
           {filteredPhotos.map((photo, index) => (
             <div
               key={photo.id}
-              className="relative flex-shrink-0 flex justify-center items-center aspect-[3/2] h-[75vh] max-w-[1200px]"
+              className="relative flex-shrink-0 flex justify-center items-center aspect-[3/2] max-w-[1200px]"
+              style={{ height: 'calc(100vh - 120px)' }}
             >
               <Image
                 src={photo.src}
