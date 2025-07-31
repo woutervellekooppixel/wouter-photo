@@ -93,8 +93,8 @@ export default function BlogPostPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="text-black dark:text-white"
       >
+        <div className="text-black dark:text-white">
         {/* Back button */}
         <Link 
           href="/blog" 
@@ -169,6 +169,7 @@ export default function BlogPostPage() {
             </div>
           </div>
         </footer>
+        </div>
       </motion.div>
     </main>
   )
