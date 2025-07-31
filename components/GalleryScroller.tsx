@@ -199,29 +199,10 @@ export default function GalleryScroller({ category }: Props) {
       }
     }
 
-    // Handle wheel events to make vertical scroll move gallery horizontally
-    const handleWheel = (e: WheelEvent) => {
-      // Only apply on desktop horizontal gallery
-      if (window.innerWidth >= 1280) {
-        // Convert any scroll direction to horizontal movement
-        const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX
-        
-        if (delta > 0) {
-          // Scroll down or right = move gallery right
-          scrollRight()
-        } else if (delta < 0) {
-          // Scroll up or left = move gallery left
-          scrollLeft()
-        }
-      }
-    }
-
     window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('wheel', handleWheel, { passive: true })
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('wheel', handleWheel)
     }
   }, [scrollLeft, scrollRight])
 
