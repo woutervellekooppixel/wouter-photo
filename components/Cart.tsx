@@ -4,10 +4,11 @@
 
 import { useCartStore } from '@/stores/cartStore'
 import { X } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function Cart() {
   const { cart, removeFromCart, isOpen, toggleCart, calculateTotal, clearCart } = useCartStore()
+  const [mounted, setMounted] = useState(false)
 
   const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
@@ -22,6 +23,15 @@ export default function Cart() {
   })
 
   const [errors, setErrors] = useState<string[]>([])
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return null
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target

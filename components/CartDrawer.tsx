@@ -2,10 +2,16 @@
 
 import { useCartStore } from '@/stores/cartStore'
 import { X } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function CartDrawer() {
   const { cart, isOpen, toggleCart, removeFromCart } = useCartStore()
+  const [mounted, setMounted] = useState(false)
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Sluit drawer met Escape
   useEffect(() => {
@@ -15,6 +21,10 @@ export default function CartDrawer() {
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [toggleCart])
+
+  if (!mounted) {
+    return null
+  }
 
   return (
     <div
