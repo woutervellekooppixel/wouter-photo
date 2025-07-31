@@ -188,17 +188,6 @@ export default function GalleryScroller({ category }: Props) {
     const container = scrollRef.current
     if (!container) return
 
-    const handleWheel = (e: WheelEvent) => {
-      // Always prevent default and convert any scroll to horizontal
-      e.preventDefault()
-      
-      // Simple, consistent scroll amount - no complex calculations
-      const scrollDirection = e.deltaY > 0 ? 1 : -1
-      const fixedScrollAmount = scrollDirection * 150 // Fixed 150px per scroll event
-      
-      container.scrollBy({ left: fixedScrollAmount, behavior: 'auto' })
-    }
-
     const handleKeyDown = (e: KeyboardEvent) => {
       // Only arrow keys do precise 1-photo navigation
       if (e.key === 'ArrowRight') {
@@ -210,27 +199,10 @@ export default function GalleryScroller({ category }: Props) {
       }
     }
 
-    // Prevent page scroll when hovering over gallery
-    const handleMouseEnter = () => {
-      document.body.style.overflow = 'hidden'
-    }
-    
-    const handleMouseLeave = () => {
-      document.body.style.overflow = 'auto'
-    }
-
-    container.addEventListener('wheel', handleWheel, { passive: false })
-    container.addEventListener('mouseenter', handleMouseEnter)
-    container.addEventListener('mouseleave', handleMouseLeave)
     window.addEventListener('keydown', handleKeyDown)
 
     return () => {
-      container.removeEventListener('wheel', handleWheel)
-      container.removeEventListener('mouseenter', handleMouseEnter)  
-      container.removeEventListener('mouseleave', handleMouseLeave)
       window.removeEventListener('keydown', handleKeyDown)
-      // Restore scroll when component unmounts
-      document.body.style.overflow = 'auto'
     }
   }, [scrollLeft, scrollRight])
 
