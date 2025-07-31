@@ -43,26 +43,17 @@ export default function GalleryScroller({ category }: Props) {
     
     const targetScroll = index * itemWidth
     
-    console.log('🔄 Scrolling to:', { 
-      index, 
-      itemWidth, 
-      targetScroll, 
-      currentScroll: container.scrollLeft 
-    })
-    
     container.scrollTo({ left: targetScroll, behavior: 'smooth' })
     setActiveIndex(index)
   }, [])
 
   const scrollLeft = useCallback(() => {
     const newIndex = Math.max(0, activeIndex - 1)
-    console.log('⬅️ Scroll Left:', { currentIndex: activeIndex, newIndex })
     scrollToIndex(newIndex)
   }, [activeIndex, scrollToIndex])
 
   const scrollRight = useCallback(() => {
     const newIndex = Math.min(filteredPhotos.length - 1, activeIndex + 1)
-    console.log('➡️ Scroll Right:', { currentIndex: activeIndex, newIndex, totalPhotos: filteredPhotos.length })
     scrollToIndex(newIndex)
   }, [activeIndex, filteredPhotos.length, scrollToIndex])
 
@@ -90,14 +81,6 @@ export default function GalleryScroller({ category }: Props) {
         const newIndex = Math.round(scrollLeft / itemWidth)
         const clampedIndex = Math.max(0, Math.min(newIndex, filteredPhotos.length - 1))
         
-        console.log('📍 Scroll Detection:', { 
-          scrollLeft, 
-          itemWidth, 
-          calculatedIndex: newIndex, 
-          clampedIndex,
-          currentActiveIndex: activeIndex 
-        })
-        
         if (clampedIndex !== activeIndex) {
           setActiveIndex(clampedIndex)
         }
@@ -115,95 +98,32 @@ export default function GalleryScroller({ category }: Props) {
     const container = scrollRef.current
     if (!container) return
 
-    let wheelTimeout: NodeJS.Timeout | null = null
-    let isWheeling = false
-
     const handleWheel = (e: WheelEvent) => {
+      // Convert vertical scroll to horizontal for natural scrolling
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
         e.preventDefault()
-        
-        // Prevent rapid-fire wheel events
-        if (isWheeling) {
-          console.log('🖱️ Wheel event blocked (already processing)')
-          return
-        }
-        
-        isWheeling = true
-        console.log('🖱️ Wheel event:', { deltaY: e.deltaY, deltaX: e.deltaX })
-        
-        // Use our precise scroll logic instead of scrollBy
-        if (e.deltaY > 0) {
-          // Scroll down = move right
-          console.log('🖱️ Wheel scroll right triggered')
-          scrollRight()
-        } else {
-          // Scroll up = move left  
-          console.log('🖱️ Wheel scroll left triggered')
-          scrollLeft()
-        }
-        
-        // Reset wheel lock after a delay
-        wheelTimeout = setTimeout(() => {
-          isWheeling = false
-          console.log('🖱️ Wheel lock released')
-        }, 500)
+        container.scrollLeft += e.deltaY
       }
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') scrollRight()
-      else if (e.key === 'ArrowLeft') scrollLeft()
-    }
-
-    // Touch swipe support for trackpads
-    let touchStartX = 0
-    let touchStartTime = 0
-
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartX = e.touches[0].clientX
-      touchStartTime = Date.now()
-    }
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (!e.changedTouches[0]) return
-      
-      const touchEndX = e.changedTouches[0].clientX
-      const touchDuration = Date.now() - touchStartTime
-      const touchDistance = Math.abs(touchEndX - touchStartX)
-      
-      console.log('👆 Touch end:', { touchDuration, touchDistance, startX: touchStartX, endX: touchEndX })
-      
-      // Only trigger on quick swipes (not slow drags) and sufficient distance
-      if (touchDuration < 300 && touchDistance > 50) {
+      // Only arrow keys do precise 1-photo navigation
+      if (e.key === 'ArrowRight') {
         e.preventDefault()
-        
-        if (touchEndX < touchStartX) {
-          // Swipe left = move right
-          console.log('👆 Touch swipe right triggered')
-          scrollRight()
-        } else {
-          // Swipe right = move left
-          console.log('👆 Touch swipe left triggered')
-          scrollLeft()
-        }
+        scrollRight()
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        scrollLeft()
       }
     }
 
+    // Allow natural touch scrolling on the container
     container.addEventListener('wheel', handleWheel, { passive: false })
-    container.addEventListener('touchstart', handleTouchStart, { passive: true })
-    container.addEventListener('touchend', handleTouchEnd, { passive: false })
     window.addEventListener('keydown', handleKeyDown)
 
     return () => {
       container.removeEventListener('wheel', handleWheel)
-      container.removeEventListener('touchstart', handleTouchStart)
-      container.removeEventListener('touchend', handleTouchEnd)
       window.removeEventListener('keydown', handleKeyDown)
-      
-      // Clean up wheel timeout
-      if (wheelTimeout) {
-        clearTimeout(wheelTimeout)
-      }
     }
   }, [scrollLeft, scrollRight])
 
