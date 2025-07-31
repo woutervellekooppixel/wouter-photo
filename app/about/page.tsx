@@ -1,28 +1,58 @@
-<script
-  type="application/ld+json"
-  dangerouslySetInnerHTML={{
-    __html: JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "Person",
-      "name": "Wouter Vellekoop",
-      "jobTitle": "Photographer",
-      "url": "https://wouter.photo",
-      "sameAs": [
-        "https://instagram.com/woutervellekoop.nl",
-        "https://linkedin.com/in/woutervellekoop"
-      ]
-    })
-  }}
-/>
+'use client'
 
-export const metadata = {
-  title: "About – Wouter.Photo",
-  description: "Learn more about Wouter Vellekoop – professional concert and event photographer based in the Netherlands.",
-}
+import { useState, useEffect } from 'react'
 
 export default function AboutPage() {
+  const [isInNetherlands, setIsInNetherlands] = useState<boolean | null>(null)
+
+  // Check user's location for phone number visibility
+  useEffect(() => {
+    async function checkLocation() {
+      try {
+        // Probeer eerst CloudFlare's service (sneller en betrouwbaarder)
+        const cfResponse = await fetch('https://cloudflare.com/cdn-cgi/trace')
+        const cfText = await cfResponse.text()
+        const cfCountry = cfText.match(/loc=([A-Z]{2})/)?.[1]
+        
+        if (cfCountry) {
+          setIsInNetherlands(cfCountry === 'NL')
+          return
+        }
+
+        // Fallback naar ipapi als CloudFlare faalt
+        const response = await fetch('https://ipapi.co/json/')
+        const data = await response.json()
+        setIsInNetherlands(data.country_code === 'NL')
+      } catch (error) {
+        // Als beide falen, assumeer niet-Nederlandse bezoeker voor privacy
+        console.log('Geolocation check failed, hiding phone number for privacy')
+        setIsInNetherlands(false)
+      }
+    }
+    checkLocation()
+  }, [])
+
   return (
-    <main className="py-20 px-6 max-w-6xl mx-auto text-black dark:text-white bg-white dark:bg-black min-h-screen">
+    <>
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Person",
+            "name": "Wouter Vellekoop",
+            "jobTitle": "Photographer",
+            "url": "https://wouter.photo",
+            "sameAs": [
+              "https://instagram.com/woutervellekoop.nl",
+              "https://linkedin.com/in/woutervellekoop"
+            ]
+          })
+        }}
+      />
+
+      <main className="py-20 px-6 max-w-6xl mx-auto text-black dark:text-white bg-white dark:bg-black min-h-screen">
 
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
@@ -51,11 +81,18 @@ export default function AboutPage() {
             MOJO, Radio 538, North Sea Jazz, Ahoy', Talpa, BNN VARA, Residentie Orkest, UNICEF Nederland and many more.
           </p>
           <p className="text-sm">
-            <a href="mailto:hello@wouter.photo" className="underline hover:text-gray-600 dark:hover:text-gray-300">hello@wouter.photo</a><br />
-            +31 (0)6 16 290 418
+            <a href="mailto:hello@wouter.photo" className="underline hover:text-gray-600 dark:hover:text-gray-300">hello@wouter.photo</a>
+            {/* Phone number only visible for Dutch visitors */}
+            {isInNetherlands && (
+              <>
+                <br />
+                +31 (0)6 16 290 418
+              </>
+            )}
           </p>
         </div>
       </div>
     </main>
+    </>
   )
 }
