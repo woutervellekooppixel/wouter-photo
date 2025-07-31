@@ -16,8 +16,6 @@ export default function GalleryScroller({ category }: Props) {
   const [activeIndex, setActiveIndex] = useState(0)
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
-  const [isTransitioning, setIsTransitioning] = useState(false)
-  const [displayedPhotos, setDisplayedPhotos] = useState(photos)
 
   // Disable body scroll on desktop
   useEffect(() => {
@@ -37,32 +35,6 @@ export default function GalleryScroller({ category }: Props) {
     category === 'all'
       ? photos
       : photos.filter((p) => p.category === category)
-
-  // Smooth transition effect when category changes
-  useEffect(() => {
-    if (JSON.stringify(filteredPhotos) !== JSON.stringify(displayedPhotos)) {
-      setIsTransitioning(true)
-      
-      // Start fade out
-      setTimeout(() => {
-        setDisplayedPhotos(filteredPhotos)
-        setActiveIndex(0)
-        
-        // Reset scroll position
-        if (scrollRef.current) {
-          scrollRef.current.scrollTo({ left: 0, behavior: 'auto' })
-        }
-        if (mobileScrollRef.current) {
-          mobileScrollRef.current.scrollTo({ left: 0, behavior: 'auto' })
-        }
-        
-        // Start fade in
-        setTimeout(() => {
-          setIsTransitioning(false)
-        }, 50)
-      }, 300) // 300ms fade out duration
-    }
-  }, [filteredPhotos, displayedPhotos])
 
   const getItemWidth = () => {
     const container = scrollRef.current
@@ -122,7 +94,7 @@ export default function GalleryScroller({ category }: Props) {
     const container = scrollRef.current
     if (container) {
       // Fixed scroll amount for exactly 1 photo movement
-      container.scrollBy({ left: -600, behavior: 'smooth' })
+      container.scrollBy({ left: -400, behavior: 'smooth' })
     }
   }, [])
 
@@ -130,11 +102,19 @@ export default function GalleryScroller({ category }: Props) {
     const container = scrollRef.current
     if (container) {
       // Fixed scroll amount for exactly 1 photo movement
-      container.scrollBy({ left: 600, behavior: 'smooth' })
+      container.scrollBy({ left: 400, behavior: 'smooth' })
     }
   }, [])
 
-  // Remove old category effect since we have smooth transition now
+  useEffect(() => {
+    setActiveIndex(0)
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ left: 0, behavior: 'auto' })
+    }
+    if (mobileScrollRef.current) {
+      mobileScrollRef.current.scrollTo({ left: 0, behavior: 'auto' })
+    }
+  }, [category])
 
   useEffect(() => {
     const container = scrollRef.current
@@ -151,7 +131,7 @@ export default function GalleryScroller({ category }: Props) {
         
         const scrollLeft = container.scrollLeft
         const newIndex = Math.round(scrollLeft / itemWidth)
-        const clampedIndex = Math.max(0, Math.min(newIndex, displayedPhotos.length - 1))
+        const clampedIndex = Math.max(0, Math.min(newIndex, filteredPhotos.length - 1))
         
         if (clampedIndex !== activeIndex) {
           setActiveIndex(clampedIndex)
@@ -164,7 +144,7 @@ export default function GalleryScroller({ category }: Props) {
       container.removeEventListener('scroll', handleScroll)
       clearTimeout(scrollTimeout)
     }
-  }, [displayedPhotos.length, activeIndex])
+  }, [filteredPhotos.length, activeIndex])
 
   useEffect(() => {
     const container = scrollRef.current
@@ -256,7 +236,7 @@ export default function GalleryScroller({ category }: Props) {
         
         const scrollLeft = mobileContainer.scrollLeft
         const newIndex = Math.round(scrollLeft / itemWidth)
-        const clampedIndex = Math.max(0, Math.min(newIndex, displayedPhotos.length - 1))
+        const clampedIndex = Math.max(0, Math.min(newIndex, filteredPhotos.length - 1))
         
         if (clampedIndex !== activeIndex) {
           setActiveIndex(clampedIndex)
@@ -269,7 +249,7 @@ export default function GalleryScroller({ category }: Props) {
       mobileContainer.removeEventListener('scroll', handleMobileScroll)
       clearTimeout(scrollTimeout)
     }
-  }, [displayedPhotos.length, activeIndex])
+  }, [filteredPhotos.length, activeIndex])
 
   return (
     <section className="relative w-full bg-white dark:bg-black xl:h-screen xl:fixed xl:inset-0 xl:flex xl:items-center pt-4 sm:pt-6 xl:pt-6">
@@ -289,13 +269,11 @@ export default function GalleryScroller({ category }: Props) {
       {/* Desktop: horizontaal scrollen */}
       <div
         ref={scrollRef}
-        className={`hidden xl:flex h-full w-full overflow-x-auto overflow-y-hidden scrollbar-hide transition-opacity duration-300 ${
-          isTransitioning ? 'opacity-0' : 'opacity-100'
-        }`}
+        className="hidden xl:flex h-full w-full overflow-x-auto overflow-y-hidden scrollbar-hide"
         style={{ height: 'calc(100vh - 80px)' }}
       >
         <div className="flex items-center h-full gap-x-4 px-4">
-          {displayedPhotos.map((photo, index) => (
+          {filteredPhotos.map((photo, index) => (
             <div
               key={photo.id}
               className="relative flex-shrink-0 max-w-[90vw]"
@@ -324,10 +302,8 @@ export default function GalleryScroller({ category }: Props) {
       </div>
 
       {/* Tablet: 2 kolommen */}
-      <div className={`hidden sm:grid xl:hidden grid-cols-2 gap-6 px-4 sm:px-6 py-6 transition-opacity duration-300 ${
-        isTransitioning ? 'opacity-0' : 'opacity-100'
-      }`}>
-        {displayedPhotos.map((photo) => (
+      <div className="hidden sm:grid xl:hidden grid-cols-2 gap-6 px-4 sm:px-6 py-6">
+        {filteredPhotos.map((photo) => (
           <div key={photo.id} className="flex justify-center items-center">
             <OptimizedImage
               src={photo.src}
@@ -346,11 +322,9 @@ export default function GalleryScroller({ category }: Props) {
       </div>
 
       {/* Mobiel: 1 kolom vertical scroll */}
-      <div className={`sm:hidden w-full transition-opacity duration-300 ${
-        isTransitioning ? 'opacity-0' : 'opacity-100'
-      }`}>
+      <div className="sm:hidden w-full">
         <div className="space-y-6 px-4 py-6">
-          {displayedPhotos.map((photo, index) => (
+          {filteredPhotos.map((photo, index) => (
             <div
               key={photo.id}
               className="w-full flex justify-center items-center"
