@@ -11,7 +11,10 @@ type Props = {
 
 export default function GalleryScroller({ category }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const mobileScrollRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
 
   const filteredPhotos =
     category === 'all'
@@ -34,16 +37,36 @@ export default function GalleryScroller({ category }: Props) {
     return rect.width + gap
   }
 
+  const getMobileItemWidth = () => {
+    const container = mobileScrollRef.current
+    if (!container) return 0
+    
+    const firstPhoto = container.querySelector('div') as HTMLElement
+    if (!firstPhoto) return 0
+    
+    return firstPhoto.offsetWidth + 16 // Include gap
+  }
+
   const scrollToIndex = useCallback((index: number) => {
     const container = scrollRef.current
-    if (!container) return
+    const mobileContainer = mobileScrollRef.current
     
-    const itemWidth = getItemWidth()
-    if (itemWidth === 0) return
+    if (container) {
+      const itemWidth = getItemWidth()
+      if (itemWidth > 0) {
+        const targetScroll = index * itemWidth
+        container.scrollTo({ left: targetScroll, behavior: 'smooth' })
+      }
+    }
     
-    const targetScroll = index * itemWidth
+    if (mobileContainer) {
+      const itemWidth = getMobileItemWidth()
+      if (itemWidth > 0) {
+        const targetScroll = index * itemWidth
+        mobileContainer.scrollTo({ left: targetScroll, behavior: 'smooth' })
+      }
+    }
     
-    container.scrollTo({ left: targetScroll, behavior: 'smooth' })
     setActiveIndex(index)
   }, [])
 
@@ -61,6 +84,9 @@ export default function GalleryScroller({ category }: Props) {
     setActiveIndex(0)
     if (scrollRef.current) {
       scrollRef.current.scrollTo({ left: 0, behavior: 'auto' })
+    }
+    if (mobileScrollRef.current) {
+      mobileScrollRef.current.scrollTo({ left: 0, behavior: 'auto' })
     }
   }, [category])
 
@@ -142,6 +168,62 @@ export default function GalleryScroller({ category }: Props) {
     }
   }, [scrollLeft, scrollRight])
 
+  // Touch handlers for mobile
+  const minSwipeDistance = 50
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > minSwipeDistance
+    const isRightSwipe = distance < -minSwipeDistance
+
+    if (isLeftSwipe) {
+      scrollRight()
+    } else if (isRightSwipe) {
+      scrollLeft()
+    }
+  }
+
+  // Separate scroll handler for mobile
+  useEffect(() => {
+    const mobileContainer = mobileScrollRef.current
+    if (!mobileContainer) return
+
+    let scrollTimeout: NodeJS.Timeout
+
+    const handleMobileScroll = () => {
+      clearTimeout(scrollTimeout)
+      scrollTimeout = setTimeout(() => {
+        const itemWidth = getMobileItemWidth()
+        if (itemWidth === 0) return
+        
+        const scrollLeft = mobileContainer.scrollLeft
+        const newIndex = Math.round(scrollLeft / itemWidth)
+        const clampedIndex = Math.max(0, Math.min(newIndex, filteredPhotos.length - 1))
+        
+        if (clampedIndex !== activeIndex) {
+          setActiveIndex(clampedIndex)
+        }
+      }, 150)
+    }
+
+    mobileContainer.addEventListener('scroll', handleMobileScroll, { passive: true })
+    return () => {
+      mobileContainer.removeEventListener('scroll', handleMobileScroll)
+      clearTimeout(scrollTimeout)
+    }
+  }, [filteredPhotos.length, activeIndex])
+
   return (
     <section className="relative w-full bg-white dark:bg-black h-screen flex items-center pt-[60px]">
       {activeIndex > 0 && (
@@ -210,25 +292,74 @@ export default function GalleryScroller({ category }: Props) {
         ))}
       </div>
 
-      {/* Mobiel: 1 kolom */}
-      <div className="grid sm:hidden grid-cols-1 gap-6 px-4 py-6">
-        {filteredPhotos.map((photo) => (
-          <div key={photo.id} className="flex justify-center items-center">
-            <Image
-              src={photo.src}
-              alt={photo.alt}
-              width={800}
-              height={1200}
-              loading="lazy"
-              placeholder="blur"
-              blurDataURL={photo.blurDataURL}
-              onLoad={(e) => {
-                e.currentTarget.dataset.loaded = 'true'
-              }}
-              className="max-w-full max-h-[80vh] object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
+      {/* Mobiel: horizontaal scrollen met touch support */}
+      <div className="sm:hidden relative w-full">
+        {/* Mobile navigation arrows */}
+        {activeIndex > 0 && (
+          <button
+            onClick={scrollLeft}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-black bg-opacity-80 dark:bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 dark:hover:bg-opacity-100 text-black dark:text-white"
+          >
+            <ChevronLeft size={16} />
+          </button>
+        )}
+        {activeIndex < filteredPhotos.length - 1 && (
+          <button
+            onClick={scrollRight}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-black bg-opacity-80 dark:bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 dark:hover:bg-opacity-100 text-black dark:text-white"
+          >
+            <ChevronRight size={16} />
+          </button>
+        )}
+        
+        {/* Mobile navigation dots */}
+        <div className="flex justify-center space-x-2 mb-4">
+          {filteredPhotos.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => scrollToIndex(index)}
+              className={`w-2 h-2 rounded-full transition-colors ${
+                index === activeIndex 
+                  ? 'bg-black dark:bg-white' 
+                  : 'bg-gray-300 dark:bg-gray-600'
+              }`}
             />
+          ))}
+        </div>
+        
+        <div
+          ref={mobileScrollRef}
+          className="flex overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          }}
+        >
+          <div className="flex gap-4 px-4">
+            {filteredPhotos.map((photo, index) => (
+              <div
+                key={photo.id}
+                className="flex-shrink-0 snap-center w-[85vw] h-[60vh] relative flex items-center justify-center"
+              >
+                <Image
+                  src={photo.src}
+                  alt={photo.alt}
+                  fill
+                  loading={index < 3 ? 'eager' : 'lazy'}
+                  placeholder="blur"
+                  blurDataURL={photo.blurDataURL}
+                  onLoad={(e) => {
+                    e.currentTarget.dataset.loaded = 'true'
+                  }}
+                  className="object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
+                />
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
     </section>
   )
