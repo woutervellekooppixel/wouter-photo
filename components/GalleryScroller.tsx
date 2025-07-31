@@ -348,20 +348,24 @@ export default function GalleryScroller({ category }: Props) {
       <div className={`hidden sm:grid xl:hidden grid-cols-2 gap-6 px-4 sm:px-6 py-6 transition-opacity duration-200 ${
         isTransitioning ? 'opacity-0' : 'opacity-100'
       }`}>
-        {displayedPhotos.map((photo) => (
+        {displayedPhotos.map((photo, index) => (
           <div key={photo.id} className="flex justify-center items-center">
-            <OptimizedImage
-              src={photo.src}
-              alt={photo.alt}
-              blurDataURL={photo.blurDataURL}
-              fill={false}
-              width={1200}
-              height={1800}
-              priority={false}
-              aspectRatio=""
-              className="max-w-full max-h-[80vh] object-contain"
-              sizes="(max-width: 640px) 100vw, 50vw"
-            />
+            <div className="relative w-full max-w-full" style={{ aspectRatio: '3/2' }}>
+              <Image
+                src={photo.src}
+                alt={photo.alt}
+                fill
+                priority={index < 4}
+                loading={index < 4 ? 'eager' : 'lazy'}
+                placeholder="blur"
+                blurDataURL={photo.blurDataURL}
+                className="object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
+                sizes="(max-width: 640px) 100vw, 50vw"
+                onLoad={(e: any) => {
+                  e.currentTarget.dataset.loaded = 'true'
+                }}
+              />
+            </div>
           </div>
         ))}
       </div>
@@ -376,18 +380,22 @@ export default function GalleryScroller({ category }: Props) {
               key={photo.id}
               className="w-full flex justify-center items-center"
             >
-              <OptimizedImage
-                src={photo.src}
-                alt={photo.alt}
-                blurDataURL={photo.blurDataURL}
-                fill={false}
-                width={1200}
-                height={1800}
-                priority={index < 3}
-                aspectRatio=""
-                className="max-w-full max-h-[70vh] object-contain"
-                sizes="100vw"
-              />
+              <div className="relative w-full max-w-full" style={{ aspectRatio: '3/2' }}>
+                <Image
+                  src={photo.src}
+                  alt={photo.alt}
+                  fill
+                  priority={index < 3}
+                  loading={index < 3 ? 'eager' : 'lazy'}
+                  placeholder="blur"
+                  blurDataURL={photo.blurDataURL}
+                  className="object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
+                  sizes="100vw"
+                  onLoad={(e: any) => {
+                    e.currentTarget.dataset.loaded = 'true'
+                  }}
+                />
+              </div>
             </div>
           ))}
         </div>
