@@ -20,8 +20,18 @@ export default function GalleryScroller({ category }: Props) {
 
   const getItemWidth = () => {
     const container = scrollRef.current
-    const firstItem = container?.querySelector(':scope > div > div:first-child') as HTMLElement
-    return firstItem?.getBoundingClientRect().width || 0
+    if (!container) return 0
+    
+    // Get the actual photo container, not just the first div
+    const photoItems = container.querySelectorAll(':scope > div > div')
+    if (photoItems.length === 0) return 0
+    
+    const firstPhoto = photoItems[0] as HTMLElement
+    const rect = firstPhoto.getBoundingClientRect()
+    
+    // Add gap between items (4px * 2 for gap-x-4)
+    const gap = 16 // 4px gap on each side
+    return rect.width + gap
   }
 
   const scrollToIndex = useCallback((index: number) => {
@@ -29,18 +39,30 @@ export default function GalleryScroller({ category }: Props) {
     if (!container) return
     
     const itemWidth = getItemWidth()
+    if (itemWidth === 0) return
+    
     const targetScroll = index * itemWidth
+    
+    console.log('🔄 Scrolling to:', { 
+      index, 
+      itemWidth, 
+      targetScroll, 
+      currentScroll: container.scrollLeft 
+    })
+    
     container.scrollTo({ left: targetScroll, behavior: 'smooth' })
     setActiveIndex(index)
   }, [])
 
   const scrollLeft = useCallback(() => {
     const newIndex = Math.max(0, activeIndex - 1)
+    console.log('⬅️ Scroll Left:', { currentIndex: activeIndex, newIndex })
     scrollToIndex(newIndex)
   }, [activeIndex, scrollToIndex])
 
   const scrollRight = useCallback(() => {
     const newIndex = Math.min(filteredPhotos.length - 1, activeIndex + 1)
+    console.log('➡️ Scroll Right:', { currentIndex: activeIndex, newIndex, totalPhotos: filteredPhotos.length })
     scrollToIndex(newIndex)
   }, [activeIndex, filteredPhotos.length, scrollToIndex])
 
@@ -62,20 +84,32 @@ export default function GalleryScroller({ category }: Props) {
       clearTimeout(scrollTimeout)
       scrollTimeout = setTimeout(() => {
         const itemWidth = getItemWidth()
-        if (itemWidth > 0) {
-          const newIndex = Math.round(container.scrollLeft / itemWidth)
-          const clampedIndex = Math.max(0, Math.min(newIndex, filteredPhotos.length - 1))
+        if (itemWidth === 0) return
+        
+        const scrollLeft = container.scrollLeft
+        const newIndex = Math.round(scrollLeft / itemWidth)
+        const clampedIndex = Math.max(0, Math.min(newIndex, filteredPhotos.length - 1))
+        
+        console.log('📍 Scroll Detection:', { 
+          scrollLeft, 
+          itemWidth, 
+          calculatedIndex: newIndex, 
+          clampedIndex,
+          currentActiveIndex: activeIndex 
+        })
+        
+        if (clampedIndex !== activeIndex) {
           setActiveIndex(clampedIndex)
         }
-      }, 100)
+      }, 150) // Increased debounce time
     }
 
-    container.addEventListener('scroll', handleScroll)
+    container.addEventListener('scroll', handleScroll, { passive: true })
     return () => {
       container.removeEventListener('scroll', handleScroll)
       clearTimeout(scrollTimeout)
     }
-  }, [filteredPhotos.length])
+  }, [filteredPhotos.length, activeIndex])
 
   useEffect(() => {
     const container = scrollRef.current
