@@ -10,10 +10,11 @@
   },
   "dependencies": {
     "@lemonsqueezy/lemonsqueezy.js": "^4.0.0",
-    "@mollie/api-client": "^4.3.2",
     "@netlify/plugin-nextjs": "^5.11.1",
     "@react-email/components": "^0.0.41",
+    "@vercel/edge": "^1.2.2",
     "autoprefixer": "^10.4.0",
+    "dotenv": "^17.2.1",
     "framer-motion": "^10.18.0",
     "lucide-react": "^0.510.0",
     "next": "^15.3.2",
