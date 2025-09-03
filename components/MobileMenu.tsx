@@ -3,9 +3,10 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { FaInstagram, FaLinkedin, FaEnvelope } from 'react-icons/fa'
-import { X, Menu, Sun, Moon } from 'lucide-react'
+import { X, Menu, Sun, Moon, ShoppingCart } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useCartStore } from '@/stores/cartStore'
 import type { HTMLAttributes } from 'react'
 
 const MotionSpan = motion(function MotionSpanBase({
@@ -19,6 +20,8 @@ const MotionSpan = motion(function MotionSpanBase({
 export default function MobileMenu() {
   const [open, setOpen] = useState(false)
   const { theme, setTheme } = useTheme()
+  const { toggleCart, cart } = useCartStore()
+  const itemCount = cart.length
   const pathname = usePathname()
   const [currentSuffixIndex, setCurrentSuffixIndex] = useState(0)
   const [isInNetherlands, setIsInNetherlands] = useState<boolean | null>(null)
@@ -145,6 +148,25 @@ export default function MobileMenu() {
           {!isInNetherlands && (
             <Link href="/blog" onClick={() => setOpen(false)}>Blog</Link>
           )}
+          <Link href="/shop" onClick={() => setOpen(false)}>Shop</Link>
+          
+          {/* Cart toggle button for mobile */}
+          <button 
+            onClick={() => {
+              toggleCart(true)
+              setOpen(false)
+            }}
+            className="flex items-center gap-2 hover:text-gray-600 dark:hover:text-gray-300 transition-colors relative"
+            aria-label="Open winkelwagen"
+          >
+            <ShoppingCart size={20} />
+            <span className="text-base">Winkelwagen</span>
+            {itemCount > 0 && (
+              <span className="bg-black dark:bg-white text-white dark:text-black text-xs px-1 rounded-full min-w-[16px] h-4 flex items-center justify-center text-[10px] font-medium">
+                {itemCount}
+              </span>
+            )}
+          </button>
           
           {/* Theme toggle button for mobile */}
           <button 

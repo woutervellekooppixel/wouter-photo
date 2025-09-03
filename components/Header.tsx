@@ -4,8 +4,8 @@ import { usePathname } from 'next/navigation'
 import { FaInstagram, FaLinkedin, FaEnvelope } from 'react-icons/fa'
 import { motion, AnimatePresence } from 'framer-motion'
 import MobileMenu from './MobileMenu'
-import { Sun, Moon } from 'lucide-react'
-// import { useCartStore } from '@/stores/cartStore' // Temporarily disabled
+import { Sun, Moon, ShoppingCart } from 'lucide-react'
+import { useCartStore } from '@/stores/cartStore'
 import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
 import type { HTMLAttributes } from 'react'
@@ -20,8 +20,8 @@ const MotionSpan = motion(function MotionSpanBase({
 
 export default function Header() {
   const pathname = usePathname()
-  // const { toggleCart, cart } = useCartStore() // Temporarily disabled
-  // const itemCount = cart.length // Temporarily disabled
+  const { toggleCart, cart } = useCartStore()
+  const itemCount = cart.length
   const [currentSuffixIndex, setCurrentSuffixIndex] = useState(0)
   const { theme, setTheme } = useTheme()
   const [isInNetherlands, setIsInNetherlands] = useState<boolean | null>(null)
@@ -134,7 +134,7 @@ export default function Header() {
         {!isInNetherlands && (
           <Link href="/blog" className="hover:text-gray-600 dark:hover:text-gray-300">Blog</Link>
         )}
-        {/*  <Link href="/shop" className="hover:text-gray-600">Shop</Link> */}
+        <Link href="/shop" className="hover:text-gray-600 dark:hover:text-gray-300">Shop</Link>
 
         <a href="https://instagram.com/woutervellekoop" target="_blank" className="hover:text-gray-600 dark:hover:text-gray-300"><FaInstagram size={16} /></a>
         <a href="https://linkedin.com/in/woutervellekoop" target="_blank" className="hover:text-gray-600 dark:hover:text-gray-300"><FaLinkedin size={16} /></a>
@@ -149,15 +149,19 @@ export default function Header() {
           {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
         </button>
 
-        {/* 🛒 Winkelwagen 
-        <button onClick={() => toggleCart(true)} className="relative hover:text-gray-600">
+        {/* 🛒 Winkelwagen */}
+        <button 
+          onClick={() => toggleCart(true)} 
+          className="relative hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          aria-label="Open winkelwagen"
+        >
           <ShoppingCart size={18} />
           {itemCount > 0 && (
-            <span className="absolute -top-1 -right-2 bg-black text-white text-xs px-1 rounded-full">
+            <span className="absolute -top-1 -right-2 bg-black dark:bg-white text-white dark:text-black text-xs px-1 rounded-full min-w-[16px] h-4 flex items-center justify-center text-[10px] font-medium">
               {itemCount}
             </span>
           )}
-        </button> */}
+        </button>
       </nav>
 
       <div className="sm:hidden">
