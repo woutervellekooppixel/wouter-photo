@@ -75,7 +75,7 @@ export default function Header() {
   }, [pathname])
 
   return (
-    <header className="sticky top-0 z-50 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white dark:bg-black dark:border-gray-700">
+    <header className="sticky top-0 z-50 flex items-center px-6 py-4 border-b border-gray-200 bg-white dark:bg-black dark:border-gray-700">
       <Link href="/portfolio" className="text-xl tracking-tight text-black dark:text-white flex items-baseline">
         <span className="font-extrabold">WOUTER</span>
         <AnimatePresence mode="wait">
@@ -92,8 +92,11 @@ export default function Header() {
         </AnimatePresence>
       </Link>
 
-      <nav className="hidden sm:flex items-center space-x-6 text-sm text-black dark:text-white">
+      <div className="hidden sm:flex flex-1 justify-center">
         <DownloadStats />
+      </div>
+
+      <nav className="hidden sm:flex items-center space-x-6 text-sm text-black dark:text-white">
         <div className="relative group">
           <div className="font-medium hover:text-black dark:hover:text-white cursor-pointer">Portfolio</div>
           <div className="absolute left-0 top-full pt-1 z-50">
