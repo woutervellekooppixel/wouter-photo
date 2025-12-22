@@ -1,11 +1,10 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FaInstagram, FaLinkedin } from 'react-icons/fa'
+import { FaInstagram, FaLinkedin, FaWhatsapp } from 'react-icons/fa'
 import { motion, AnimatePresence } from 'framer-motion'
 import MobileMenu from './MobileMenu'
 import DownloadStats from './DownloadStats'
-import ContactMenu from './ContactMenu'
 import { Sun, Moon } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
@@ -113,6 +112,7 @@ export default function Header() {
 
         <a href="https://instagram.com/woutervellekoop" target="_blank" className="hover:text-gray-600 dark:hover:text-gray-300"><FaInstagram size={16} /></a>
         <a href="https://linkedin.com/in/woutervellekoop" target="_blank" className="hover:text-gray-600 dark:hover:text-gray-300"><FaLinkedin size={16} /></a>
+        <a href="https://wa.me/31616290418?text=Hallo%20Wouter%2C%20ik%20ben%20ge%C3%AFnteresseerd%20in%20jouw%20fotografiediensten" target="_blank" className="hover:text-gray-600 dark:hover:text-gray-300"><FaWhatsapp size={16} /></a>
 
         {/* Theme toggle button */}
         <button 
@@ -122,9 +122,6 @@ export default function Header() {
         >
           {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
         </button>
-
-        {/* Contact Menu (Email, WhatsApp, etc) */}
-        <ContactMenu />
       </nav>
 
       <div className="sm:hidden">
