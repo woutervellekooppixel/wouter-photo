@@ -1,16 +1,54 @@
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { Readable } from "stream";
 
-const R2 = new S3Client({
-  region: "auto",
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-  },
-});
+// Check for required environment variables
+const requiredEnvVars = {
+  R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID,
+  R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID,
+  R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY,
+  R2_BUCKET_NAME: process.env.R2_BUCKET_NAME,
+};
 
-const BUCKET_NAME = process.env.R2_BUCKET_NAME!;
+const missingVars = Object.entries(requiredEnvVars)
+  .filter(([_, value]) => !value)
+  .map(([key]) => key);
+
+if (missingVars.length > 0) {
+  console.error(`❌ Missing required environment variables: ${missingVars.join(', ')}`);
+  console.error('📝 Please copy .env.example to .env.local and fill in the values');
+}
+
+// Initialize R2 client only if all env vars are present
+let R2: S3Client | null = null;
+let BUCKET_NAME: string | null = null;
+
+if (missingVars.length === 0) {
+  R2 = new S3Client({
+    region: "auto",
+    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+    },
+  });
+  BUCKET_NAME = process.env.R2_BUCKET_NAME!;
+  console.log('✅ R2 client initialized successfully');
+}
+
+// Helper to check if R2 is configured
+export function isR2Configured(): boolean {
+  return R2 !== null && BUCKET_NAME !== null;
+}
+
+// Helper to throw error if R2 is not configured
+function requireR2() {
+  if (!isR2Configured()) {
+    throw new Error(
+      `R2 storage not configured. Missing environment variables: ${missingVars.join(', ')}. ` +
+      'Please copy .env.example to .env.local and fill in the required values.'
+    );
+  }
+}
 
 export interface UploadMetadata {
   slug: string;
@@ -40,24 +78,26 @@ export interface UploadMetadata {
 
 // Upload file to R2
 export async function uploadFile(buffer: Buffer, key: string, contentType: string) {
+  requireR2();
   const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
+    Bucket: BUCKET_NAME!,
     Key: key,
     Body: buffer,
     ContentType: contentType,
   });
 
-  await R2.send(command);
+  await R2!.send(command);
 }
 
 // Download file from R2
 export async function downloadFile(key: string): Promise<Buffer> {
+  requireR2();
   const command = new GetObjectCommand({
-    Bucket: BUCKET_NAME,
+    Bucket: BUCKET_NAME!,
     Key: key,
   });
 
-  const response = await R2.send(command);
+  const response = await R2!.send(command);
   
   if (!response.Body) {
     throw new Error("Empty response body");
@@ -76,22 +116,24 @@ export async function downloadFile(key: string): Promise<Buffer> {
 
 // Delete file from R2
 export async function deleteFile(key: string) {
+  requireR2();
   const command = new DeleteObjectCommand({
-    Bucket: BUCKET_NAME,
+    Bucket: BUCKET_NAME!,
     Key: key,
   });
 
-  await R2.send(command);
+  await R2!.send(command);
 }
 
 // Delete folder (all files with prefix)
 export async function deleteFolder(prefix: string) {
+  requireR2();
   const listCommand = new ListObjectsV2Command({
-    Bucket: BUCKET_NAME,
+    Bucket: BUCKET_NAME!,
     Prefix: prefix,
   });
 
-  const listResponse = await R2.send(listCommand);
+  const listResponse = await R2!.send(listCommand);
   
   if (!listResponse.Contents || listResponse.Contents.length === 0) {
     return;
@@ -107,12 +149,13 @@ export async function deleteFolder(prefix: string) {
 
 // List files in a folder
 export async function listFiles(prefix: string) {
+  requireR2();
   const command = new ListObjectsV2Command({
-    Bucket: BUCKET_NAME,
+    Bucket: BUCKET_NAME!,
     Prefix: prefix,
   });
 
-  const response = await R2.send(command);
+  const response = await R2!.send(command);
   return response.Contents || [];
 }
 
@@ -216,12 +259,13 @@ export async function findOrphanedUploads(): Promise<string[]> {
 
 // Check if file exists
 export async function fileExists(key: string): Promise<boolean> {
+  requireR2();
   try {
     const command = new HeadObjectCommand({
-      Bucket: BUCKET_NAME,
+      Bucket: BUCKET_NAME!,
       Key: key,
     });
-    await R2.send(command);
+    await R2!.send(command);
     return true;
   } catch {
     return false;
