@@ -9,66 +9,18 @@ import {
   Linkedin, 
   ChevronDown, 
   ChevronRight, 
-  FileText, 
-  File as FileIcon, 
-  Folder,
-  FileArchive,
-  FileCode,
-  FileSpreadsheet,
-  Video,
-  Music,
-  Star
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { formatBytes, formatDate } from "@/lib/utils";
-import type { UploadMetadata } from "@/lib/r2";
-
-export default function DownloadGallery({
-  metadata,
-}: {
-  metadata: UploadMetadata;
-}) {
-  const [downloading, setDownloading] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState(0);
-  const [downloadingFile, setDownloadingFile] = useState<string | null>(null);
-  const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
-  const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>({});
-  const [loadingThumbnails, setLoadingThumbnails] = useState(true);
-  const [thumbnailsLoaded, setThumbnailsLoaded] = useState(0);
-  const [previewLoaded, setPreviewLoaded] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
-  const [isSelectMode, setIsSelectMode] = useState(false);
-  const [ratings, setRatings] = useState<Record<string, boolean>>({});
-  const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
-
-  // Helper function to check if file should be filtered out
-  const shouldFilterFile = (filename: string) => {
-    const name = filename.toLowerCase();
-    const ext = name.split('.').pop();
-    // Filter out system files and metadata files
-    return [
-      '.ds_store',
-      '.xmp',
-      'thumbs.db',
-      'desktop.ini'
-    ].some(pattern => name.includes(pattern)) || name.startsWith('.');
-  };
-
-  // Helper function to check if file is an image
-  const isImage = (filename: string) => {
-    const ext = filename.toLowerCase().split('.').pop();
-    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'heic', 'heif'].includes(ext || '');
-  };
-
-  // Get icon for file type
-  const getFileIcon = (filename: string) => {
-    const ext = filename.toLowerCase().split('.').pop();
-    
-    // Archive files
-    if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext || '')) {
-      return <FileArchive className="h-5 w-5 text-purple-600 flex-shrink-0" />;
-    }
-    
+        {/* Info bar under site header */}
+        <div className={`w-full bg-white border-b border-gray-200 shadow-sm transition-opacity duration-1000 ${loadingThumbnails ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+          <div className="container mx-auto px-6 max-w-6xl flex flex-wrap gap-3 py-3 text-sm text-gray-700 items-center">
+            <span className="font-semibold">WOUTER.DOWNLOAD</span>
+            <span className="text-gray-400">•</span>
+            <span>{visibleFiles.length} bestand{visibleFiles.length !== 1 ? 'en' : ''}</span>
+            <span className="text-gray-400">•</span>
+            <span>{formatBytes(totalSize)}</span>
+            <span className="text-gray-400">•</span>
+            <span>Beschikbaar tot {formatExpiryDate(metadata.expiresAt)}</span>
+          </div>
+        </div>
     // Code files
     if (['js', 'ts', 'jsx', 'tsx', 'html', 'css', 'scss', 'php', 'py', 'java', 'c', 'cpp', 'json'].includes(ext || '')) {
       return <FileCode className="h-5 w-5 text-green-600 flex-shrink-0" />;
@@ -491,6 +443,12 @@ export default function DownloadGallery({
               >
                 <span className="font-bold">WOUTER.</span>
                 <span className="font-normal">DOWNLOAD</span>
+              </a>
+              <a
+                href="https://wouter.photo"
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Home
               </a>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <span>{visibleFiles.length} bestand{visibleFiles.length !== 1 ? 'en' : ''}</span>
