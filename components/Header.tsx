@@ -1,10 +1,11 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FaInstagram, FaLinkedin, FaEnvelope } from 'react-icons/fa'
+import { FaInstagram, FaLinkedin } from 'react-icons/fa'
 import { motion, AnimatePresence } from 'framer-motion'
 import MobileMenu from './MobileMenu'
 import DownloadStats from './DownloadStats'
+import ContactMenu from './ContactMenu'
 import { Sun, Moon } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
@@ -112,7 +113,6 @@ export default function Header() {
 
         <a href="https://instagram.com/woutervellekoop" target="_blank" className="hover:text-gray-600 dark:hover:text-gray-300"><FaInstagram size={16} /></a>
         <a href="https://linkedin.com/in/woutervellekoop" target="_blank" className="hover:text-gray-600 dark:hover:text-gray-300"><FaLinkedin size={16} /></a>
-        <a href="mailto:hello@wouter.photo" className="hover:text-gray-600 dark:hover:text-gray-300"><FaEnvelope size={16} /></a>
 
         {/* Theme toggle button */}
         <button 
@@ -123,13 +123,8 @@ export default function Header() {
           {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
         </button>
 
-        {/* Hire Me button */}
-        <a 
-          href="mailto:hello@wouter.photo?subject=Photography Inquiry"
-          className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
-        >
-          Hire Me
-        </a>
+        {/* Contact Menu (Email, WhatsApp, etc) */}
+        <ContactMenu />
       </nav>
 
       <div className="sm:hidden">
