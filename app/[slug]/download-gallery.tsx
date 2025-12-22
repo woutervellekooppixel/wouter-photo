@@ -490,9 +490,9 @@ export default function DownloadGallery({
                 className="flex-shrink-0 text-gray-700 hover:text-gray-900 transition-colors text-lg tracking-tight"
               >
                 <span className="font-bold">WOUTER.</span>
-                <span className="font-normal">PHOTO</span>
+                <span className="font-normal">DOWNLOAD</span>
               </a>
-              <div className="hidden md:flex items-center gap-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
                 <span>{visibleFiles.length} bestand{visibleFiles.length !== 1 ? 'en' : ''}</span>
                 <span className="text-gray-400">•</span>
                 <span>{formatBytes(totalSize)}</span>
