@@ -29,7 +29,7 @@ export default function ContactMenu() {
             <span>Email</span>
           </a>
           <a
-            href="https://wa.me/31618283283?text=Hallo%20Wouter%2C%20ik%20ben%20ge%C3%AFnteresseerd%20in%20jouw%20fotografiediensten"
+            href="https://wa.me/31616290418?text=Hallo%20Wouter%2C%20ik%20ben%20ge%C3%AFnteresseerd%20in%20jouw%20fotografiediensten"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3 px-4 py-3 text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors border-t border-gray-200 dark:border-gray-700"
