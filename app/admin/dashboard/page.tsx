@@ -46,10 +46,22 @@ export default function AdminDashboard() {
   }, []);
 
   const loadUploads = async () => {
-    const res = await fetch("/api/admin/uploads");
-    if (res.ok) {
-      const data = await res.json();
-      setUploads(data);
+    try {
+      const res = await fetch("/api/admin/uploads");
+      if (res.ok) {
+        const data = await res.json();
+        setUploads(data);
+      } else if (res.status === 503) {
+        // R2 not configured - show helpful message
+        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+        toast({
+          title: "⚠️ R2 opslag niet geconfigureerd",
+          description: errorData.details || "Configureer R2 environment variabelen om uploads te beheren",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error loading uploads:', error);
     }
   };
 
@@ -107,7 +119,17 @@ export default function AdminDashboard() {
         });
 
         if (!presignedRes.ok) {
-          throw new Error('Failed to get upload URL');
+          const errorData = await presignedRes.json().catch(() => ({ error: 'Unknown error' }));
+          
+          // Show helpful message for R2 not configured
+          if (presignedRes.status === 503) {
+            throw new Error(
+              'R2 opslag niet geconfigureerd. ' +
+              'Kopieer .env.example naar .env.local en vul de R2 credentials in.'
+            );
+          }
+          
+          throw new Error(errorData.details || errorData.error || 'Failed to get upload URL');
         }
 
         const { presignedUrl, key } = await presignedRes.json();
