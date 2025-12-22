@@ -113,6 +113,15 @@ export default function MobileMenu() {
 </div>
           <Link href="/about" onClick={() => setOpen(false)}>About</Link>
           
+          {/* Hire Me button for mobile */}
+          <a 
+            href="mailto:hello@wouter.photo?subject=Photography Inquiry"
+            className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-lg font-medium rounded hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
+            onClick={() => setOpen(false)}
+          >
+            Hire Me
+          </a>
+          
           {/* Theme toggle button for mobile */}
           <button 
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
