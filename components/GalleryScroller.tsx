@@ -216,9 +216,9 @@ export default function GalleryScroller({ category }: Props) {
       if (window.innerWidth >= 1280) {
         e.preventDefault()
         
-        // Convert vertical scroll to horizontal scroll
-        const scrollAmount = e.deltaY
-        container.scrollBy({ left: scrollAmount, behavior: 'auto' })
+        // Convert vertical scroll to horizontal scroll with multiplier for faster scroll
+        const scrollAmount = e.deltaY * 2
+        container.scrollLeft += scrollAmount
       }
     }
 
