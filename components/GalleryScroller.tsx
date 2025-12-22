@@ -160,8 +160,17 @@ export default function GalleryScroller({ category }: Props) {
 
     let scrollTimeout: NodeJS.Timeout
 
+    const handleWheel = (e: WheelEvent) => {
+      // Only on desktop
+      if (window.innerWidth >= 1280) {
+        e.preventDefault()
+        // Direct horizontal scroll - simple and fast
+        container.scrollLeft += e.deltaY * 2.5
+      }
+    }
+
     const handleScroll = () => {
-      // Debounce scroll events to avoid conflicts with button clicks
+      // Debounce scroll events to update active index
       clearTimeout(scrollTimeout)
       scrollTimeout = setTimeout(() => {
         const itemWidth = getItemWidth()
@@ -174,11 +183,14 @@ export default function GalleryScroller({ category }: Props) {
         if (clampedIndex !== activeIndex) {
           setActiveIndex(clampedIndex)
         }
-      }, 150) // Increased debounce time
+      }, 100)
     }
 
+    container.addEventListener('wheel', handleWheel, { passive: false })
     container.addEventListener('scroll', handleScroll, { passive: true })
+    
     return () => {
+      container.removeEventListener('wheel', handleWheel)
       container.removeEventListener('scroll', handleScroll)
       clearTimeout(scrollTimeout)
     }
@@ -205,29 +217,6 @@ export default function GalleryScroller({ category }: Props) {
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [scrollLeft, scrollRight])
-
-  // Handle mousewheel to scroll horizontally
-  useEffect(() => {
-    const container = scrollRef.current
-    if (!container) return
-
-    const handleWheel = (e: WheelEvent) => {
-      // Only on desktop
-      if (window.innerWidth >= 1280) {
-        e.preventDefault()
-        
-        // Convert vertical scroll to horizontal scroll with multiplier for faster scroll
-        const scrollAmount = e.deltaY * 2
-        container.scrollLeft += scrollAmount
-      }
-    }
-
-    container.addEventListener('wheel', handleWheel, { passive: false })
-
-    return () => {
-      container.removeEventListener('wheel', handleWheel)
-    }
-  }, [])
 
   // Touch handlers for mobile
   const minSwipeDistance = 50
