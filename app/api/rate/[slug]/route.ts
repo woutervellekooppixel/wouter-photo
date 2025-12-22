@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMetadata, saveMetadata } from "@/lib/r2";
+import { isValidSlug } from "@/lib/validation";
 
 export async function POST(
   request: NextRequest,
@@ -7,6 +8,12 @@ export async function POST(
 ) {
   try {
     const { slug } = await context.params;
+    if (!isValidSlug(slug)) {
+      return NextResponse.json(
+        { error: "Invalid slug" },
+        { status: 400 }
+      );
+    }
     const { fileKey, rated } = await request.json();
 
     if (!fileKey || typeof rated !== 'boolean') {
@@ -52,6 +59,12 @@ export async function GET(
 ) {
   try {
     const { slug } = await context.params;
+    if (!isValidSlug(slug)) {
+      return NextResponse.json(
+        { error: "Invalid slug" },
+        { status: 400 }
+      );
+    }
 
     const metadata = await getMetadata(slug);
     if (!metadata) {

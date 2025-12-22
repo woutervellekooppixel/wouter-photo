@@ -2,17 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMetadata, getFile, updateDownloadCount } from "@/lib/r2";
 import { sendDownloadNotification } from "@/lib/email";
 import { downloadRateLimit } from "@/lib/rateLimit";
+import { isValidSlug } from "@/lib/validation";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   // Rate limiting
-  const rateLimitResponse = downloadRateLimit(request);
+  const rateLimitResponse = await downloadRateLimit(request);
   if (rateLimitResponse) return rateLimitResponse;
 
   try {
     const { slug } = await params;
+    if (!isValidSlug(slug)) {
+      return NextResponse.json({ error: "Invalid slug" }, { status: 400 });
+    }
     const { searchParams } = new URL(request.url);
     const fileKey = searchParams.get("key");
 

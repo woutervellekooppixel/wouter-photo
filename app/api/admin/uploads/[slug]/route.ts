@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminAuth } from "@/lib/auth";
 import { deleteUpload } from "@/lib/r2";
+import { isValidSlug } from "@/lib/validation";
 
 export async function DELETE(
   request: NextRequest,
@@ -11,6 +12,9 @@ export async function DELETE(
 
   try {
     const { slug } = await params;
+    if (!isValidSlug(slug)) {
+      return NextResponse.json({ error: "Invalid slug" }, { status: 400 });
+    }
     await deleteUpload(slug);
     return NextResponse.json({ success: true });
   } catch (error) {

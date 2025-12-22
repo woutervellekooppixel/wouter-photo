@@ -3,6 +3,7 @@ import { getMetadata, getFile, getZipFile, createZipFile, updateDownloadCount } 
 import archiver from "archiver";
 import { sendDownloadNotification } from "@/lib/email";
 import { downloadRateLimit } from "@/lib/rateLimit";
+import { isValidSlug } from "@/lib/validation";
 
 // Configure route for large downloads
 export const maxDuration = 300; // 5 minutes
@@ -13,11 +14,14 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   // Rate limiting
-  const rateLimitResponse = downloadRateLimit(request);
+  const rateLimitResponse = await downloadRateLimit(request);
   if (rateLimitResponse) return rateLimitResponse;
 
   try {
     const { slug } = await params;
+    if (!isValidSlug(slug)) {
+      return NextResponse.json({ error: "Invalid slug" }, { status: 400 });
+    }
     const metadata = await getMetadata(slug);
 
     if (!metadata) {

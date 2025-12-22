@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdminAuth } from "@/lib/auth";
 import { r2Client } from "@/lib/r2";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { MAX_BACKGROUND_FILE_SIZE_BYTES } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
   const authError = await requireAdminAuth();
@@ -13,6 +14,13 @@ export async function POST(req: NextRequest) {
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+
+    if (file.size > MAX_BACKGROUND_FILE_SIZE_BYTES) {
+      return NextResponse.json(
+        { error: "File is too large" },
+        { status: 413 }
+      );
     }
 
     // Convert file to buffer
