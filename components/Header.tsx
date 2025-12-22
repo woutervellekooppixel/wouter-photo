@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import { FaInstagram, FaLinkedin, FaEnvelope } from 'react-icons/fa'
 import { motion, AnimatePresence } from 'framer-motion'
 import MobileMenu from './MobileMenu'
+import DownloadStats from './DownloadStats'
 import { Sun, Moon } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
@@ -89,6 +90,7 @@ export default function Header() {
       </Link>
 
       <nav className="hidden sm:flex items-center space-x-6 text-sm text-black dark:text-white">
+        <DownloadStats />
         <div className="relative group">
           <div className="font-medium hover:text-black dark:hover:text-white cursor-pointer">Portfolio</div>
           <div className="absolute left-0 top-full pt-1 z-50">
