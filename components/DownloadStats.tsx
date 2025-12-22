@@ -52,7 +52,7 @@ export default function DownloadStats() {
   const totalSize = metadata.files.reduce((acc, file) => acc + file.size, 0)
 
   return (
-    <div className="hidden md:flex items-center gap-2 text-xs text-gray-600">
+    <div className="hidden md:flex items-center justify-center flex-1 gap-2 text-xs text-gray-600">
       <span>{metadata.files.length} bestand{metadata.files.length !== 1 ? 'en' : ''}</span>
       <span className="text-gray-400">•</span>
       <span>{formatBytes(totalSize)}</span>
