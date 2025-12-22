@@ -26,7 +26,7 @@ export async function POST(
 
     const currentRatings = metadata.ratings || {};
     if (rated) {
-      currentRatings[fileKey] = 1; // Simple boolean rating
+      currentRatings[fileKey] = true; // Simple boolean rating
     } else {
       delete currentRatings[fileKey];
     }

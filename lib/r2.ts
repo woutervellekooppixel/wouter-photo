@@ -1,58 +1,30 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command, HeadObjectCommand } from "@aws-sdk/client-s3";
-import { Readable } from "stream";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  ListObjectsV2Command,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import archiver from "archiver";
 
-// Check for required environment variables
-const requiredEnvVars = {
-  R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID,
-  R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID,
-  R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY,
-  R2_BUCKET_NAME: process.env.R2_BUCKET_NAME,
-};
+const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID!;
+const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID!;
+const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY!;
+const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME!;
 
-const missingVars = Object.entries(requiredEnvVars)
-  .filter(([_, value]) => !value)
-  .map(([key]) => key);
-
-if (missingVars.length > 0) {
-  console.error(`❌ Missing required environment variables: ${missingVars.join(', ')}`);
-  console.error('📝 Please copy .env.example to .env.local and fill in the values');
-}
-
-// Initialize R2 client only if all env vars are present
-let R2: S3Client | null = null;
-let BUCKET_NAME: string | null = null;
-
-if (missingVars.length === 0) {
-  R2 = new S3Client({
-    region: "auto",
-    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-    },
-  });
-  BUCKET_NAME = process.env.R2_BUCKET_NAME!;
-  console.log('✅ R2 client initialized successfully');
-}
-
-// Helper to check if R2 is configured
-export function isR2Configured(): boolean {
-  return R2 !== null && BUCKET_NAME !== null;
-}
-
-// Helper to throw error if R2 is not configured
-function requireR2() {
-  if (!isR2Configured()) {
-    throw new Error(
-      `R2 storage not configured. Missing environment variables: ${missingVars.join(', ')}. ` +
-      'Please copy .env.example to .env.local and fill in the required values.'
-    );
-  }
-}
+export const r2Client = new S3Client({
+  region: "auto",
+  endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: R2_ACCESS_KEY_ID,
+    secretAccessKey: R2_SECRET_ACCESS_KEY,
+  },
+});
 
 export interface UploadMetadata {
   slug: string;
-  title?: string;
+  title?: string; // Optional: friendly title for the upload
   createdAt: string;
   expiresAt: string;
   files: {
@@ -64,138 +36,206 @@ export interface UploadMetadata {
   downloads: number;
   downloadHistory?: {
     timestamp: string;
-    type: 'all' | 'selected';
-    fileKeys?: string[];
-    ip: string;
-    userAgent: string;
+    type: 'all' | 'single' | 'selected';
+    files?: string[]; // File keys that were downloaded
+    ip?: string;
+    userAgent?: string;
   }[];
-  previewImageKey?: string;
-  ratings?: Record<string, number>; // fileKey -> rating (1-5)
-  clientEmail?: string;
-  customMessage?: string;
-  ratingsEnabled?: boolean;
+  previewImageKey?: string; // Optional: key of the image to show on loading screen
+  backgroundImageKey?: string; // Optional: key of the image to use as background
+  clientEmail?: string; // Optional: client email for sending notifications
+  customMessage?: string; // Optional: custom message to include in email
+  ratings?: Record<string, boolean>; // Optional: client ratings for photos (fileKey -> rated)
+  ratingsEnabled?: boolean; // Optional: allow clients to rate photos
 }
 
-// Upload file to R2
-export async function uploadFile(buffer: Buffer, key: string, contentType: string) {
-  requireR2();
+export interface MonthlyStats {
+  month: string; // Format: "2025-12"
+  operations: {
+    listFiles: number;
+    getFile: number;
+    putFile: number;
+    deleteFile: number;
+  };
+  bandwidth: number; // bytes downloaded
+  storage: number; // average bytes stored
+}
+
+export async function uploadFile(
+  file: Buffer,
+  key: string,
+  contentType: string
+): Promise<void> {
   const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME!,
+    Bucket: R2_BUCKET_NAME,
     Key: key,
-    Body: buffer,
+    Body: file,
     ContentType: contentType,
   });
 
-  await R2!.send(command);
+  await r2Client.send(command);
 }
 
-// Download file from R2
-export async function downloadFile(key: string): Promise<Buffer> {
-  requireR2();
+export async function getFile(key: string): Promise<Buffer> {
   const command = new GetObjectCommand({
-    Bucket: BUCKET_NAME!,
+    Bucket: R2_BUCKET_NAME,
     Key: key,
   });
 
-  const response = await R2!.send(command);
-  
-  if (!response.Body) {
-    throw new Error("Empty response body");
-  }
-
-  // Convert stream to buffer
-  const stream = response.Body as Readable;
-  const chunks: Uint8Array[] = [];
-  
-  for await (const chunk of stream) {
-    chunks.push(chunk);
-  }
-  
-  return Buffer.concat(chunks);
+  const response = await r2Client.send(command);
+  const bytes = await response.Body?.transformToByteArray();
+  return Buffer.from(bytes || []);
 }
 
-// Delete file from R2
-export async function deleteFile(key: string) {
-  requireR2();
+export async function getSignedDownloadUrl(
+  key: string,
+  expiresIn: number = 3600
+): Promise<string> {
+  const command = new GetObjectCommand({
+    Bucket: R2_BUCKET_NAME,
+    Key: key,
+  });
+
+  return getSignedUrl(r2Client, command, { expiresIn });
+}
+
+export async function listFiles(prefix: string): Promise<string[]> {
+  const allFiles: string[] = [];
+  let continuationToken: string | undefined;
+
+  do {
+    const command = new ListObjectsV2Command({
+      Bucket: R2_BUCKET_NAME,
+      Prefix: prefix,
+      ContinuationToken: continuationToken,
+    });
+
+    const response = await r2Client.send(command);
+    const files = response.Contents?.map((item) => item.Key!) || [];
+    allFiles.push(...files);
+    
+    continuationToken = response.NextContinuationToken;
+  } while (continuationToken);
+
+  return allFiles;
+}
+
+export async function deleteFile(key: string): Promise<void> {
   const command = new DeleteObjectCommand({
-    Bucket: BUCKET_NAME!,
+    Bucket: R2_BUCKET_NAME,
     Key: key,
   });
 
-  await R2!.send(command);
-}
-
-// Delete folder (all files with prefix)
-export async function deleteFolder(prefix: string) {
-  requireR2();
-  const listCommand = new ListObjectsV2Command({
-    Bucket: BUCKET_NAME!,
-    Prefix: prefix,
-  });
-
-  const listResponse = await R2!.send(listCommand);
+  const response = await r2Client.send(command);
+  console.log('[R2] Delete response for', key, ':', response.$metadata.httpStatusCode);
   
-  if (!listResponse.Contents || listResponse.Contents.length === 0) {
-    return;
-  }
-
-  // Delete all files
-  for (const object of listResponse.Contents) {
-    if (object.Key) {
-      await deleteFile(object.Key);
-    }
+  if (response.$metadata.httpStatusCode !== 204 && response.$metadata.httpStatusCode !== 200) {
+    throw new Error(`Failed to delete ${key}: HTTP ${response.$metadata.httpStatusCode}`);
   }
 }
 
-// List files in a folder
-export async function listFiles(prefix: string) {
-  requireR2();
-  const command = new ListObjectsV2Command({
-    Bucket: BUCKET_NAME!,
-    Prefix: prefix,
-  });
-
-  const response = await R2!.send(command);
-  return response.Contents || [];
-}
-
-// Save metadata
-export async function saveMetadata(metadata: UploadMetadata) {
+export async function saveMetadata(metadata: UploadMetadata): Promise<void> {
   const key = `metadata/${metadata.slug}.json`;
-  const buffer = Buffer.from(JSON.stringify(metadata, null, 2));
-  
-  await uploadFile(buffer, key, "application/json");
+  await uploadFile(
+    Buffer.from(JSON.stringify(metadata, null, 2)),
+    key,
+    "application/json"
+  );
 }
 
-// Get metadata
 export async function getMetadata(slug: string): Promise<UploadMetadata | null> {
   try {
     const key = `metadata/${slug}.json`;
-    const buffer = await downloadFile(key);
-    return JSON.parse(buffer.toString());
+    const buffer = await getFile(key);
+    return JSON.parse(buffer.toString("utf-8"));
   } catch (error) {
     return null;
   }
 }
 
-// Delete metadata
-export async function deleteMetadata(slug: string) {
-  const key = `metadata/${slug}.json`;
-  await deleteFile(key);
+export async function createZipFile(slug: string): Promise<void> {
+  console.log(`[R2] Creating pre-made zip for ${slug}`);
+  const metadata = await getMetadata(slug);
+  if (!metadata) {
+    throw new Error(`Metadata not found for ${slug}`);
+  }
+
+  const archive = archiver("zip", { zlib: { level: 6 } });
+  const chunks: Buffer[] = [];
+
+  // Collect chunks from the archive
+  archive.on("data", (chunk: Buffer) => {
+    chunks.push(chunk);
+  });
+
+  // Wait for archive to finish
+  const archivePromise = new Promise<void>((resolve, reject) => {
+    archive.on("end", resolve);
+    archive.on("error", reject);
+  });
+
+  // Add all files to the archive
+  for (const file of metadata.files) {
+    const buffer = await getFile(file.key);
+    archive.append(buffer, { name: file.name });
+  }
+
+  // Finalize the archive
+  await archive.finalize();
+  await archivePromise;
+
+  // Combine all chunks and upload
+  const zipBuffer = Buffer.concat(chunks);
+  const zipKey = `zips/${slug}.zip`;
+  await uploadFile(zipBuffer, zipKey, "application/zip");
+  
+  console.log(`[R2] Pre-made zip created: ${zipKey} (${zipBuffer.length} bytes)`);
 }
 
-// List all uploads
+export async function getZipFile(slug: string): Promise<Buffer | null> {
+  try {
+    const zipKey = `zips/${slug}.zip`;
+    return await getFile(zipKey);
+  } catch (error) {
+    return null;
+  }
+}
+
+export async function updateDownloadCount(
+  slug: string,
+  type: 'all' | 'single' | 'selected' = 'all',
+  files?: string[],
+  ip?: string,
+  userAgent?: string
+): Promise<void> {
+  const metadata = await getMetadata(slug);
+  if (metadata) {
+    metadata.downloads = (metadata.downloads || 0) + 1;
+    
+    // Add to download history
+    if (!metadata.downloadHistory) {
+      metadata.downloadHistory = [];
+    }
+    metadata.downloadHistory.push({
+      timestamp: new Date().toISOString(),
+      type,
+      ...(files && { files }),
+      ...(ip && { ip }),
+      ...(userAgent && { userAgent }),
+    });
+    await saveMetadata(metadata);
+  }
+}
+
 export async function listAllUploads(): Promise<UploadMetadata[]> {
-  const files = await listFiles("metadata/");
+  const metadataKeys = await listFiles("metadata/");
   const uploads: UploadMetadata[] = [];
 
-  for (const file of files) {
-    if (file.Key && file.Key.endsWith(".json")) {
-      const slug = file.Key.replace("metadata/", "").replace(".json", "");
-      const metadata = await getMetadata(slug);
-      if (metadata) {
-        uploads.push(metadata);
-      }
+  for (const key of metadataKeys) {
+    if (key.endsWith(".json")) {
+      const buffer = await getFile(key);
+      const metadata = JSON.parse(buffer.toString("utf-8"));
+      uploads.push(metadata);
     }
   }
 
@@ -204,79 +244,166 @@ export async function listAllUploads(): Promise<UploadMetadata[]> {
   );
 }
 
-// Update download count
-export async function updateDownloadCount(
-  slug: string, 
-  type: 'all' | 'selected',
-  fileKeys?: string[],
-  ip?: string,
-  userAgent?: string
-) {
+export async function deleteUpload(slug: string): Promise<void> {
   const metadata = await getMetadata(slug);
   if (!metadata) return;
 
-  metadata.downloads = (metadata.downloads || 0) + 1;
-  
-  // Add to download history
-  if (!metadata.downloadHistory) {
-    metadata.downloadHistory = [];
+  // Delete all files
+  for (const file of metadata.files) {
+    await deleteFile(file.key);
   }
-  
-  metadata.downloadHistory.push({
-    timestamp: new Date().toISOString(),
-    type,
-    fileKeys,
-    ip: ip || 'unknown',
-    userAgent: userAgent || 'unknown'
-  });
 
-  await saveMetadata(metadata);
+  // Delete metadata
+  await deleteFile(`metadata/${slug}.json`);
 }
 
-// Find orphaned uploads (folders without metadata)
-export async function findOrphanedUploads(): Promise<string[]> {
-  const allFiles = await listFiles("uploads/");
-  const metadata = await listFiles("metadata/");
+export async function deleteFolder(prefix: string): Promise<void> {
+  console.log('[R2] Listing files in folder:', prefix);
+  const files = await listFiles(prefix);
+  console.log('[R2] Found', files.length, 'files to delete:', files);
   
-  const metadataSlugs = new Set(
-    metadata
-      .filter(f => f.Key?.endsWith(".json"))
-      .map(f => f.Key!.replace("metadata/", "").replace(".json", ""))
-  );
+  if (files.length === 0) {
+    console.log('[R2] No files found with prefix:', prefix);
+    // Try without trailing slash
+    const prefixWithoutSlash = prefix.endsWith('/') ? prefix.slice(0, -1) : prefix;
+    console.log('[R2] Trying without trailing slash:', prefixWithoutSlash);
+    const filesAlt = await listFiles(prefixWithoutSlash);
+    console.log('[R2] Found', filesAlt.length, 'files:', filesAlt);
+    
+    if (filesAlt.length === 0) {
+      console.log('[R2] Still no files found. Folder may already be empty or not exist.');
+      return;
+    }
+  }
+  
+  for (const key of files) {
+    console.log('[R2] Deleting file:', key);
+    await deleteFile(key);
+  }
+  
+  // Verify deletion
+  console.log('[R2] Verifying deletion...');
+  const remainingFiles = await listFiles(prefix);
+  console.log('[R2] Files remaining after deletion:', remainingFiles.length);
+  
+  if (remainingFiles.length > 0) {
+    console.error('[R2] WARNING: Some files were not deleted:', remainingFiles);
+    throw new Error(`Failed to delete all files. ${remainingFiles.length} files remaining.`);
+  }
+  
+  console.log('[R2] Successfully deleted all files in folder:', prefix);
+}
 
+export async function findOrphanedUploads(): Promise<string[]> {
+  // Get all upload folders
+  const allFiles = await listFiles("uploads/");
   const uploadFolders = new Set<string>();
-  for (const file of allFiles) {
-    if (file.Key) {
-      const parts = file.Key.split("/");
-      if (parts.length >= 2 && parts[0] === "uploads") {
-        uploadFolders.add(parts[1]);
-      }
+  
+  for (const key of allFiles) {
+    const parts = key.split('/');
+    if (parts.length >= 2) {
+      uploadFolders.add(parts[1]); // slug is the second part after "uploads/"
     }
   }
 
-  return Array.from(uploadFolders).filter(slug => !metadataSlugs.has(slug));
+  // Get all metadata slugs
+  const metadataKeys = await listFiles("metadata/");
+  const metadataSlugs = new Set<string>();
+  
+  for (const key of metadataKeys) {
+    if (key.endsWith(".json")) {
+      const slug = key.replace("metadata/", "").replace(".json", "");
+      metadataSlugs.add(slug);
+    }
+  }
+
+  // Find folders without metadata
+  const orphaned: string[] = [];
+  for (const folder of uploadFolders) {
+    if (!metadataSlugs.has(folder)) {
+      orphaned.push(folder);
+    }
+  }
+
+  return orphaned;
 }
 
-// Check if file exists
-export async function fileExists(key: string): Promise<boolean> {
-  requireR2();
+// Monthly stats tracking
+export async function getMonthlyStats(): Promise<MonthlyStats> {
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  
   try {
-    const command = new HeadObjectCommand({
-      Bucket: BUCKET_NAME!,
-      Key: key,
-    });
-    await R2!.send(command);
-    return true;
-  } catch {
-    return false;
+    const key = `stats/${currentMonth}.json`;
+    const buffer = await getFile(key);
+    return JSON.parse(buffer.toString('utf-8'));
+  } catch (error) {
+    // Return default stats if not found
+    return {
+      month: currentMonth,
+      operations: {
+        listFiles: 0,
+        getFile: 0,
+        putFile: 0,
+        deleteFile: 0,
+      },
+      bandwidth: 0,
+      storage: 0,
+    };
   }
 }
 
-// Delete entire upload (files and metadata)
-export async function deleteUpload(slug: string) {
-  // Delete all files
-  await deleteFolder(`uploads/${slug}/`);
-  // Delete metadata
-  await deleteMetadata(slug);
+export async function saveMonthlyStats(stats: MonthlyStats): Promise<void> {
+  const key = `stats/${stats.month}.json`;
+  await uploadFile(
+    Buffer.from(JSON.stringify(stats, null, 2)),
+    key,
+    'application/json'
+  );
 }
 
+export async function trackOperation(operation: keyof MonthlyStats['operations'], count: number = 1): Promise<void> {
+  const stats = await getMonthlyStats();
+  stats.operations[operation] += count;
+  await saveMonthlyStats(stats);
+}
+
+export async function trackBandwidth(bytes: number): Promise<void> {
+  const stats = await getMonthlyStats();
+  stats.bandwidth += bytes;
+  await saveMonthlyStats(stats);
+}
+
+export async function calculateMonthlyCost(): Promise<{
+  storage: number;
+  operations: number;
+  bandwidth: number;
+  total: number;
+}> {
+  const stats = await getMonthlyStats();
+  const uploads = await listAllUploads();
+  
+  // Calculate current storage
+  const totalStorage = uploads.reduce((acc, u) => 
+    acc + u.files.reduce((sum, f) => sum + f.size, 0), 0
+  );
+  
+  // R2 Pricing (per maand)
+  const storageGB = totalStorage / (1024 * 1024 * 1024);
+  const storageCost = storageGB * 0.015; // $0.015 per GB/month
+  
+  // Operations cost
+  const classAOps = stats.operations.listFiles + stats.operations.putFile + stats.operations.deleteFile;
+  const classBOps = stats.operations.getFile;
+  const operationsCost = (classAOps / 1000000) * 4.50 + (classBOps / 1000000) * 0.36;
+  
+  // Bandwidth cost (egress is free for first 10TB/month with R2!)
+  const bandwidthCost = 0;
+  
+  return {
+    storage: storageGB,
+    operations: operationsCost,
+    bandwidth: bandwidthCost,
+    total: storageCost + operationsCost + bandwidthCost,
+  };
+}
