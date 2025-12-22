@@ -37,9 +37,12 @@ export default function Header() {
       return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC']
     } else if (pathname === '/about') {
       return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC', 'ABOUT']
-    } else if (pathname === '/not-found' || !pathname.match(/^\/(portfolio|about)/)) {
-      // 404 page or unknown route
-      return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC', '404']
+    } else if (pathname.startsWith('/admin')) {
+      // Admin/dashboard pages
+      return ['PHOTO', 'DOWNLOAD']
+    } else if (pathname === '/not-found' || /^\/[a-zA-Z0-9-]+$/.test(pathname)) {
+      // Download pages (single slug) or unknown route
+      return ['PHOTO', 'DOWNLOAD']
     } else {
       return ['PHOTO']
     }
