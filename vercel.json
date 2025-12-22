@@ -3,5 +3,10 @@
     "env": {
       "NEXT_PRIVATE_IGNORE_TS_CONFIG_REWRITE": "true"
     }
-  }
+  },
+  "domains": [
+    "wouter.photo",
+    "www.wouter.photo",
+    "download.wouter.photo"
+  ]
 }
