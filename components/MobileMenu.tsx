@@ -21,34 +21,6 @@ export default function MobileMenu() {
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
   const [currentSuffixIndex, setCurrentSuffixIndex] = useState(0)
-  const [isInNetherlands, setIsInNetherlands] = useState<boolean | null>(null)
-
-  // Check user's location
-  useEffect(() => {
-    async function checkLocation() {
-      try {
-        // Probeer eerst CloudFlare's service (sneller en betrouwbaarder)
-        const cfResponse = await fetch('https://cloudflare.com/cdn-cgi/trace')
-        const cfText = await cfResponse.text()
-        const cfCountry = cfText.match(/loc=([A-Z]{2})/)?.[1]
-        
-        if (cfCountry) {
-          setIsInNetherlands(cfCountry === 'NL')
-          return
-        }
-
-        // Fallback naar ipapi als CloudFlare faalt
-        const response = await fetch('https://ipapi.co/json/')
-        const data = await response.json()
-        setIsInNetherlands(data.country_code === 'NL')
-      } catch (error) {
-        // Als beide falen, assumeer Nederlandse bezoeker voor veiligheid
-        console.log('Geolocation check failed, assuming Netherlands for safety')
-        setIsInNetherlands(true)
-      }
-    }
-    checkLocation()
-  }, [])
 
   // Bepaal de suffixes op basis van de huidige pagina (zelfde logica als Header)
   const getSuffixes = () => {
@@ -62,8 +34,6 @@ export default function MobileMenu() {
       return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC']
     } else if (pathname === '/about') {
       return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC', 'ABOUT']
-    } else if (pathname.startsWith('/blog')) {
-      return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC', 'BLOG']
     } else {
       return ['PHOTO']
     }
@@ -142,9 +112,6 @@ export default function MobileMenu() {
   </Link>
 </div>
           <Link href="/about" onClick={() => setOpen(false)}>About</Link>
-          {!isInNetherlands && (
-            <Link href="/blog" onClick={() => setOpen(false)}>Blog</Link>
-          )}
           
           {/* Theme toggle button for mobile */}
           <button 
