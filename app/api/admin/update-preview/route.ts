@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMetadata, saveMetadata } from "@/lib/r2";
 import { requireAdminAuth } from "@/lib/auth";
+import { isValidSlug } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
   // Check authentication
@@ -9,6 +10,13 @@ export async function POST(req: NextRequest) {
 
   try {
     const { slug, previewImageKey } = await req.json();
+
+    if (!isValidSlug(slug)) {
+      return NextResponse.json(
+        { error: "Invalid slug" },
+        { status: 400 }
+      );
+    }
 
     // Get existing metadata
     const metadata = await getMetadata(slug);

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { formatBytes, formatDate } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 import { useAutoLogout } from "@/lib/useAutoLogout";
+import { MAX_UPLOAD_FILE_SIZE_BYTES } from "@/lib/validation";
 
 interface FileWithPreview extends File {
   preview?: string;
@@ -344,6 +345,16 @@ export default function AdminDashboard() {
       return;
     }
 
+    const oversizedFile = files.find((file) => file.size > MAX_UPLOAD_FILE_SIZE_BYTES);
+    if (oversizedFile) {
+      toast({
+        title: "Bestand te groot",
+        description: `${oversizedFile.name} is groter dan ${formatBytes(MAX_UPLOAD_FILE_SIZE_BYTES)}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setUploading(true);
     setUploadProgress(0);
 
@@ -365,6 +376,7 @@ export default function AdminDashboard() {
             slug,
             fileName: file.name,
             fileType: file.type,
+            fileSize: file.size,
           }),
         });
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMetadata, getFile, updateDownloadCount } from "@/lib/r2";
 import archiver from "archiver";
 import { downloadRateLimit } from "@/lib/rateLimit";
+import { isValidSlug } from "@/lib/validation";
 
 // Configure route for large downloads
 export const maxDuration = 300; // 5 minutes
@@ -12,11 +13,14 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   // Rate limiting
-  const rateLimitResponse = downloadRateLimit(request);
+  const rateLimitResponse = await downloadRateLimit(request);
   if (rateLimitResponse) return rateLimitResponse;
 
   try {
     const { slug } = await params;
+    if (!isValidSlug(slug)) {
+      return NextResponse.json({ error: "Invalid slug" }, { status: 400 });
+    }
     const { fileKeys } = await request.json();
 
     if (!fileKeys || !Array.isArray(fileKeys) || fileKeys.length === 0) {

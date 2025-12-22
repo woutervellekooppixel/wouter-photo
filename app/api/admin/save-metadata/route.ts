@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminAuth } from "@/lib/auth";
 import { saveMetadata, type UploadMetadata } from "@/lib/r2";
+import { isValidSlug, MAX_UPLOAD_FILE_SIZE_BYTES } from "@/lib/validation";
 
 export async function POST(request: NextRequest) {
   const authError = await requireAdminAuth();
@@ -13,6 +14,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Slug and files are required" },
         { status: 400 }
+      );
+    }
+
+    if (!isValidSlug(slug)) {
+      return NextResponse.json(
+        { error: "Invalid slug" },
+        { status: 400 }
+      );
+    }
+
+    if (!Array.isArray(files)) {
+      return NextResponse.json(
+        { error: "Files must be an array" },
+        { status: 400 }
+      );
+    }
+
+    if (files.some((file: { size?: number }) => typeof file.size !== "number" || file.size <= 0 || file.size > MAX_UPLOAD_FILE_SIZE_BYTES)) {
+      return NextResponse.json(
+        { error: "One or more files exceed the allowed size limit" },
+        { status: 413 }
       );
     }
 

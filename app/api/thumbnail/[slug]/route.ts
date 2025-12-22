@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMetadata, getSignedDownloadUrl } from "@/lib/r2";
+import { isValidSlug } from "@/lib/validation";
 
 export async function GET(
   request: NextRequest,
@@ -7,6 +8,9 @@ export async function GET(
 ) {
   try {
     const { slug } = await params;
+    if (!isValidSlug(slug)) {
+      return NextResponse.json({ error: "Invalid slug" }, { status: 400 });
+    }
     const { searchParams } = new URL(request.url);
     const fileKey = searchParams.get("key");
 

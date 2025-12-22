@@ -3,18 +3,33 @@ import { requireAdminAuth } from "@/lib/auth";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { r2Client } from "@/lib/r2";
+import { isValidSlug, MAX_UPLOAD_FILE_SIZE_BYTES } from "@/lib/validation";
 
 export async function POST(request: NextRequest) {
   const authError = await requireAdminAuth();
   if (authError) return authError;
 
   try {
-    const { slug, fileName, fileType } = await request.json();
+    const { slug, fileName, fileType, fileSize } = await request.json();
 
     if (!slug || !fileName) {
       return NextResponse.json(
         { error: "Slug and fileName are required" },
         { status: 400 }
+      );
+    }
+
+    if (!isValidSlug(slug)) {
+      return NextResponse.json(
+        { error: "Invalid slug" },
+        { status: 400 }
+      );
+    }
+
+    if (typeof fileSize !== "number" || fileSize <= 0 || fileSize > MAX_UPLOAD_FILE_SIZE_BYTES) {
+      return NextResponse.json(
+        { error: "File size exceeds allowed limit" },
+        { status: 413 }
       );
     }
 
