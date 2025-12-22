@@ -478,7 +478,7 @@ export default function DownloadGallery({
       {/* Content wrapper */}
       <div className="relative z-10">
       {/* Info bar under site header */}
-      <div className={`w-full bg-white border-b border-gray-200 shadow-sm transition-opacity duration-1000 ${loadingThumbnails ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <div className="w-full bg-white border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-6 max-w-6xl flex flex-wrap gap-3 py-3 text-sm text-gray-700 items-center">
           <span className="font-semibold">WOUTER.DOWNLOAD</span>
           <span className="text-gray-400">•</span>
