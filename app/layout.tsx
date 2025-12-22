@@ -1,6 +1,7 @@
 import './globals.css'
 import Header from '../components/Header'
 import PWAHandler from '../components/PWAHandler'
+import { Toaster } from '@/components/ui/toaster'
 import Script from 'next/script'
 import { ThemeProvider } from 'next-themes'
 import { Metadata } from 'next'
@@ -176,6 +177,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
           <PWAHandler />
           <Header />
+          <Toaster />
           {children}
         </ThemeProvider>
       </body>
