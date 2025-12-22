@@ -36,6 +36,9 @@ export default function Header() {
       return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC']
     } else if (pathname === '/about') {
       return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC', 'ABOUT']
+    } else if (pathname === '/not-found' || !pathname.match(/^\/(portfolio|about)/)) {
+      // 404 page or unknown route
+      return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC', '404']
     } else {
       return ['PHOTO']
     }
