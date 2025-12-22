@@ -111,6 +111,14 @@ export default function Header() {
         >
           {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
         </button>
+
+        {/* Hire Me button */}
+        <a 
+          href="mailto:hello@wouter.photo?subject=Photography Inquiry"
+          className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
+        >
+          Hire Me
+        </a>
       </nav>
 
       <div className="sm:hidden">
