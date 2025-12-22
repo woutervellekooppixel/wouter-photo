@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMetadata, downloadFile, updateDownloadCount } from "@/lib/r2";
+import { getMetadata, getFile, updateDownloadCount } from "@/lib/r2";
 import archiver from "archiver";
+import { downloadRateLimit } from "@/lib/rateLimit";
 
+// Configure route for large downloads
 export const maxDuration = 300; // 5 minutes
 export const dynamic = 'force-dynamic';
 
 export async function POST(
   request: NextRequest,
-  context: { params: Promise<{ slug: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  // Rate limiting
+  const rateLimitResponse = downloadRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
-    const { slug } = await context.params;
+    const { slug } = await params;
     const { fileKeys } = await request.json();
 
     if (!fileKeys || !Array.isArray(fileKeys) || fileKeys.length === 0) {
@@ -30,6 +36,7 @@ export async function POST(
       return NextResponse.json({ error: "Expired" }, { status: 410 });
     }
 
+    // Filter to only selected files
     const selectedFiles = metadata.files.filter(f => fileKeys.includes(f.key));
 
     if (selectedFiles.length === 0) {
@@ -44,6 +51,7 @@ export async function POST(
     // Create zip archive with streaming
     const archive = archiver("zip", { zlib: { level: 6 } });
     
+    // Create a readable stream from the archive
     const stream = new ReadableStream({
       start(controller) {
         archive.on("data", (chunk: Buffer) => {
@@ -58,10 +66,11 @@ export async function POST(
           controller.error(err);
         });
 
+        // Start adding files to the archive
         (async () => {
           try {
             for (const file of selectedFiles) {
-              const buffer = await downloadFile(file.key);
+              const buffer = await getFile(file.key);
               archive.append(buffer, { name: file.name });
             }
             await archive.finalize();
@@ -73,6 +82,7 @@ export async function POST(
       },
     });
 
+    // Return the streaming zip file
     return new NextResponse(stream, {
       headers: {
         "Content-Type": "application/zip",

@@ -1,35 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMetadata, saveMetadata } from "@/lib/r2";
 import { requireAdminAuth } from "@/lib/auth";
+import { getMetadata, saveMetadata } from "@/lib/r2";
 
 export async function POST(req: NextRequest) {
-  // Check authentication
   const authError = await requireAdminAuth();
   if (authError) return authError;
 
   try {
-    const { slug, previewImageKey } = await req.json();
+    const { slug, backgroundImageKey } = await req.json();
 
-    // Get existing metadata
-    const metadata = await getMetadata(slug);
-    if (!metadata) {
-      return NextResponse.json(
-        { error: "Upload not found" },
-        { status: 404 }
-      );
+    if (!slug) {
+      return NextResponse.json({ error: "Slug is required" }, { status: 400 });
     }
 
-    // Update preview image
-    metadata.previewImageKey = previewImageKey;
+    const metadata = await getMetadata(slug);
+    if (!metadata) {
+      return NextResponse.json({ error: "Upload not found" }, { status: 404 });
+    }
 
-    // Save updated metadata
+    metadata.backgroundImageKey = backgroundImageKey;
     await saveMetadata(metadata);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Update preview error:", error);
+    console.error("Error updating background:", error);
     return NextResponse.json(
-      { error: "Failed to update preview image" },
+      { error: "Failed to update background" },
       { status: 500 }
     );
   }
