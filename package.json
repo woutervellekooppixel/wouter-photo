@@ -10,11 +10,21 @@
     "postbuild": "next-sitemap"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.700.0",
+    "@aws-sdk/s3-request-presigner": "^3.956.0",
     "@netlify/plugin-nextjs": "^5.11.1",
+    "@radix-ui/react-dialog": "^1.1.2",
+    "@radix-ui/react-label": "^2.1.1",
+    "@radix-ui/react-slot": "^1.1.1",
+    "@radix-ui/react-toast": "^1.2.2",
     "@vercel/edge": "^1.2.2",
+    "archiver": "^7.0.1",
     "autoprefixer": "^10.4.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "dotenv": "^17.2.1",
     "framer-motion": "^10.18.0",
+    "iron-session": "^8.0.3",
     "lucide-react": "^0.510.0",
     "next": "^15.3.8",
     "next-sitemap": "^4.2.3",
@@ -23,10 +33,14 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^5.0.1",
+    "resend": "^4.0.1",
     "sharp": "^0.34.2",
-    "tailwindcss": "^3.4.1"
+    "tailwind-merge": "^2.6.0",
+    "tailwindcss": "^3.4.1",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@types/archiver": "^6.0.2",
     "@types/node": "22.15.18",
     "@types/react": "19.1.4",
     "typescript": "5.8.3"
