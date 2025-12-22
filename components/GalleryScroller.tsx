@@ -206,6 +206,29 @@ export default function GalleryScroller({ category }: Props) {
     }
   }, [scrollLeft, scrollRight])
 
+  // Handle mousewheel to scroll horizontally
+  useEffect(() => {
+    const container = scrollRef.current
+    if (!container) return
+
+    const handleWheel = (e: WheelEvent) => {
+      // Only on desktop
+      if (window.innerWidth >= 1280) {
+        e.preventDefault()
+        
+        // Convert vertical scroll to horizontal scroll
+        const scrollAmount = e.deltaY
+        container.scrollBy({ left: scrollAmount, behavior: 'auto' })
+      }
+    }
+
+    container.addEventListener('wheel', handleWheel, { passive: false })
+
+    return () => {
+      container.removeEventListener('wheel', handleWheel)
+    }
+  }, [])
+
   // Touch handlers for mobile
   const minSwipeDistance = 50
 
