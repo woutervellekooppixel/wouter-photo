@@ -33,6 +33,9 @@ export interface UploadMetadata {
   }[];
   previewImageKey?: string;
   ratings?: Record<string, number>; // fileKey -> rating (1-5)
+  clientEmail?: string;
+  customMessage?: string;
+  ratingsEnabled?: boolean;
 }
 
 // Upload file to R2
