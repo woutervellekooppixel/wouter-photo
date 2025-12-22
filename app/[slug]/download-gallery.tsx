@@ -477,8 +477,8 @@ export default function DownloadGallery({
       
       {/* Content wrapper */}
       <div className="relative z-10">
-      {/* Info bar under site header */}
-      <div className="w-full bg-white border-b border-gray-200 shadow-sm">
+      {/* Info bar under site header (fixed, above overlay) */}
+      <div className="fixed top-16 left-0 right-0 z-[60] bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-6 max-w-6xl flex flex-wrap gap-3 py-3 text-sm text-gray-700 items-center">
           <span className="font-semibold">WOUTER.DOWNLOAD</span>
           <span className="text-gray-400">•</span>
@@ -489,6 +489,8 @@ export default function DownloadGallery({
           <span>Beschikbaar tot {formatExpiryDate(metadata.expiresAt)}</span>
         </div>
       </div>
+      {/* Spacer so content doesn't sit under the fixed info bar */}
+      <div className="h-12" />
 
       {/* Fullscreen loading overlay */}
       {loadingThumbnails && (
