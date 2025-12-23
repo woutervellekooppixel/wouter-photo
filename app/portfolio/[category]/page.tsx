@@ -1,14 +1,15 @@
 import { notFound } from 'next/navigation';
 import { generateMetadata } from './metadata';
 import GalleryScroller from '../../../components/GalleryScroller';
+import { getGalleryData } from './gallery-data';
 
 export { generateMetadata };
 
-interface PageProps {
-  params: Promise<{ category: string }>;
-}
 
-export default async function PortfolioPage({ params }: PageProps) {
+
+
+// Next.js 15.5+: params is Promise, destructure met await
+export default async function PortfolioPage({ params }: any) {
   const { category } = await params;
 
   const validCategories = ['concerts', 'events', 'misc', 'all'];
@@ -60,6 +61,15 @@ export default async function PortfolioPage({ params }: PageProps) {
     }
   } : null;
 
+  // Haal gallery data op
+  const dataApi = await getGalleryData();
+  let photos: any[] = [];
+  if (category === 'all') {
+    photos = [...(dataApi.concerts || []), ...(dataApi.events || []), ...(dataApi.misc || [])];
+  } else {
+    photos = dataApi[category] || [];
+  }
+
   return (
     <>
       {structuredData && (
@@ -69,7 +79,7 @@ export default async function PortfolioPage({ params }: PageProps) {
         />
       )}
       <div className="min-h-screen bg-white dark:bg-black">
-        <GalleryScroller category={category as 'all' | 'concerts' | 'events' | 'misc'} />
+        <GalleryScroller category={category as 'all' | 'concerts' | 'events' | 'misc'} photos={photos} />
       </div>
     </>
   );

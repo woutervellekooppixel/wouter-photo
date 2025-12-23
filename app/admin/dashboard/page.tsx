@@ -10,6 +10,7 @@ import { formatBytes, formatDate } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 import { useAutoLogout } from "@/lib/useAutoLogout";
 import { MAX_UPLOAD_FILE_SIZE_BYTES } from "@/lib/validation";
+import AdminTabs from '@/components/AdminTabs';
 
 interface FileWithPreview extends File {
   preview?: string;
@@ -733,6 +734,8 @@ export default function AdminDashboard() {
             </Button>
           </div>
         </div>
+
+        <AdminTabs />
 
         {/* Compact Summary */}
         {uploads.length > 0 && (
