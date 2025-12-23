@@ -24,6 +24,9 @@ export default function MobileMenu() {
 
   // Bepaal de suffixes op basis van de huidige pagina (zelfde logica als Header)
   const getSuffixes = () => {
+    if (!pathname) {
+      return ['PHOTO']
+    }
     if (pathname === '/') {
       return ['CONCERTS', 'EVENTS', 'MISC', 'PHOTO']
     } else if (pathname.startsWith('/portfolio/concerts')) {

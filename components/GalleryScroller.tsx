@@ -1,25 +1,24 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { photos } from '../data/photos'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 import OptimizedImage from './OptimizedImage'
 
 type Props = {
-  category: 'concerts' | 'events' | 'misc' | 'all'
+  category: 'concerts' | 'events' | 'misc' | 'all',
+  photos: any[]
 }
 
-export default function GalleryScroller({ category }: Props) {
+export default function GalleryScroller({ category, photos }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const mobileScrollRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
   const [isTransitioning, setIsTransitioning] = useState(false)
-  const [displayedPhotos, setDisplayedPhotos] = useState(() => 
-    category === 'all' ? photos : photos.filter((p) => p.category === category)
-  )
+  // displayedPhotos is now derived from props
+  const [displayedPhotos, setDisplayedPhotos] = useState<any[]>(photos)
 
   // Disable body scroll on desktop
   useEffect(() => {
@@ -28,47 +27,43 @@ export default function GalleryScroller({ category }: Props) {
       document.documentElement.classList.add('gallery-page')
       document.body.classList.add('gallery-page')
     }
-    
     return () => {
       document.documentElement.classList.remove('gallery-page')
       document.body.classList.remove('gallery-page')
     }
   }, [])
 
-  const filteredPhotos =
-    category === 'all'
-      ? photos
-      : photos.filter((p) => p.category === category)
+  // Update displayedPhotos when photos/category changes
+  useEffect(() => {
+    let newPhotos: any[] = []
+    if (category === 'all') {
+      newPhotos = photos
+    } else {
+      newPhotos = photos.filter((p) => p.category === category)
+    }
+    setDisplayedPhotos(newPhotos)
+    setActiveIndex(0)
+  }, [category, photos])
+
+  // filteredPhotos niet meer nodig, alles via API
 
   // Handle category changes with smooth transition
+  // useEffect voor fade/transition kan blijven, maar nu alleen op displayedPhotos
   useEffect(() => {
-    const newPhotos = category === 'all'
-      ? photos
-      : photos.filter((p) => p.category === category)
-    
-    if (JSON.stringify(newPhotos) !== JSON.stringify(displayedPhotos)) {
-      setIsTransitioning(true)
-      
-      // After fade out, update photos and fade back in
+    setIsTransitioning(true)
+    setTimeout(() => {
+      // Reset scroll positions
+      if (scrollRef.current) {
+        scrollRef.current.scrollTo({ left: 0, behavior: 'auto' })
+      }
+      if (mobileScrollRef.current) {
+        mobileScrollRef.current.scrollTo({ left: 0, behavior: 'auto' })
+      }
       setTimeout(() => {
-        setDisplayedPhotos(newPhotos)
-        setActiveIndex(0)
-        
-        // Reset scroll positions
-        if (scrollRef.current) {
-          scrollRef.current.scrollTo({ left: 0, behavior: 'auto' })
-        }
-        if (mobileScrollRef.current) {
-          mobileScrollRef.current.scrollTo({ left: 0, behavior: 'auto' })
-        }
-        
-        // Fade back in
-        setTimeout(() => {
-          setIsTransitioning(false)
-        }, 50)
-      }, 200)
-    }
-  }, [category, displayedPhotos])
+        setIsTransitioning(false)
+      }, 50)
+    }, 200)
+  }, [displayedPhotos])
 
   const getItemWidth = () => {
     const container = scrollRef.current
@@ -362,8 +357,9 @@ export default function GalleryScroller({ category }: Props) {
                 fill
                 priority={index < 2}
                 loading={index < 2 ? 'eager' : 'lazy'}
-                placeholder="blur"
-                blurDataURL={photo.blurDataURL}
+                {...(photo.blurDataURL
+                  ? { placeholder: 'blur', blurDataURL: photo.blurDataURL }
+                  : { placeholder: undefined, blurDataURL: undefined })}
                 className="object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
                 sizes="90vw"
                 onLoad={(e: any) => {
@@ -388,8 +384,9 @@ export default function GalleryScroller({ category }: Props) {
                 fill
                 priority={index < 4}
                 loading={index < 4 ? 'eager' : 'lazy'}
-                placeholder="blur"
-                blurDataURL={photo.blurDataURL}
+                {...(photo.blurDataURL
+                  ? { placeholder: 'blur', blurDataURL: photo.blurDataURL }
+                  : { placeholder: undefined, blurDataURL: undefined })}
                 className="object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
                 sizes="(max-width: 640px) 100vw, 50vw"
                 onLoad={(e: any) => {
@@ -418,8 +415,9 @@ export default function GalleryScroller({ category }: Props) {
                   fill
                   priority={index < 3}
                   loading={index < 3 ? 'eager' : 'lazy'}
-                  placeholder="blur"
-                  blurDataURL={photo.blurDataURL}
+                  {...(photo.blurDataURL
+                    ? { placeholder: 'blur', blurDataURL: photo.blurDataURL }
+                    : { placeholder: undefined, blurDataURL: undefined })}
                   className="object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
                   sizes="100vw"
                   onLoad={(e: any) => {

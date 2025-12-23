@@ -27,22 +27,25 @@ export default function Header() {
 
   // Bepaal de suffixes op basis van de huidige pagina
   const getSuffixes = () => {
-    if (pathname === '/') {
+    if (!pathname) {
       return ['PHOTO']
-    } else if (pathname.startsWith('/portfolio/concerts')) {
-      return ['PHOTO', 'EVENTS', 'MISC', 'CONCERTS']
-    } else if (pathname.startsWith('/portfolio/events')) {
-      return ['PHOTO', 'CONCERTS', 'MISC', 'EVENTS']
-    } else if (pathname.startsWith('/portfolio/misc')) {
-      return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC']
+    }
+    if (pathname === '/' || pathname === '/portfolio') {
+      return ['PHOTO']
+    } else if (pathname === '/portfolio/concerts') {
+      return ['CONCERTS']
+    } else if (pathname === '/portfolio/events') {
+      return ['EVENTS']
+    } else if (pathname === '/portfolio/misc') {
+      return ['MISC']
     } else if (pathname === '/about') {
-      return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC', 'ABOUT']
+      return ['ABOUT']
     } else if (pathname.startsWith('/admin')) {
       // Admin/dashboard pages
-      return ['PHOTO', 'DOWNLOAD']
+      return ['DOWNLOAD']
     } else if (pathname === '/not-found' || /^\/[a-zA-Z0-9-]+$/.test(pathname)) {
       // Download pages (single slug) or unknown route
-      return ['PHOTO', 'DOWNLOAD']
+      return ['DOWNLOAD']
     } else {
       return ['PHOTO']
     }
