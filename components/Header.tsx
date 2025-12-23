@@ -28,7 +28,7 @@ export default function Header() {
   // Bepaal de suffixes op basis van de huidige pagina
   const getSuffixes = () => {
     if (pathname === '/') {
-      return ['CONCERTS', 'EVENTS', 'MISC', 'PHOTO']
+      return ['PHOTO']
     } else if (pathname.startsWith('/portfolio/concerts')) {
       return ['PHOTO', 'EVENTS', 'MISC', 'CONCERTS']
     } else if (pathname.startsWith('/portfolio/events')) {
