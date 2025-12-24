@@ -1,3 +1,14 @@
+// --- ENVIRONMENT CHECK ---
+const missingVars = [
+  'R2_ACCOUNT_ID',
+  'R2_ACCESS_KEY_ID',
+  'R2_SECRET_ACCESS_KEY',
+  'R2_BUCKET_NAME'
+].filter((v) => !process.env[v]);
+if (missingVars.length > 0) {
+  throw new Error('R2 config error: ontbrekende env vars: ' + missingVars.join(', '));
+}
+
 import {
   S3Client,
   PutObjectCommand,
@@ -245,16 +256,34 @@ export async function listAllUploads(): Promise<UploadMetadata[]> {
 }
 
 export async function deleteUpload(slug: string): Promise<void> {
+  console.log('[deleteUpload] Start voor slug:', slug);
   const metadata = await getMetadata(slug);
-  if (!metadata) return;
+  if (!metadata) {
+    console.log('[deleteUpload] Geen metadata gevonden voor', slug);
+    throw new Error('Geen metadata gevonden voor ' + slug);
+  }
+  console.log('[deleteUpload] Metadata:', metadata);
 
   // Delete all files
   for (const file of metadata.files) {
-    await deleteFile(file.key);
+    try {
+      console.log('[deleteUpload] Verwijder bestand:', file.key);
+      await deleteFile(file.key);
+    } catch (err) {
+      console.error('[deleteUpload] Fout bij verwijderen van', file.key, err);
+      throw err;
+    }
   }
 
   // Delete metadata
-  await deleteFile(`metadata/${slug}.json`);
+  try {
+    console.log('[deleteUpload] Verwijder metadata:', `metadata/${slug}.json`);
+    await deleteFile(`metadata/${slug}.json`);
+  } catch (err) {
+    console.error('[deleteUpload] Fout bij verwijderen van metadata', err);
+    throw err;
+  }
+  console.log('[deleteUpload] Klaar voor slug:', slug);
 }
 
 export async function deleteFolder(prefix: string): Promise<void> {
