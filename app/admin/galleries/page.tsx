@@ -28,7 +28,9 @@ async function fetchPhotos(): Promise<Record<Category, Photo[]>> {
 
 export default function AdminGalleries() {
     // Foto verwijderen
+    const [deleteError, setDeleteError] = useState<string|null>(null);
     async function deletePhoto(cat: Category, idx: number) {
+      setDeleteError(null);
       const photo = photos[cat][idx];
       if (!photo) return;
       if (!confirm('Weet je zeker dat je deze foto wilt verwijderen?')) return;
@@ -37,11 +39,33 @@ export default function AdminGalleries() {
       items.splice(idx, 1);
       setPhotos({ ...photos, [cat]: items });
       // Verwijder via API (fysiek bestand)
-      await fetch('/api/admin/galleries/delete', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category: cat, id: photo.id })
-      });
+      try {
+        const resp = await fetch('/api/admin/galleries', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ category: cat, id: photo.id })
+        });
+        let msg = '';
+        let raw = '';
+        try {
+          const clone = resp.clone();
+          raw = await clone.text();
+        } catch {}
+        try {
+          const data = await resp.json();
+          msg = data?.error ? `Verwijderen mislukt: ${data.error}` : 'Verwijderen mislukt';
+          if (data?.debug) {
+            msg += '\nDEBUG: ' + JSON.stringify(data.debug, null, 2);
+          }
+        } catch {
+          msg = 'Verwijderen mislukt (raw): ' + raw;
+        }
+        if (!resp.ok) {
+          setDeleteError(msg + (raw && !msg.includes(raw) ? '\nRAW: ' + raw : ''));
+        }
+      } catch (err: any) {
+        setDeleteError('Verwijderen error: ' + (err?.message || err));
+      }
       // Sla nieuwe volgorde op
       fetch('/api/admin/galleries/order', {
         method: 'POST',
@@ -115,6 +139,7 @@ export default function AdminGalleries() {
     <div className="p-4">
       <AdminTabs />
       <h1 className="text-2xl font-bold mb-6">Galleries beheer</h1>
+      {deleteError && <div className="mb-4 text-red-600 text-sm font-semibold">{deleteError}</div>}
       {uploadError && <div className="mb-4 text-red-600 text-sm font-semibold">{uploadError}</div>}
       {uploadSuccess && <div className="mb-4 text-green-600 text-sm font-semibold">{uploadSuccess}</div>}
       <div className="flex gap-8">

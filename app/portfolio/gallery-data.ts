@@ -17,3 +17,5 @@ export async function getGalleryData() {
   if (!res.ok) throw new Error('Failed to fetch gallery data');
   return res.json();
 }
+
+export default getGalleryData;
