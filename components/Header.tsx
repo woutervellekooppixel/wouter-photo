@@ -19,9 +19,18 @@ const MotionSpan = motion(function MotionSpanBase({
 })
 
 export default function Header() {
+  // Alle hooks altijd aanroepen!
+  const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
   const [currentSuffixIndex, setCurrentSuffixIndex] = useState(0)
   const { theme, setTheme } = useTheme()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Pas hier de mounted check toe, alleen voor de JSX:
+  // De volledige JSX-structuur blijft altijd gelijk. Alleen de dynamische tekst/animatie is afhankelijk van mounted.
 
   const isActive = (slug: string) => pathname === `/portfolio/${slug}`
 
@@ -54,6 +63,7 @@ export default function Header() {
   const suffixes = getSuffixes()
   const currentSuffix = suffixes[currentSuffixIndex]
 
+
   // Cyclisch door de suffixes gaan en stoppen op de laatste (huidige pagina)
   useEffect(() => {
     if (currentSuffixIndex >= suffixes.length - 1) return // Stop als we bij de laatste zijn
@@ -78,21 +88,25 @@ export default function Header() {
   }, [pathname])
 
   return (
-    <header className="sticky top-0 z-50 flex items-center px-6 py-4 border-b border-gray-200 bg-white dark:bg-black dark:border-gray-700">
+    <header className="sticky top-0 z-50 flex items-center px-6 py-4 pt-4 border-b border-gray-200 bg-white dark:bg-black dark:border-gray-700">
       <Link href="/portfolio" className="text-xl tracking-tight text-black dark:text-white flex items-baseline">
         <span className="font-extrabold">WOUTER</span>
-        <AnimatePresence mode="wait">
-          <MotionSpan
-            key={currentSuffix}
-            className="font-light inline-block"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-          >
-            .{currentSuffix}
-          </MotionSpan>
-        </AnimatePresence>
+        {mounted ? (
+          <AnimatePresence mode="wait">
+            <MotionSpan
+              key={currentSuffix}
+              className="font-light inline-block"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+            >
+              .{currentSuffix}
+            </MotionSpan>
+          </AnimatePresence>
+        ) : (
+          <span className="font-light inline-block opacity-0">.PHOTO</span>
+        )}
       </Link>
 
       <div className="hidden sm:flex flex-1 justify-center">
@@ -127,7 +141,7 @@ export default function Header() {
         </button>
       </nav>
 
-      <div className="sm:hidden">
+      <div className="sm:hidden flex-1 flex justify-end items-center h-full pr-0" style={{minHeight: 'inherit'}}>
         <MobileMenu />
       </div>
     </header>

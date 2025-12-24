@@ -21,6 +21,11 @@ export default function MobileMenu() {
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
   const [currentSuffixIndex, setCurrentSuffixIndex] = useState(0)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Bepaal de suffixes op basis van de huidige pagina (zelfde logica als Header)
   const getSuffixes = () => {
@@ -44,6 +49,8 @@ export default function MobileMenu() {
 
   const suffixes = getSuffixes()
   const currentSuffix = suffixes[currentSuffixIndex]
+
+  // De volledige JSX-structuur blijft altijd gelijk. Alleen de dynamische tekst/animatie is afhankelijk van mounted.
 
   // Cyclisch door de suffixes gaan en stoppen op de laatste (huidige pagina)
   useEffect(() => {
@@ -69,9 +76,11 @@ export default function MobileMenu() {
 
   return (
     <div className="md:hidden">
-      <button onClick={() => setOpen(true)} className="text-black dark:text-white">
-        <Menu size={24} />
-      </button>
+      <div className="flex justify-end items-center h-full pr-0">
+        <button onClick={() => setOpen(true)} className="text-black dark:text-white">
+          <Menu size={24} />
+        </button>
+      </div>
 
       {open && (
         <div className="fixed inset-0 bg-white dark:bg-black z-50 flex flex-col items-center justify-center space-y-8 text-xl text-black dark:text-white">
