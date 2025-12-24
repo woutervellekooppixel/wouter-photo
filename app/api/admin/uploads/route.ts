@@ -8,7 +8,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const uploads = await listAllUploads();
-    return NextResponse.json(uploads);
+    // Filter gallery-foto's eruit
+    const filtered = uploads.filter(u => !u.gallery);
+    return NextResponse.json(filtered);
   } catch (error) {
     console.error("Error listing uploads:", error);
     return NextResponse.json(

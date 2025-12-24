@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
         type: 'image/webp',
       }],
       downloads: 0,
+      gallery: true,
     };
     const { saveMetadata } = await import('@/lib/r2');
     await saveMetadata(metadata);
