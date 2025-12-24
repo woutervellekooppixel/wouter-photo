@@ -24,28 +24,25 @@ export async function GET(request: Request) {
       continue;
     }
     // Filter blur-bestanden en alleen .webp
-    let photos = files.filter(f => f.endsWith('.webp') && !f.includes('-blur')).map(f => ({
+    let allPhotos = files.filter(f => f.endsWith('.webp') && !f.includes('-blur')).map(f => ({
       id: f,
       src: `/api/photos/${cat}/${f}`,
       alt: f,
       category: cat
     }));
-    // Sorteer volgens orderData als beschikbaar
+    // Sorteer exact volgens orderData, ontbrekende foto's achteraan
+    let photos: typeof allPhotos = [];
     if (orderData[cat] && orderData[cat].length > 0) {
-      const orderedIds = new Set(orderData[cat]);
-      // Niet-geordende foto's vooraan
-      const unOrdered = files
-        .filter(f => f.endsWith('.webp') && !f.includes('-blur') && !orderedIds.has(f))
-        .map(f => ({
-          id: f,
-          src: `/api/photos/${cat}/${f}`,
-          alt: f,
-          category: cat
-        }));
-      const ordered = orderData[cat]
-        .map(fname => photos.find(p => p.id === fname))
-        .filter(Boolean) as typeof photos;
-      photos = [...unOrdered, ...ordered];
+      // Eerst alles uit orderData in die volgorde
+      photos = orderData[cat]
+        .map(fname => allPhotos.find(p => p.id === fname))
+        .filter(Boolean) as typeof allPhotos;
+      // Voeg ontbrekende foto's toe (nieuwe uploads etc)
+      const orderedSet = new Set(orderData[cat]);
+      const missing = allPhotos.filter(p => !orderedSet.has(p.id));
+      photos = [...photos, ...missing];
+    } else {
+      photos = allPhotos;
     }
     result[cat] = photos;
   }

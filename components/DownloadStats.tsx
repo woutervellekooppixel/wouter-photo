@@ -40,7 +40,8 @@ export default function DownloadStats() {
     fetchMetadata()
   }, [pathname, isDownloadPage])
 
-  if (!isDownloadPage || !metadata) return null
+  // Hooks altijd aanroepen! Render een lege div als fallback.
+  if (!isDownloadPage || !metadata) return <div className="hidden md:flex items-center gap-2 text-xs text-gray-600" />
 
   const formatExpiryDate = (dateString: string) => {
     const date = new Date(dateString)
