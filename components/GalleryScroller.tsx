@@ -345,22 +345,21 @@ export default function GalleryScroller({ category, photos }: Props) {
           {displayedPhotos.map((photo, index) => (
             <div
               key={photo.id}
-              className="relative flex-shrink-0 max-w-[90vw]"
-              style={{ 
-                height: 'calc(100vh - 120px)',
-                aspectRatio: '3/2'
-              }}
+              className="relative flex-shrink-0 max-w-[90vw] flex items-center justify-center bg-white dark:bg-black"
+              style={{ height: 'calc(100vh - 120px)' }}
             >
               <Image
                 src={photo.src}
                 alt={photo.alt}
-                fill
+                width={1600}
+                height={1067}
                 priority={index < 2}
                 loading={index < 2 ? 'eager' : 'lazy'}
                 {...(photo.blurDataURL
                   ? { placeholder: 'blur', blurDataURL: photo.blurDataURL }
                   : { placeholder: undefined, blurDataURL: undefined })}
-                className="object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100"
+                style={{ height: '100%', width: 'auto', maxWidth: '100%' }}
+                className="object-contain transition-opacity duration-500 ease-in-out opacity-0 data-[loaded=true]:opacity-100 mx-auto"
                 sizes="90vw"
                 onLoad={(e: any) => {
                   e.currentTarget.dataset.loaded = 'true'

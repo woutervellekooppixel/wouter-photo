@@ -3,6 +3,7 @@ import Header from '../components/Header'
 import PWAHandler from '../components/PWAHandler'
 import { Toaster } from '@/components/ui/toaster'
 import Script from 'next/script'
+import AnalyticsInit from '../components/AnalyticsInit'
 import { ThemeProvider } from 'next-themes'
 import { Metadata } from 'next'
 
@@ -149,20 +150,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           src={`https://www.googletagmanager.com/gtag/js?id=G-SGRS9782NB`} 
           strategy="afterInteractive"
         />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-SGRS9782NB', {
-              page_title: document.title,
-              page_location: window.location.href
-            });
-            
-            // Debug logging
-            console.log('🔵 Google Analytics geïnitialiseerd:', 'G-SGRS9782NB');
-          `}
-        </Script>
+        {/* Google Analytics initialisatie nu client-side voor hydration fix */}
+        <AnalyticsInit />
       </head>
       <body>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
