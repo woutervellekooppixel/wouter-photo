@@ -157,7 +157,16 @@ export default function AdminGalleries() {
         {...attributes}
         {...listeners}
       >
-        <Image src={photo.src} alt={photo.alt} width={80} height={60} className="rounded object-cover" />
+        <div className="h-20 min-w-0 flex-shrink-0 flex items-center justify-center overflow-hidden rounded bg-gray-100">
+          <Image
+            src={photo.src}
+            alt={photo.alt}
+            width={120}
+            height={80}
+            className="h-20 w-auto object-contain"
+            sizes="80px"
+          />
+        </div>
         <span className="flex-1 truncate text-xs">{photo.alt}</span>
         <div className="flex flex-col gap-1">
           {/* Chevron up/down als visuele drag handle, optioneel interactief */}
@@ -210,11 +219,11 @@ export default function AdminGalleries() {
       {deleteError && <div className="mb-4 text-red-600 text-sm font-semibold">{deleteError}</div>}
       {uploadError && <div className="mb-4 text-red-600 text-sm font-semibold">{uploadError}</div>}
       {uploadSuccess && <div className="mb-4 text-green-600 text-sm font-semibold">{uploadSuccess}</div>}
-      <div className="flex gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Drag & drop voor alle categorieën met dnd-kit */}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           {CATEGORIES.map((cat) => (
-            <Card key={cat} className="w-1/3">
+            <Card key={cat} className="w-full">
               <CardHeader>
                 <CardTitle>{cat.charAt(0).toUpperCase() + cat.slice(1)}</CardTitle>
                 {/* Dropzone bovenaan */}
