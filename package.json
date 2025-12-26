@@ -11,7 +11,8 @@
     "migrate:pre": "cp package.json package.json.bak && jq '.type = \"commonjs\"' package.json > package.tmp && mv package.tmp package.json",
     "migrate:run": "node scripts/migrate-photos-to-r2.cjs",
     "migrate:post": "mv package.json.bak package.json",
-    "migrate:all": "npm run migrate:pre && npm run migrate:run && npm run migrate:post"
+    "migrate:all": "npm run migrate:pre && npm run migrate:run && npm run migrate:post",
+    "deploy": "vercel --prod"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.700.0",

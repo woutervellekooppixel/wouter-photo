@@ -1,5 +1,5 @@
 /** @type {import('next-sitemap').IConfig} */
-export default {
+module.exports = {
   siteUrl: 'https://wouter.photo',
   generateRobotsTxt: true,
   changefreq: 'weekly',

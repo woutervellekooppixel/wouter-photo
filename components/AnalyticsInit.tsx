@@ -5,9 +5,9 @@ export default function AnalyticsInit() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.dataLayer = window.dataLayer || [];
-    function gtag(){window.dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-SGRS9782NB', {
+    window.gtag = function (...args: any[]) { window.dataLayer.push(args); };
+    window.gtag('js', new Date());
+    window.gtag('config', 'G-SGRS9782NB', {
       page_title: document.title,
       page_location: window.location.href
     });
