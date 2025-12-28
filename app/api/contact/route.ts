@@ -15,7 +15,7 @@ export async function POST(req: Request) {
       from: 'Contact Form <no-reply@wouter.photo>',
       to: ['hello@wouter.photo'],
       subject: `New Contact Form Submission from ${name}`,
-      reply_to: email,
+      replyTo: email,
       text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
     });
 
