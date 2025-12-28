@@ -2,6 +2,8 @@ import './globals.css'
 import Header from '../components/Header'
 import PWAHandler from '../components/PWAHandler'
 import { Toaster } from '@/components/ui/toaster'
+import FloatingContactButton from '../components/FloatingContactButton'
+import MobileFloatingContactButton from '../components/MobileFloatingContactButton'
 import Script from 'next/script'
 import AnalyticsInit from '../components/AnalyticsInit'
 import { ThemeProvider } from 'next-themes'
@@ -168,6 +170,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Header />
           <Toaster />
           {children}
+          <FloatingContactButton />
+          <MobileFloatingContactButton />
         </ThemeProvider>
       </body>
     </html>

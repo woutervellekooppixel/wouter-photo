@@ -1,12 +1,15 @@
-'use client'
+  "use client";
 import Link from 'next/link'
+import FloatingContactButton from './FloatingContactButton'
 import { usePathname } from 'next/navigation'
 import { FaInstagram, FaLinkedin, FaWhatsapp } from 'react-icons/fa'
+import { useState } from 'react'
+// import { SocialLightbox } from './SocialLightbox' (verwijderd)
 import { motion, AnimatePresence } from 'framer-motion'
 import MobileMenu from './MobileMenu'
 import DownloadStats from './DownloadStats'
 import { Sun, Moon } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useTheme } from 'next-themes'
 import type { HTMLAttributes } from 'react'
 
@@ -24,6 +27,7 @@ export default function Header() {
   const pathname = usePathname()
   const [currentSuffixIndex, setCurrentSuffixIndex] = useState(0)
   const { theme, setTheme } = useTheme()
+  // const [showSocial, setShowSocial] = useState<null | 'instagram' | 'linkedin'>(null) (verwijderd)
 
   useEffect(() => {
     setMounted(true)
@@ -113,7 +117,7 @@ export default function Header() {
         <DownloadStats />
       </div>
 
-      <nav className="hidden sm:flex items-center space-x-6 text-sm text-black dark:text-white">
+      <nav className="hidden sm:flex items-center space-x-6 text-sm text-black dark:text-white flex-shrink-0">
         <div className="relative group">
           <div className="font-medium hover:text-black dark:hover:text-white cursor-pointer">Portfolio</div>
           <div className="absolute left-0 top-full pt-1 z-50">
@@ -125,10 +129,16 @@ export default function Header() {
           </div>
         </div>
 
+
         <Link href="/about" className="hover:text-gray-600 dark:hover:text-gray-300">About</Link>
 
-        <a href="https://instagram.com/woutervellekoop" target="_blank" className="hover:text-gray-600 dark:hover:text-gray-300"><FaInstagram size={16} /></a>
-        <a href="https://linkedin.com/in/woutervellekoop" target="_blank" className="hover:text-gray-600 dark:hover:text-gray-300"><FaLinkedin size={16} /></a>
+
+        <a href="https://instagram.com/woutervellekoop" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600 dark:hover:text-gray-300" aria-label="Instagram">
+          <FaInstagram size={16} />
+        </a>
+        <a href="https://linkedin.com/in/woutervellekoop" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600 dark:hover:text-gray-300" aria-label="LinkedIn">
+          <FaLinkedin size={16} />
+        </a>
         <a href="https://wa.me/31616290418?text=Hallo%20Wouter%2C%20ik%20ben%20ge%C3%AFnteresseerd%20in%20jouw%20fotografiediensten" target="_blank" className="hover:text-gray-600 dark:hover:text-gray-300"><FaWhatsapp size={16} /></a>
 
         {/* Theme toggle button */}
@@ -141,9 +151,15 @@ export default function Header() {
         </button>
       </nav>
 
+      {/* Contact button helemaal rechts */}
+      <div className="hidden sm:flex flex-shrink-0 ml-4">
+        <FloatingContactButton />
+      </div>
+
       <div className="sm:hidden flex-1 flex justify-end items-center h-full pr-0" style={{minHeight: 'inherit'}}>
         <MobileMenu />
       </div>
+
     </header>
   )
 }
