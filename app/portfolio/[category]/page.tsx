@@ -78,7 +78,7 @@ export default async function PortfolioPage({ params }: any) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
       )}
-      <div className="min-h-screen bg-white dark:bg-black">
+      <div className="min-h-screen bg-white dark:bg-black py-6">
         <GalleryScroller category={category as 'all' | 'concerts' | 'events' | 'misc'} photos={photos} />
       </div>
     </>
