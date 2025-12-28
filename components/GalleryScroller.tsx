@@ -316,7 +316,7 @@ export default function GalleryScroller({ category, photos }: Props) {
   }, [displayedPhotos.length, activeIndex])
 
   return (
-    <section className="relative w-full bg-white dark:bg-black xl:h-screen xl:fixed xl:inset-0 xl:flex xl:items-center pt-4 sm:pt-6 xl:pt-6">
+    <section className="relative w-full bg-white dark:bg-black xl:h-screen xl:fixed xl:inset-0 xl:flex xl:items-center pt-0 sm:pt-0 xl:pt-16">
       <button
         onClick={scrollLeft}
         className="hidden xl:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-black bg-opacity-80 dark:bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 dark:hover:bg-opacity-100 text-black dark:text-white"
