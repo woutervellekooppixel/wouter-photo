@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { FaInstagram, FaLinkedin, FaEnvelope } from 'react-icons/fa'
+import FloatingContactButton from './FloatingContactButton';
 import { X, Menu, Sun, Moon } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -16,7 +17,10 @@ const MotionSpan = motion(function MotionSpanBase({
   return <span className={className} style={style} {...rest} />
 })
 
+// import { useState } from 'react' (verwijderd, want al aanwezig)
+
 export default function MobileMenu() {
+    // const [showSocial, setShowSocial] = useState<null | 'instagram' | 'linkedin'>(null) (verwijderd)
   const [open, setOpen] = useState(false)
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
@@ -124,15 +128,11 @@ export default function MobileMenu() {
   </Link>
 </div>
           <Link href="/about" onClick={() => setOpen(false)}>About</Link>
-          
-          {/* Hire Me button for mobile */}
-          <a 
-            href="mailto:hello@wouter.photo?subject=Photography Inquiry"
-            className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-lg font-medium rounded hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
-            onClick={() => setOpen(false)}
-          >
-            Hire Me
-          </a>
+
+          {/* Contact button/modal for mobile */}
+          <div className="flex w-full justify-center items-center mt-4 mb-2 px-4">
+            <FloatingContactButton mobile />
+          </div>
           
           {/* Theme toggle button for mobile */}
           <button 
@@ -145,12 +145,13 @@ export default function MobileMenu() {
           </button>
           
           <div className="flex space-x-6 pt-4">
-  <a href="https://instagram.com/woutervellekoop.nl" target="_blank" onClick={() => setOpen(false)} aria-label="Instagram">
+  <a href="https://instagram.com/woutervellekoop" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
     <FaInstagram size={20} />
   </a>
-  <a href="https://linkedin.com/in/woutervellekoop" target="_blank" onClick={() => setOpen(false)} aria-label="LinkedIn">
+  <a href="https://linkedin.com/in/woutervellekoop" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
     <FaLinkedin size={20} />
   </a>
+        {/* Social lightbox modal verwijderd */}
   <a href="mailto:hello@wouter.photo" onClick={() => setOpen(false)} aria-label="Email">
     <FaEnvelope size={20} />
   </a>
