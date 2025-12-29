@@ -48,12 +48,6 @@ export async function POST(request: NextRequest) {
       return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
     };
 
-    // Format expiry date
-    const expiryDate = new Date(metadata.expiresAt).toLocaleDateString("nl-NL", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
 
     // Build download URL
     const downloadUrl = `https://wouter.photo/${slug}`;
