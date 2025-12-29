@@ -2,9 +2,7 @@ import './globals.css'
 import Header from '../components/Header'
 import PWAHandler from '../components/PWAHandler'
 import { Toaster } from '@/components/ui/toaster'
-import FloatingContactButton from '../components/FloatingContactButton'
-import MobileFloatingContactButton from '../components/MobileFloatingContactButton'
-import { usePathname } from 'next/navigation'
+import FloatingContactWrapper from '../components/FloatingContactWrapper'
 import Script from 'next/script'
 import AnalyticsInit from '../components/AnalyticsInit'
 import { ThemeProvider } from 'next-themes'
@@ -76,12 +74,6 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   // Gebruik Next.js usePathname hook voor correcte route-detectie (client-side)
-  const pathname = usePathname();
-  const hideFloatingContact =
-    pathname?.startsWith('/about') ||
-    pathname === '/about' ||
-    pathname?.includes('download') ||
-    pathname?.startsWith('/admin');
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Person',
@@ -178,8 +170,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Header />
           <Toaster />
           {children}
-          {!hideFloatingContact && <FloatingContactButton />}
-          {!hideFloatingContact && <MobileFloatingContactButton />}
+          <FloatingContactWrapper />
         </ThemeProvider>
       </body>
     </html>
