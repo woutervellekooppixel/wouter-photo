@@ -1,17 +1,15 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'About – Wouter Vellekoop | Professional Photographer',
-  description: 'Meet Wouter Vellekoop, professional photographer specializing in concert and event photography. Based in the Netherlands, available for bookings worldwide.',
+  title: 'About – Wouter Vellekoop',
+  description: 'Meet Wouter Vellekoop, photographer specializing in concert and event photography. Based in the Netherlands, available for bookings worldwide.',
   keywords: [
     'Wouter Vellekoop',
-    'professional photographer',
     'photographer Netherlands',
     'concert photographer',
     'event photographer',
     'music photographer',
     'photography services',
-    'professional photography',
     'about photographer',
     'photography biography',
     'Netherlands photographer',
@@ -19,8 +17,8 @@ export const metadata: Metadata = {
     'event photography services'
   ],
   openGraph: {
-    title: 'About Wouter Vellekoop – Professional Photographer',
-    description: 'Meet Wouter Vellekoop, professional photographer specializing in concert and event photography. Based in the Netherlands, available for bookings worldwide.',
+    title: 'About Wouter Vellekoop',
+    description: 'Meet Wouter Vellekoop, photographer specializing in concert and event photography. Based in the Netherlands, available for bookings worldwide.',
     url: 'https://wouter.photo/about',
     siteName: 'Wouter.Photo',
     images: [
@@ -28,7 +26,7 @@ export const metadata: Metadata = {
         url: 'https://wouter.photo/2022_NSJF-Fri_1179.jpg',
         width: 1200,
         height: 800,
-        alt: 'Wouter Vellekoop - Professional Photographer',
+        alt: 'Wouter Vellekoop',
       }
     ],
     locale: 'en_US',
@@ -36,8 +34,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'About Wouter Vellekoop – Professional Photographer',
-    description: 'Meet Wouter Vellekoop, professional photographer specializing in concert and event photography. Based in the Netherlands, available for bookings worldwide.',
+    title: 'About Wouter Vellekoop',
+    description: 'Meet Wouter Vellekoop, photographer specializing in concert and event photography. Based in the Netherlands, available for bookings worldwide.',
     images: ['https://wouter.photo/2022_NSJF-Fri_1179.jpg'],
   },
   alternates: {
