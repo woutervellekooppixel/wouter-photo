@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
                     </a>
                   </td>
                 </tr>
-                  from: "Wouter Vellekoop <hello@wouter.photo>",          </table>
+              </table>
 
               <!-- Signature -->
               <div style="margin-bottom: 32px; background-color: #ffffff;">
