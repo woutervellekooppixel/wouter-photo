@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   if (authError) return authError;
 
   try {
-    const { slug, title, files, expiryDays, clientEmail, customMessage, ratingsEnabled } = await request.json();
+    const { slug, title, files, clientEmail, customMessage, ratingsEnabled } = await request.json();
 
     if (!slug || !files || files.length === 0) {
       return NextResponse.json(
