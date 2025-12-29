@@ -41,7 +41,7 @@ export default function AdminDashboard() {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
-  const [expiryDays, setExpiryDays] = useState(7);
+  // Removed expiryDays state and logic
   const [clientEmail, setClientEmail] = useState("");
   const [customMessage, setCustomMessage] = useState("Hi,\n\nHierbij de foto's van afgelopen avond.");
   const [ratingsEnabled, setRatingsEnabled] = useState(false);
@@ -803,57 +803,7 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              <div>
-                <label className="text-sm font-medium mb-1 block">
-                  Verloopt over
-                </label>
-                <div className="flex gap-2 items-center">
-                  <Input
-                    type="number"
-                    min="1"
-                    max="365"
-                    value={expiryDays}
-                    onChange={(e) => setExpiryDays(Math.max(1, Math.min(365, parseInt(e.target.value) || 60)))}
-                    className="w-20"
-                  />
-                  <span className="text-sm text-gray-600">dagen</span>
-                  <div className="flex gap-1 ml-auto">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setExpiryDays(7)}
-                      className="h-8 px-2 text-xs"
-                    >
-                      7d
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setExpiryDays(30)}
-                      className="h-8 px-2 text-xs"
-                    >
-                      30d
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setExpiryDays(60)}
-                      className="h-8 px-2 text-xs"
-                    >
-                      60d
-                    </Button>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  {new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL', { 
-                    day: 'numeric', 
-                    month: 'short'
-                  })}
-                </p>
-              </div>
+              {/* Expiry UI removed: no vervaldatum/expiry fields shown */}
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
