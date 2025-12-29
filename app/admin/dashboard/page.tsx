@@ -432,7 +432,6 @@ export default function AdminDashboard() {
           slug,
           title: title.trim() || undefined,
           files: uploadedFiles,
-          expiryDays,
           clientEmail: clientEmail.trim() || undefined,
           customMessage: customMessage.trim() || undefined,
           ratingsEnabled,
