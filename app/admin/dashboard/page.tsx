@@ -38,6 +38,14 @@ interface Upload {
 }
 
 export default function AdminDashboard() {
+    // Redirect naar /admin als je niet bent ingelogd
+    useEffect(() => {
+      fetch('/api/admin/check-auth').then(async res => {
+        if (!res.ok) {
+          window.location.href = '/admin';
+        }
+      });
+    }, []);
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
