@@ -17,7 +17,8 @@ export default function GalleryGrid({ category }: GalleryGridProps) {
   return (
     <>
       <div
-        className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-2 sm:px-4 md:px-8 lg:px-16 xl:px-32 py-6"
+        className="grid grid-cols-1 sm:grid-cols-2 gap-4 px-4 py-6"
+        style={{ maxWidth: 1200, margin: '0 auto' }}
       >
         {filteredPhotos.map((photo, index) => (
           <div key={photo.id} className="cursor-pointer" onClick={() => setLightboxIndex(index)}>
