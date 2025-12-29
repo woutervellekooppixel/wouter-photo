@@ -55,6 +55,7 @@ export default function AdminDashboard() {
   const [selectedUploads, setSelectedUploads] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
   const [monthlyCost, setMonthlyCost] = useState<any>(null);
+    const [uploadsError, setUploadsError] = useState<string | null>(null);
   const [expandedUpload, setExpandedUpload] = useState<string | null>(null);
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
@@ -200,10 +201,20 @@ export default function AdminDashboard() {
   }, [expandedUpload, uploads]);
 
   const loadUploads = async () => {
-    const res = await fetch("/api/admin/uploads");
-    if (res.ok) {
-      const data = await res.json();
-      setUploads(data);
+    setUploadsError(null);
+    try {
+      const res = await fetch("/api/admin/uploads");
+      if (res.ok) {
+        const data = await res.json();
+        setUploads(data);
+      } else {
+        const errorData = await res.json().catch(() => ({ error: 'Onbekende fout' }));
+        setUploadsError(errorData.error || 'Fout bij laden van uploads');
+        setUploads([]);
+      }
+    } catch (err) {
+      setUploadsError(err instanceof Error ? err.message : 'Netwerkfout bij laden van uploads');
+      setUploads([]);
     }
   };
 
@@ -1016,10 +1027,10 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                {uploads.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">
-                    Nog geen uploads
-                  </p>
+                {uploadsError ? (
+                  <p className="text-center text-red-500 py-8 font-semibold">Fout: {uploadsError}</p>
+                ) : uploads.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">Nog geen uploads</p>
                 ) : (
                   uploads.map((upload) => {
                     const imageFiles = upload.files.filter(f => isImage(f.name));
