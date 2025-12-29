@@ -1,12 +1,15 @@
-  // Redirect naar /admin als je niet bent ingelogd
-  useEffect(() => {
-    fetch('/api/admin/check-auth').then(async res => {
-      if (!res.ok) {
-        window.location.href = '/admin';
-      }
-    });
-  }, []);
+
 "use client";
+
+// Redirect naar /admin als je niet bent ingelogd
+import { useEffect } from "react";
+useEffect(() => {
+  fetch('/api/admin/check-auth').then(async res => {
+    if (!res.ok) {
+      window.location.href = '/admin';
+    }
+  });
+}, []);
 
 import { useState, useEffect, useRef } from "react";
 import {
