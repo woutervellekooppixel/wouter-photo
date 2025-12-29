@@ -11,14 +11,13 @@ import { Metadata } from 'next'
 export const metadata: Metadata = {
   metadataBase: new URL('https://wouter.photo'),
   title: {
-    default: 'Wouter Vellekoop – Professional Concert & Event Photographer',
+    default: 'Wouter Vellekoop – Concert & Event Photographer',
     template: '%s | Wouter.Photo'
   },
-  description: 'Professional concert, event, and advertising photographer based in the Netherlands. Capturing raw energy of live performances with speed, consistency and style.',
+  description: 'Concert, event, and advertising photographer based in the Netherlands. Capturing raw energy of live performances with speed, consistency and style.',
   keywords: [
     'concert photographer',
     'event photographer', 
-    'professional photography',
     'live music photography',
     'Netherlands photographer',
     'advertising photography',
@@ -46,14 +45,14 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://wouter.photo',
     siteName: 'Wouter Vellekoop Photography',
-    title: 'Wouter Vellekoop – Professional Concert & Event Photographer',
-    description: 'Professional concert, event, and advertising photographer based in the Netherlands. Capturing raw energy of live performances.',
+    title: 'Wouter Vellekoop – Concert & Event Photographer',
+    description: 'Concert, event, and advertising photographer based in the Netherlands. Capturing raw energy of live performances.',
     images: [
       {
         url: '/2022_NSJF-Fri_1179.jpg',
         width: 1200,
         height: 630,
-        alt: 'Wouter Vellekoop - Professional Photographer',
+        alt: 'Wouter Vellekoop - Photographer',
       },
     ],
   },
@@ -78,8 +77,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: 'Wouter Vellekoop',
-    jobTitle: 'Professional Photographer',
-    description: 'Professional concert, event, and advertising photographer based in the Netherlands',
+    jobTitle: 'Photographer',
+    description: 'Concert, event, and advertising photographer based in the Netherlands',
     url: 'https://wouter.photo',
     image: 'https://wouter.photo/2022_NSJF-Fri_1179.jpg',
     address: {
