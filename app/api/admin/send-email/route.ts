@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
               <div style="margin-bottom: 32px; background-color: #ffffff;">
                 <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #374151;">
                   ${!customMessage ? 'Hi,<br><br>' : ''}
-                  Je download link staat hieronder klaar. De foto's zijn beschikbaar tot ${expiryDate} en je kunt ze zo vaak downloaden als je wilt.
+                  Je download link staat hieronder klaar. Je kunt de foto's zo vaak downloaden als je wilt.
                 </p>
               </div>
 
