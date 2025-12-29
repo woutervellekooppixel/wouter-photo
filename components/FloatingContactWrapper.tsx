@@ -6,13 +6,14 @@ import { usePathname } from "next/navigation";
 
 export default function FloatingContactWrapper() {
   const pathname = usePathname();
-  const hideFloatingContact =
-    pathname?.startsWith("/about") ||
-    pathname === "/about" ||
-    pathname?.includes("download") ||
-    pathname?.startsWith("/admin");
+  // Verberg op about, admin, download en alle slug-pagina's (zoals /kerst-in-de-nieuwe-kerk-ro)
+  const isAdmin = pathname?.startsWith("/admin");
+  const isAbout = pathname === "/about" || pathname?.startsWith("/about");
+  const isDownload = pathname?.includes("download");
+  // Verberg op alle root-slug pagina's (bv. /kerst-in-de-nieuwe-kerk-ro)
+  const isSlugPage = pathname?.match(/^\/[a-z0-9\-]+$/i) && !isAdmin && !isAbout && !isDownload;
 
-  if (hideFloatingContact) return null;
+  if (isAdmin || isAbout || isDownload || isSlugPage) return null;
   return (
     <>
       <FloatingContactButton />
