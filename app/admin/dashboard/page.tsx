@@ -20,7 +20,6 @@ interface Upload {
   slug: string;
   title?: string;
   createdAt: string;
-  expiresAt: string;
   files: { key: string; name: string; size: number; type: string }[];
   downloads: number;
   downloadHistory?: {
@@ -742,9 +741,7 @@ export default function AdminDashboard() {
           <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200">
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-600">
-                {uploads.filter(u => new Date(u.expiresAt) > new Date()).length} actieve uploads • {' '}
-                {uploads.filter(u => new Date(u.expiresAt) > new Date()).reduce((acc, u) => acc + u.files.length, 0)} bestanden • {' '}
-                {uploads.filter(u => new Date(u.expiresAt) > new Date()).reduce((acc, u) => acc + u.downloads, 0)} downloads
+                {uploads.length} uploads • {uploads.reduce((acc, u) => acc + u.files.length, 0)} bestanden • {uploads.reduce((acc, u) => acc + u.downloads, 0)} downloads
               </span>
               <Button 
                 variant="link" 
@@ -1156,7 +1153,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="text-xs text-gray-600 space-y-1">
                         <p>Aangemaakt: {formatDate(new Date(upload.createdAt))}</p>
-                        <p>Verloopt: {formatDate(new Date(upload.expiresAt))}</p>
+                        {/* Geen vervaldatum meer */}
                         <div className="flex items-center gap-2">
                           <p>Downloads: {upload.downloads}×</p>
                           {upload.downloadHistory && upload.downloadHistory.length > 0 && (
@@ -1353,7 +1350,7 @@ export default function AdminDashboard() {
                     selectedUploadForEmail.files.reduce((acc, f) => acc + f.size, 0)
                   )}</li>
                   <li>✓ Download link met grote knop</li>
-                  <li>✓ Vervaldatum: {formatDate(new Date(selectedUploadForEmail.expiresAt))}</li>
+                  {/* Geen vervaldatum meer */}
                   <li>✓ WOUTER.PHOTO branding</li>
                 </ul>
               </div>
@@ -1608,7 +1605,7 @@ export default function AdminDashboard() {
                   <Card>
                     <CardContent className="pt-6">
                       <div className="text-2xl font-bold">
-                        {uploads.filter(u => new Date(u.expiresAt) > new Date()).length}
+                        {uploads.length}
                       </div>
                       <p className="text-xs text-gray-500">Actieve Uploads</p>
                     </CardContent>
@@ -1616,7 +1613,7 @@ export default function AdminDashboard() {
                   <Card>
                     <CardContent className="pt-6">
                       <div className="text-2xl font-bold">
-                        {uploads.filter(u => new Date(u.expiresAt) > new Date()).reduce((acc, u) => acc + u.files.length, 0)}
+                        {uploads.reduce((acc, u) => acc + u.files.length, 0)}
                       </div>
                       <p className="text-xs text-gray-500">Totaal Bestanden</p>
                     </CardContent>
@@ -1624,18 +1621,18 @@ export default function AdminDashboard() {
                   <Card>
                     <CardContent className="pt-6">
                       <div className="text-2xl font-bold">
-                        {uploads.filter(u => new Date(u.expiresAt) > new Date()).reduce((acc, u) => acc + u.downloads, 0)}
+                        {uploads.reduce((acc, u) => acc + u.downloads, 0)}
                       </div>
                       <p className="text-xs text-gray-500">Totaal Downloads</p>
                       <p className="text-xs text-gray-400 mt-1">
-                        {uploads.filter(u => new Date(u.expiresAt) > new Date()).reduce((acc, u) => acc + (u.downloadHistory?.length || 0), 0)} events
+                        {uploads.reduce((acc, u) => acc + (u.downloadHistory?.length || 0), 0)} events
                       </p>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="pt-6">
                       <div className="text-2xl font-bold">
-                        {formatBytes(uploads.filter(u => new Date(u.expiresAt) > new Date()).reduce((acc, u) => 
+                        {formatBytes(uploads.reduce((acc, u) => 
                           acc + u.files.reduce((sum, f) => sum + f.size, 0), 0
                         ))}
                       </div>
@@ -1650,7 +1647,7 @@ export default function AdminDashboard() {
                 <h3 className="text-lg font-semibold mb-4">Download Activiteit (laatste 7 dagen)</h3>
                 <div className="grid gap-4 md:grid-cols-3">
                   {(() => {
-                    const activeUploads = uploads.filter(u => new Date(u.expiresAt) > new Date());
+                    const activeUploads = uploads;
                     const last7Days = activeUploads.reduce((acc, u) => {
                       const recentDownloads = u.downloadHistory?.filter(d => {
                         const downloadDate = new Date(d.timestamp);
@@ -1744,7 +1741,7 @@ export default function AdminDashboard() {
               <div>
                 <h3 className="text-lg font-semibold mb-4">Per Upload</h3>
                 <div className="space-y-3">
-                  {uploads.filter(u => new Date(u.expiresAt) > new Date()).map(upload => (
+                  {uploads.map(upload => (
                     <Card key={upload.slug}>
                       <CardContent className="pt-6">
                         <div className="flex items-center justify-between mb-3">

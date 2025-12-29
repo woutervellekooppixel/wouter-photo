@@ -42,14 +42,11 @@ export async function POST(req: NextRequest) {
       await uploadFile(buffer, key, file.type || `image/${ext}`);
     }
 
-    // Metadata opslaan zodat upload zichtbaar is in admin
+    // Metadata opslaan zodat upload zichtbaar is in admin (zonder expiresAt)
     const now = new Date();
-    const expires = new Date(now);
-    expires.setFullYear(now.getFullYear() + 1); // 1 jaar geldig
     const metadata = {
       slug: safeName.replace(/\.[^.]+$/, ''),
       createdAt: now.toISOString(),
-      expiresAt: expires.toISOString(),
       files: [{
         key: uploadedKey,
         name: uploadedName,

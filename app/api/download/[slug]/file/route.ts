@@ -30,12 +30,6 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // Check expiry
-    const now = new Date();
-    const expiresAt = new Date(metadata.expiresAt);
-    if (now > expiresAt) {
-      return NextResponse.json({ error: "Expired" }, { status: 410 });
-    }
 
     // Find the file
     const file = metadata.files.find((f) => f.key === fileKey);

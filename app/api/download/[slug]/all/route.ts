@@ -28,12 +28,6 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // Check expiry
-    const now = new Date();
-    const expiresAt = new Date(metadata.expiresAt);
-    if (now > expiresAt) {
-      return NextResponse.json({ error: "Expired" }, { status: 410 });
-    }
 
     // Update download count with tracking
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
