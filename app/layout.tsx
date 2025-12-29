@@ -75,14 +75,13 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-  // Alternatief voor SSR/CSR: next/navigation usePathname hook
-  // const pathname = usePathname ? usePathname() : '';
+  // Gebruik Next.js usePathname hook voor correcte route-detectie (client-side)
+  const pathname = usePathname();
   const hideFloatingContact =
-    pathname.startsWith('/about') ||
+    pathname?.startsWith('/about') ||
     pathname === '/about' ||
-    pathname.includes('download') ||
-    pathname.startsWith('/admin');
+    pathname?.includes('download') ||
+    pathname?.startsWith('/admin');
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Person',
