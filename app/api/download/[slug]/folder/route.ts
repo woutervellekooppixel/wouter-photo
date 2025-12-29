@@ -43,13 +43,6 @@ export async function GET(
       );
     }
 
-    // Check if expired
-    if (new Date(metadata.expiresAt) < new Date()) {
-      return NextResponse.json(
-        { error: 'Upload has expired' },
-        { status: 410 }
-      );
-    }
 
     // Filter files that belong to this folder
     const folderFiles = metadata.files.filter(file => {

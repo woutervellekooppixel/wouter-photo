@@ -30,12 +30,6 @@ export default async function DownloadPage({ params }: PageProps) {
     notFound();
   }
 
-  // Check if expired
-  const now = new Date();
-  const expiresAt = new Date(metadata.expiresAt);
-  if (now > expiresAt) {
-    notFound();
-  }
 
   return <DownloadGallery metadata={metadata} />;
 }

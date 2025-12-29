@@ -22,17 +22,6 @@ export async function GET(request: NextRequest) {
         const slug = metadataFile.replace('metadata/', '').replace('.json', '');
         const metadata = await getMetadata(slug);
         
-        if (metadata && new Date(metadata.expiresAt) < now) {
-          console.log(`[Cleanup] Deleting expired upload: ${slug}`);
-          
-          // Delete all files and folders for this upload
-          await deleteFolder(`uploads/${slug}/`);
-          await deleteFolder(`thumbnails/${slug}/`);
-          await deleteFolder(`zips/${slug}.zip`);
-          await deleteFolder(`metadata/${slug}.json`);
-          
-          deletedSlugs.push(slug);
-        }
       } catch (error) {
         console.error(`[Cleanup] Error processing ${metadataFile}:`, error);
         errors.push(`${metadataFile}: ${error instanceof Error ? error.message : 'Unknown error'}`);

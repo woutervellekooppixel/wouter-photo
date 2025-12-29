@@ -43,12 +43,6 @@ export default function DownloadStats() {
   // Hooks altijd aanroepen! Render een lege div als fallback.
   if (!isDownloadPage || !metadata) return <div className="hidden md:flex items-center gap-2 text-xs text-gray-600" />
 
-  const formatExpiryDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const day = String(date.getDate()).padStart(2, '0')
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    return `${day}-${month}`
-  }
 
   const totalSize = metadata.files.reduce((acc, file) => acc + file.size, 0)
 
@@ -58,7 +52,6 @@ export default function DownloadStats() {
       <span className="text-gray-400">•</span>
       <span>{formatBytes(totalSize)}</span>
       <span className="text-gray-400">•</span>
-      <span>Beschikbaar tot {formatExpiryDate(metadata.expiresAt)}</span>
     </div>
   )
 }

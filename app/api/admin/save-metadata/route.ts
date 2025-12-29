@@ -38,15 +38,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Save metadata
+    // Save metadata zonder expiresAt
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + (expiryDays || 7) * 24 * 60 * 60 * 1000);
-
     const metadata: UploadMetadata = {
       slug,
       ...(title && { title }),
       createdAt: now.toISOString(),
-      expiresAt: expiresAt.toISOString(),
       files: files,
       downloads: 0,
       ...(clientEmail && { clientEmail }),
