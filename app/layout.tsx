@@ -81,7 +81,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const hideFloatingContact =
     pathname.startsWith('/about') ||
     pathname === '/about' ||
-    pathname.includes('download');
+    pathname.includes('download') ||
+    pathname.startsWith('/admin');
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Person',
