@@ -1,8 +1,8 @@
 
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 // Redirect naar /admin als je niet bent ingelogd
-import { useEffect } from "react";
 useEffect(() => {
   fetch('/api/admin/check-auth').then(async res => {
     if (!res.ok) {
@@ -10,8 +10,6 @@ useEffect(() => {
     }
   });
 }, []);
-
-import { useState, useEffect, useRef } from "react";
 import {
   DndContext,
   closestCenter,
