@@ -1309,19 +1309,7 @@ export default function AdminDashboard() {
                 </p>
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
-                <h3 className="font-medium text-gray-900">Email bevat:</h3>
-                <ul className="space-y-1 text-gray-600">
-                  <li>✓ Preview foto als header</li>
-                  <li>✓ Persoonlijk bericht (als ingevuld)</li>
-                  <li>✓ {selectedUploadForEmail.files.length} foto's • {formatBytes(
-                    selectedUploadForEmail.files.reduce((acc, f) => acc + f.size, 0)
-                  )}</li>
-                  <li>✓ Download link met grote knop</li>
-                  {/* Geen vervaldatum meer */}
-                  <li>✓ WOUTER.PHOTO branding</li>
-                </ul>
-              </div>
+              
             </div>
 
             <div className="p-6 border-t bg-gray-50 flex gap-3">
