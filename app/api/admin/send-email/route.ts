@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 
     // Send email
     const { data, error } = await resend.emails.send({
-      from: "Wouter Vellekoop <downloads@wouter.photo>",
+      from: "Wouter Vellekoop <hello@wouter.photo>",
       replyTo: "info@woutervellekoop.nl",
       to: recipientEmail,
       subject: emailSubject,
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
                     </a>
                   </td>
                 </tr>
-              </table>
+                  from: "Wouter Vellekoop <hello@wouter.photo>",          </table>
 
               <!-- Signature -->
               <div style="margin-bottom: 32px; background-color: #ffffff;">
