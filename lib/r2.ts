@@ -37,7 +37,7 @@ export interface UploadMetadata {
   slug: string;
   title?: string; // Optional: friendly title for the upload
   createdAt: string;
-  expiresAt: string;
+  expiresAt?: string; // Optioneel, niet meer verplicht
   files: {
     key: string;
     name: string;
