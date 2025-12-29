@@ -61,7 +61,7 @@ export default function AboutPage() {
         <div className="w-full relative aspect-[2/3]">
           <Image
             src="/2022_NSJF-Fri_1179.jpg"
-            alt="Wouter Vellekoop - Professional Photographer"
+            alt="Wouter Vellekoop"
             fill
             priority
             className="shadow-lg object-cover rounded-lg"
@@ -73,7 +73,7 @@ export default function AboutPage() {
         <div className="text-lg leading-relaxed">
         <h1 className="text-3xl font-bold mb-10">ABOUT</h1>
           <p className="mb-6">
-            I'm Wouter Vellekoop - a professional photographer based in the Netherlands, specializing in concert, event, conceptual, and advertising photography.  
+            I'm Wouter Vellekoop – a photographer based in the Netherlands, specializing in concert, event, conceptual, and advertising photography.  
             My passion lies in capturing the raw energy of live performances and translating atmosphere into powerful visuals.
           </p>
           <p className="mb-6">
