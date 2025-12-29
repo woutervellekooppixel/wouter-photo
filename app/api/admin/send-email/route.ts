@@ -112,8 +112,7 @@ export async function POST(request: NextRequest) {
               <!-- Standard Message (always shown) -->
               <div style="margin-bottom: 32px; background-color: #ffffff;">
                 <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #374151;">
-                  ${!customMessage ? 'Hi,<br><br>' : ''}
-                  Je download link staat hieronder klaar. Je kunt de foto's zo vaak downloaden als je wilt.
+                  ${!customMessage ?''}
                 </p>
               </div>
 
@@ -142,10 +141,10 @@ export async function POST(request: NextRequest) {
                 <tr>
                   <td align="center">
                     <a href="https://instagram.com/woutervellekoop" style="display: inline-block; margin: 0 8px;">
-                      <img src="https://cdn.simpleicons.org/instagram/000000" alt="Instagram" style="width: 24px; height: 24px;" />
+                      <img src="https://cdn.simpleicons.org/instagram/ffffff" alt="Instagram" style="width: 24px; height: 24px; background: #000; border-radius: 50%; padding: 2px;" />
                     </a>
                     <a href="https://facebook.com/wvellekoop" style="display: inline-block; margin: 0 8px;">
-                      <img src="https://cdn.simpleicons.org/facebook/000000" alt="Facebook" style="width: 24px; height: 24px;" />
+                      <img src="https://cdn.simpleicons.org/facebook/ffffff" alt="Facebook" style="width: 24px; height: 24px; background: #1877f3; border-radius: 50%; padding: 2px;" />
                     </a>
                   </td>
                 </tr>
@@ -155,7 +154,8 @@ export async function POST(request: NextRequest) {
               <table role="presentation" style="width: 100%;">
                 <tr>
                   <td align="center">
-                    <div style="color: #000000; font-size: 14px; letter-spacing: 2px;">
+                    <!-- Logo met zwarte tekst voor light mode, witte tekst voor dark mode (meest robuust: zwart met lichte schaduw) -->
+                    <div style="color: #000000; font-size: 14px; letter-spacing: 2px; text-shadow: 0 1px 4px #fff, 0 1px 4px #000;">
                       <span style="font-weight: 700;">WOUTER</span><span style="font-weight: 400;">.</span><span style="font-weight: 300;">PHOTO</span>
                     </div>
                   </td>
