@@ -4,6 +4,7 @@ import PWAHandler from '../components/PWAHandler'
 import { Toaster } from '@/components/ui/toaster'
 import FloatingContactButton from '../components/FloatingContactButton'
 import MobileFloatingContactButton from '../components/MobileFloatingContactButton'
+import { usePathname } from 'next/navigation'
 import Script from 'next/script'
 import AnalyticsInit from '../components/AnalyticsInit'
 import { ThemeProvider } from 'next-themes'
@@ -74,6 +75,13 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+  // Alternatief voor SSR/CSR: next/navigation usePathname hook
+  // const pathname = usePathname ? usePathname() : '';
+  const hideFloatingContact =
+    pathname.startsWith('/about') ||
+    pathname === '/about' ||
+    pathname.includes('download');
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Person',
@@ -170,8 +178,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Header />
           <Toaster />
           {children}
-          <FloatingContactButton />
-          <MobileFloatingContactButton />
+          {!hideFloatingContact && <FloatingContactButton />}
+          {!hideFloatingContact && <MobileFloatingContactButton />}
         </ThemeProvider>
       </body>
     </html>
