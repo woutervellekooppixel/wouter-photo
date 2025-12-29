@@ -528,7 +528,7 @@ export default function DownloadGallery({
         </div>
       )}
 
-      <div className={`w-full px-2 sm:px-4 md:px-8 lg:px-16 xl:px-32 py-6 transition-opacity duration-1000 ${loadingThumbnails ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <div className={`container mx-auto p-6 max-w-6xl transition-opacity duration-1000 ${loadingThumbnails ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         {/* Project Title */}
         <div className="mb-8 mt-4">
           <h1 className="text-3xl font-bold text-gray-900 text-center mb-6">
