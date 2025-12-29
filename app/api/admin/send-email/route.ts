@@ -102,18 +102,9 @@ export async function POST(request: NextRequest) {
           <tr>
             <td style="background-color: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);">
               
-              ${customMessage ? `
-              <!-- Custom Message -->
-              <div style="margin-bottom: 24px; background-color: #ffffff;">
-                <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #374151;">${formattedCustomMessage}</p>
-              </div>
-              ` : ''}
-              
-              <!-- Standard Message (always shown) -->
+              <!-- Custom Message (altijd verplicht) -->
               <div style="margin-bottom: 32px; background-color: #ffffff;">
-                <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #374151;">
-                  ${!customMessage ? 'Hi,<br><br>Je download link staat hieronder klaar. Je kunt de foto\'s zo vaak downloaden als je wilt.' : ''}
-                </p>
+                <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #374151;">${formattedCustomMessage}</p>
               </div>
 
               <!-- CTA Button -->
