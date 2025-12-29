@@ -131,11 +131,34 @@ export async function POST(request: NextRequest) {
               <table role="presentation" style="width: 100%; margin-bottom: 20px;">
                 <tr>
                   <td align="center">
-                    <a href="https://instagram.com/woutervellekoop" style="display: inline-block; margin: 0 8px;">
-                      <img src="https://cdn.simpleicons.org/instagram/ffffff" alt="Instagram" style="width: 24px; height: 24px; background: #000; border-radius: 50%; padding: 2px;" />
+                    <a href="https://instagram.com/woutervellekoop" style="display: inline-block; margin: 0 8px;" target="_blank" rel="noopener">
+                      <span style="display: inline-block; width: 28px; height: 28px; vertical-align: middle;">
+                        <svg width="28" height="28" viewBox="0 0 448 448" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="448" height="448" rx="90" fill="#fff"/>
+                          <radialGradient id="ig-gradient" cx="0.5" cy="0.5" r="0.8">
+                            <stop offset="0%" stop-color="#f9ce34"/>
+                            <stop offset="45%" stop-color="#ee2a7b"/>
+                            <stop offset="100%" stop-color="#6228d7"/>
+                          </radialGradient>
+                          <rect x="24" y="24" width="400" height="400" rx="80" fill="url(#ig-gradient)"/>
+                          <circle cx="224" cy="224" r="90" stroke="#fff" stroke-width="32" fill="none"/>
+                          <circle cx="224" cy="224" r="56" fill="#fff"/>
+                          <circle cx="320" cy="128" r="20" fill="#fff"/>
+                        </svg>
+                      </span>
                     </a>
-                    <a href="https://facebook.com/wvellekoop" style="display: inline-block; margin: 0 8px;">
-                      <img src="https://cdn.simpleicons.org/facebook/ffffff" alt="Facebook" style="width: 24px; height: 24px; background: #1877f3; border-radius: 50%; padding: 2px;" />
+                    <a href="https://linkedin.com/in/woutervellekoop" style="display: inline-block; margin: 0 8px;" target="_blank" rel="noopener">
+                      <span style="display: inline-block; width: 28px; height: 28px; vertical-align: middle;">
+                        <svg width="28" height="28" viewBox="0 0 448 448" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="448" height="448" rx="90" fill="#fff"/>
+                          <rect x="24" y="24" width="400" height="400" rx="80" fill="#0077b5"/>
+                          <rect x="100" y="180" width="48" height="120" rx="12" fill="#fff"/>
+                          <circle cx="124" cy="140" r="24" fill="#fff"/>
+                          <rect x="180" y="180" width="48" height="120" rx="12" fill="#fff"/>
+                          <rect x="236" y="220" width="48" height="80" rx="12" fill="#fff"/>
+                          <rect x="292" y="180" width="48" height="120" rx="12" fill="#fff"/>
+                        </svg>
+                      </span>
                     </a>
                   </td>
                 </tr>
