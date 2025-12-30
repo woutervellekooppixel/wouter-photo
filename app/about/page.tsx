@@ -53,7 +53,7 @@ export default function AboutPage() {
         }}
       />
 
-      <main className="py-20 px-6 max-w-6xl mx-auto text-black dark:text-white bg-white dark:bg-black min-h-screen">
+      <main className="py-20 px-6 max-w-6xl mx-auto text-black dark:text-white bg-white dark:bg-black">
 
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
