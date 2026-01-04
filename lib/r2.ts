@@ -1,3 +1,4 @@
+// Force Vercel to rebuild and use latest named exports
 // Helpers voor gallery order opslaan/halen via R2
 export async function getGalleryOrder(): Promise<Record<string, string[]>> {
   try {
