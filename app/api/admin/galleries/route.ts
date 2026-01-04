@@ -4,12 +4,28 @@ import { listFiles, getGalleryOrder } from '@/lib/r2';
 
 import { NextRequest } from 'next/server';
 
-const CATEGORIES = ['concerts', 'events', 'misc'];
+
+import { ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { r2Client } from '@/lib/r2';
+
+// Dynamisch alle categorieën ophalen (alle mappen op rootniveau)
+async function getCategories(): Promise<string[]> {
+  const command = new ListObjectsV2Command({
+    Bucket: process.env.R2_BUCKET_NAME!,
+    Delimiter: '/',
+    Prefix: '',
+  });
+  const response = await r2Client.send(command);
+  // CommonPrefixes bevat alle mappen
+  return (response.CommonPrefixes || []).map((p) => p.Prefix?.replace(/\/$/, '')).filter(Boolean) as string[];
+}
+
 
 export async function GET(request: Request) {
   let orderData: Record<string, string[]> = await getGalleryOrder();
   const result: Record<string, { id: string, src: string, alt: string, category: string }[]> = {};
-  for (const cat of CATEGORIES) {
+  const categories = await getCategories();
+  for (const cat of categories) {
     let files: string[] = [];
     try {
       files = (await listFiles(`${cat}/`)).map(f => f.split('/').pop()!).filter(Boolean);
@@ -17,8 +33,8 @@ export async function GET(request: Request) {
       result[cat] = [];
       continue;
     }
-    // Filter blur-bestanden en alleen .webp
-    let allPhotos = files.filter(f => f.endsWith('.webp') && !f.includes('-blur')).map(f => ({
+    // Filter blur-bestanden en alleen .webp of .jpg/.jpeg
+    let allPhotos = files.filter(f => (f.endsWith('.webp') || f.endsWith('.jpg') || f.endsWith('.jpeg')) && !f.includes('-blur')).map(f => ({
       id: f,
       src: `/api/photos/${cat}/${f}`,
       alt: f,
