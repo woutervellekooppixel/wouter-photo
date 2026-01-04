@@ -134,51 +134,17 @@ export default function DownloadGallery({
         setThumbnailsLoaded(Math.floor(currentProgress));
       }, intervalTime);
       
-      // Load preview image first for loading screen
+
+      // Gebruik altijd de interne API voor thumbnails
       if (previewImage) {
-        try {
-          const response = await fetch(
-            `/api/thumbnail/${metadata.slug}?key=${encodeURIComponent(previewImage.key)}`
-          );
-          const data = await response.json();
-          if (data.url) {
-            urls[previewImage.key] = data.url;
-            setThumbnailUrls({ ...urls }); // Update state immediately for preview
-            // previewLoaded will be set by the Image onLoad event
-          }
-        } catch (error) {
-          console.error("Failed to load preview thumbnail:", error);
-        }
+        urls[previewImage.key] = `/api/photos/by-key?key=${encodeURIComponent(previewImage.key)}`;
+        setThumbnailUrls({ ...urls });
       }
-      
-      // Load all thumbnails in parallel in the background
-      const loadPromises = metadata.files.map(async (file) => {
-        // Skip preview image if already loaded
-        if (previewImage && file.key === previewImage.key) {
-          return { key: file.key, url: urls[file.key] };
-        }
-        
-        try {
-          const response = await fetch(
-            `/api/thumbnail/${metadata.slug}?key=${encodeURIComponent(file.key)}`
-          );
-          const data = await response.json();
-          return { key: file.key, url: data.url };
-        } catch (error) {
-          console.error("Failed to load thumbnail:", error);
-          return { key: file.key, url: null };
-        }
+
+      metadata.files.forEach((file) => {
+        if (previewImage && file.key === previewImage.key) return;
+        urls[file.key] = `/api/photos/by-key?key=${encodeURIComponent(file.key)}`;
       });
-      
-      const results = await Promise.all(loadPromises);
-      
-      // Collect all URLs
-      results.forEach(result => {
-        if (result.url) {
-          urls[result.key] = result.url;
-        }
-      });
-      
       setThumbnailUrls(urls);
       
       // Hide loading screen after 8 seconds
