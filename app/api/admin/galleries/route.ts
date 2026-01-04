@@ -1,19 +1,13 @@
 
 import { NextResponse } from 'next/server';
-import path from 'path';
-import { listFiles } from '@/lib/r2';
+import { listFiles, getGalleryOrder } from '@/lib/r2';
 
 import { NextRequest } from 'next/server';
 
 const CATEGORIES = ['concerts', 'events', 'misc'];
-const ORDER_PATH = path.join(process.cwd(), 'data/galleries-order.json');
 
 export async function GET(request: Request) {
-  let orderData: Record<string, string[]> = { concerts: [], events: [], misc: [] };
-  try {
-    const file = await import('fs/promises').then(fs => fs.readFile(ORDER_PATH, 'utf-8'));
-    orderData = JSON.parse(file);
-  } catch {}
+  let orderData: Record<string, string[]> = await getGalleryOrder();
   const result: Record<string, { id: string, src: string, alt: string, category: string }[]> = {};
   for (const cat of CATEGORIES) {
     let files: string[] = [];

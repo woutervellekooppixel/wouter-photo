@@ -1,3 +1,29 @@
+// Helpers voor gallery order opslaan/halen via R2
+export async function getGalleryOrder(): Promise<Record<string, string[]>> {
+  try {
+    const buf = await getFile('galleries-order.json');
+    const str = buf.toString('utf-8').trim();
+    if (!str) return { concerts: [], events: [], misc: [] };
+    const parsed = JSON.parse(str);
+    if (
+      typeof parsed !== 'object' ||
+      !parsed ||
+      !('concerts' in parsed) ||
+      !('events' in parsed) ||
+      !('misc' in parsed)
+    ) {
+      return { concerts: [], events: [], misc: [] };
+    }
+    return parsed;
+  } catch (e) {
+    return { concerts: [], events: [], misc: [] };
+  }
+}
+
+export async function setGalleryOrder(data: Record<string, string[]>): Promise<void> {
+  const buf = Buffer.from(JSON.stringify(data, null, 2), 'utf-8');
+  await uploadFile(buf, 'galleries-order.json', 'application/json');
+}
 // --- ENVIRONMENT CHECK ---
 const missingVars = [
   'R2_ACCOUNT_ID',
