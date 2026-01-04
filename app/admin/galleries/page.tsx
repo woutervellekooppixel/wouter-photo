@@ -2,14 +2,16 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-// Redirect naar /admin als je niet bent ingelogd
-useEffect(() => {
-  fetch('/api/admin/check-auth').then(async res => {
-    if (!res.ok) {
-      window.location.href = '/admin';
-    }
-  });
-}, []);
+
+function useAuthRedirect() {
+  useEffect(() => {
+    fetch('/api/admin/check-auth').then(async res => {
+      if (!res.ok) {
+        window.location.href = '/admin';
+      }
+    });
+  }, []);
+}
 import {
   DndContext,
   closestCenter,
