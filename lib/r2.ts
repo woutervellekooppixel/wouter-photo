@@ -139,6 +139,7 @@ export async function getSignedDownloadUrl(
 }
 
 export async function listFiles(prefix: string): Promise<string[]> {
+  console.log("DEBUG listFiles", prefix);
   const allFiles: string[] = [];
   let continuationToken: string | undefined;
 
