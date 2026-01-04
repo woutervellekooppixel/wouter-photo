@@ -5,8 +5,9 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 import OptimizedImage from './OptimizedImage'
 
+
 type Props = {
-  category: 'concerts' | 'events' | 'misc' | 'all',
+  category: string,
   photos: any[]
 }
 
@@ -364,6 +365,7 @@ export default function GalleryScroller({ category, photos }: Props) {
                 onLoad={(e: any) => {
                   e.currentTarget.dataset.loaded = 'true'
                 }}
+                unoptimized
               />
             </div>
           ))}
@@ -391,6 +393,7 @@ export default function GalleryScroller({ category, photos }: Props) {
                 onLoad={(e: any) => {
                   e.currentTarget.dataset.loaded = 'true'
                 }}
+                unoptimized
               />
             </div>
           </div>
@@ -422,6 +425,7 @@ export default function GalleryScroller({ category, photos }: Props) {
                   onLoad={(e: any) => {
                     e.currentTarget.dataset.loaded = 'true'
                   }}
+                  unoptimized
                 />
               </div>
             </div>

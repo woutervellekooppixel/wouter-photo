@@ -36,9 +36,10 @@ export async function GET(request: Request) {
     // Filter blur-bestanden en alleen .webp of .jpg/.jpeg
     let allPhotos = files.filter(f => (f.endsWith('.webp') || f.endsWith('.jpg') || f.endsWith('.jpeg')) && !f.includes('-blur')).map(f => ({
       id: f,
-      src: `/api/photos/${cat}/${f}`,
+      src: `/api/photos/by-key?key=${encodeURIComponent(cat + '/' + f)}`,
       alt: f,
-      category: cat
+      category: cat,
+      key: cat + '/' + f
     }));
     // Sorteer exact volgens orderData, ontbrekende foto's achteraan
     let photos: typeof allPhotos = [];
