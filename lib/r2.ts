@@ -464,3 +464,4 @@ export async function calculateMonthlyCost(): Promise<{
     total: storageCost + operationsCost + bandwidthCost,
   };
 }
+console.log("DEBUG listFiles", prefix);
