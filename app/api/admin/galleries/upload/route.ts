@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
       }],
       downloads: 0,
       gallery: true,
+      backgroundImageKey: uploadedKey, // Zet de eerste foto als hero/background
     };
     const { saveMetadata } = await import('@/lib/r2');
     await saveMetadata(metadata);
