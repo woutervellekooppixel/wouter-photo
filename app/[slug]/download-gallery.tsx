@@ -60,6 +60,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
   const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>({});
   const [loadingThumbnails, setLoadingThumbnails] = useState(true);
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(true);
   const [thumbnailsLoaded, setThumbnailsLoaded] = useState(0);
   const [previewLoaded, setPreviewLoaded] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
@@ -76,19 +77,32 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
       return;
     }
     setFakePercent(0);
-    let start = Date.now();
+    const start = performance.now();
     let raf = 0 as unknown as number;
     const duration = 6000;
     const animate = () => {
-      const elapsed = Date.now() - start;
-      const percent = Math.min(100, Math.round((elapsed / duration) * 100));
+      const elapsed = performance.now() - start;
+      const t = Math.min(1, elapsed / duration);
+      // Easing for a more premium / less linear feel
+      const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+      const percent = Math.min(100, eased * 100);
       setFakePercent(percent);
-      if (percent < 100 && loadingThumbnails) {
+      if (t < 1 && loadingThumbnails) {
         raf = requestAnimationFrame(animate) as unknown as number;
       }
     };
     raf = requestAnimationFrame(animate) as unknown as number;
     return () => cancelAnimationFrame(raf as unknown as number);
+  }, [loadingThumbnails]);
+
+  // Houd overlay kort in DOM voor fade-out animatie
+  useEffect(() => {
+    if (loadingThumbnails) {
+      setShowLoadingOverlay(true);
+      return;
+    }
+    const t = window.setTimeout(() => setShowLoadingOverlay(false), 900);
+    return () => window.clearTimeout(t);
   }, [loadingThumbnails]);
 
   // Helpers
@@ -442,7 +456,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
       {/* Content wrapper */}
       <div className="relative z-10">
         {/* Fullscreen loading overlay */}
-        {loadingThumbnails && (
+        {showLoadingOverlay && (
           <div
             className="fixed inset-0 z-50 transition-opacity duration-1000"
             style={{ opacity: loadingThumbnails ? 1 : 0 }}
@@ -481,6 +495,56 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Minimal loader UI (Instagram stories style) */}
+
+            {/* Subtle label */}
+            <div className="absolute left-5 top-5 sm:left-6 sm:top-6">
+              <p className="text-[11px] tracking-[0.18em] text-white/70">wouter.download</p>
+            </div>
+
+            {/* Center logo/wordmark with fill animation */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="relative">
+                {/* Base wordmark (subtle) */}
+                <div className="select-none text-2xl sm:text-3xl md:text-4xl tracking-tight text-white/25" aria-hidden>
+                  <span className="font-bold">wouter</span>
+                  <span className="font-bold">.</span>
+                  <span className="font-normal">download</span>
+                </div>
+
+                {/* Fill (reveals from bottom to top) */}
+                <div className="absolute inset-0 overflow-hidden" aria-hidden>
+                  <div
+                    className="absolute left-0 top-0 bottom-0 overflow-hidden"
+                    style={{ width: `${fakePercent}%` }}
+                  >
+                    <div className="select-none text-2xl sm:text-3xl md:text-4xl tracking-tight text-white drop-shadow-[0_6px_20px_rgba(0,0,0,0.35)]">
+                      <span className="font-bold">wouter</span>
+                      <span className="font-bold">.</span>
+                      <span className="font-normal">download</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Thin progress line at the bottom */}
+            <div className="absolute left-0 right-0 bottom-0 p-4 sm:p-5">
+              <div className="h-[3px] w-full rounded-full bg-white/20 overflow-hidden">
+                <div
+                  className="h-full w-full origin-left rounded-full bg-white will-change-transform"
+                  style={{ transform: `scaleX(${fakePercent / 100})` }}
+                />
+              </div>
+              <div className="mt-2 flex items-center justify-between text-[11px] text-white/60">
+                <span>
+                  {Math.min(thumbnailsLoaded, imageFiles.length)} / {imageFiles.length}
+                </span>
+                <span className="tabular-nums">{Math.round(fakePercent)}%</span>
+              </div>
             </div>
           </div>
         )}
@@ -605,7 +669,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                               <Star
                                 className={`h-4 w-4 transition-all duration-200 ${
                                   ratings[file.key]
-                                    ? "fill-yellow-400 text-yellow-400"
+                                    ? "fill-white text-white"
                                     : "text-white group-hover/star:fill-white/50"
                                 }`}
                               />
@@ -789,4 +853,3 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
     </div>
   );
 }
-``
