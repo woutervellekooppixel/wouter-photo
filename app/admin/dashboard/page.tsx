@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, X, Copy, Trash2, LogOut, Check, ExternalLink, Mail, Star, Settings, BarChart3 } from "lucide-react";
+import { Upload, X, Copy, Trash2, LogOut, Check, ExternalLink, Star, Settings, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,8 +31,6 @@ interface Upload {
   }[];
   previewImageKey?: string;
   backgroundImageKey?: string;
-  clientEmail?: string;
-  customMessage?: string;
   ratings?: Record<string, boolean>;
   ratingsEnabled?: boolean;
 }
@@ -50,8 +48,6 @@ export default function AdminDashboard() {
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   // Removed expiryDays state and logic
-  const [clientEmail, setClientEmail] = useState("");
-  const [customMessage, setCustomMessage] = useState("Hi,\n\nHierbij de foto's van afgelopen avond.");
   const [ratingsEnabled, setRatingsEnabled] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -66,28 +62,12 @@ export default function AdminDashboard() {
     const [uploadsError, setUploadsError] = useState<string | null>(null);
   const [expandedUpload, setExpandedUpload] = useState<string | null>(null);
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
-  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
-  const [selectedUploadForEmail, setSelectedUploadForEmail] = useState<Upload | null>(null);
-  const [emailRecipient, setEmailRecipient] = useState("");
-  const [emailMessage, setEmailMessage] = useState("");
-  const [sendingEmail, setSendingEmail] = useState(false);
-  const [templates, setTemplates] = useState<Array<{ name: string; email: string; message: string }>>([]);
-  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
-  const [templateName, setTemplateName] = useState("");
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [defaultBackgroundFile, setDefaultBackgroundFile] = useState<File | null>(null);
   const [defaultBackgroundPreview, setDefaultBackgroundPreview] = useState<string>("/default-background.svg");
   const [showStatisticsDialog, setShowStatisticsDialog] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
-
-  // Load templates from localStorage
-  useEffect(() => {
-    const savedTemplates = localStorage.getItem('emailTemplates');
-    if (savedTemplates) {
-      setTemplates(JSON.parse(savedTemplates));
-    }
-  }, []);
 
   // Load current background image
   useEffect(() => {
@@ -110,55 +90,7 @@ export default function AdminDashboard() {
     loadCurrentBackground();
   }, []);
 
-  const saveTemplate = () => {
-    if (!templateName.trim()) {
-      toast({
-        title: "Naam vereist",
-        description: "Geef je template een naam",
-        variant: "destructive",
-      });
-      return;
-    }
 
-    const newTemplate = {
-      name: templateName,
-      email: clientEmail,
-      message: customMessage,
-    };
-
-    const updatedTemplates = [...templates, newTemplate];
-    setTemplates(updatedTemplates);
-    localStorage.setItem('emailTemplates', JSON.stringify(updatedTemplates));
-    
-    setTemplateName("");
-    setShowTemplateDialog(false);
-    
-    toast({
-      title: "Template opgeslagen!",
-      description: `Template "${newTemplate.name}" is opgeslagen`,
-    });
-  };
-
-  const loadTemplate = (template: { name: string; email: string; message: string }) => {
-    setClientEmail(template.email);
-    setCustomMessage(template.message);
-    
-    toast({
-      title: "Template geladen",
-      description: `Template "${template.name}" is ingevuld`,
-    });
-  };
-
-  const deleteTemplate = (index: number) => {
-    const updatedTemplates = templates.filter((_, i) => i !== index);
-    setTemplates(updatedTemplates);
-    localStorage.setItem('emailTemplates', JSON.stringify(updatedTemplates));
-    
-    toast({
-      title: "Template verwijderd",
-      description: "Template is verwijderd",
-    });
-  };
 
   // Auto logout after 5 hours of inactivity
   useAutoLogout({ 
@@ -451,8 +383,6 @@ export default function AdminDashboard() {
           slug,
           title: title.trim() || undefined,
           files: uploadedFiles,
-          clientEmail: clientEmail.trim() || undefined,
-          customMessage: customMessage.trim() || undefined,
           ratingsEnabled,
         }),
       });
@@ -461,50 +391,15 @@ export default function AdminDashboard() {
         throw new Error('Failed to save metadata');
       }
 
-      // Send email if client email is provided
-      if (clientEmail.trim()) {
-        try {
-          const emailRes = await fetch("/api/admin/send-email", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              slug,
-              recipientEmail: clientEmail.trim(),
-              customMessage: customMessage.trim() || undefined,
-            }),
-          });
-
-          if (!emailRes.ok) {
-            const emailData = await emailRes.json();
-            console.error("Email send error:", emailData);
-            throw new Error("Email verzenden mislukt");
-          }
-
-          toast({
-            title: "Succes!",
-            description: `Upload succesvol en email verzonden naar ${clientEmail}`,
-          });
-        } catch (emailError) {
-          console.error("Email error:", emailError);
-          toast({
-            title: "Upload succesvol",
-            description: "Maar email verzenden is mislukt. Je kunt het opnieuw proberen via het envelopje.",
-            variant: "destructive",
-          });
-        }
-      } else {
-        toast({
-          title: "Succes!",
-          description: `Upload succesvol: ${title || slug}`,
-        });
-      }
+      toast({
+        title: "Succes!",
+        description: `Upload succesvol: ${title || slug}`,
+      });
 
       // Reset form
       setFiles([]);
       setTitle("");
       setSlug("");
-      setClientEmail("");
-      setCustomMessage("Hi,\n\nHierbij de foto's van afgelopen avond.");
       setRatingsEnabled(false);
       
       // Reload uploads list
@@ -635,71 +530,7 @@ export default function AdminDashboard() {
     loadUploads();
   };
 
-  const openEmailDialog = (upload: Upload) => {
-    setSelectedUploadForEmail(upload);
-    setEmailRecipient(upload.clientEmail || "");
-    setEmailMessage(upload.customMessage || "");
-    setEmailDialogOpen(true);
-  };
 
-  const sendEmail = async () => {
-    if (!selectedUploadForEmail || !emailRecipient) {
-      toast({
-        title: "Fout",
-        description: "Email adres is verplicht",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setSendingEmail(true);
-
-    try {
-      const res = await fetch("/api/admin/send-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          slug: selectedUploadForEmail.slug,
-          recipientEmail: emailRecipient,
-          customMessage: emailMessage,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        console.error("Email send error:", data);
-        const errorMsg = typeof data.details === 'string' 
-          ? data.details 
-          : JSON.stringify(data.details || data.error || "Email verzenden mislukt");
-        throw new Error(errorMsg);
-      }
-
-      toast({
-        title: "Email verzonden!",
-        description: `Email succesvol verzonden naar ${emailRecipient}`,
-      });
-
-      setEmailDialogOpen(false);
-      setSelectedUploadForEmail(null);
-      setEmailRecipient("");
-      setEmailMessage("");
-    } catch (error) {
-      console.error("Email error:", error);
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : typeof error === 'object' 
-          ? JSON.stringify(error) 
-          : String(error);
-      toast({
-        title: "Fout",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setSendingEmail(false);
-    }
-  };
 
   const generateSlugSuggestions = (fileName: string) => {
     const name = fileName.toLowerCase()
@@ -884,68 +715,16 @@ export default function AdminDashboard() {
 
               {/* Expiry UI removed: no vervaldatum/expiry fields shown */}
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium block">Client email (optioneel)</label>
-                  <div className="flex gap-1">
-                    {templates.length > 0 && (
-                      <select
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            loadTemplate(templates[parseInt(e.target.value)]);
-                            e.target.value = "";
-                          }
-                        }}
-                        className="text-xs border border-gray-300 rounded px-2 py-1 h-8"
-                      >
-                        <option value="">Laad template...</option>
-                        {templates.map((template, index) => (
-                          <option key={index} value={index}>
-                            {template.name}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setShowTemplateDialog(true)}
-                      className="h-8 px-2 text-xs"
-                    >
-                      Opslaan
-                    </Button>
-                  </div>
-                </div>
-                <Input
-                  type="email"
-                  placeholder="naam@voorbeeld.nl"
-                  value={clientEmail}
-                  onChange={(e) => setClientEmail(e.target.value)}
-                  className="h-9"
-                />
-
-                <div>
-                  <label className="text-sm font-medium mb-1 block">Persoonlijk bericht</label>
-                  <textarea
-                    value={customMessage}
-                    onChange={(e) => setCustomMessage(e.target.value)}
-                    rows={6}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+              <div>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={ratingsEnabled}
+                    onChange={(e) => setRatingsEnabled(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                </div>
-
-                <div>
-                  <label className="flex items-center gap-2 text-sm cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={ratingsEnabled}
-                      onChange={(e) => setRatingsEnabled(e.target.checked)}
-                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span>Foto waardering inschakelen</span>
-                  </label>
-                </div>
+                  <span>Foto waardering inschakelen</span>
+                </label>
               </div>
 
               <div className="border-2 border-dashed rounded-lg p-6 text-center border-gray-300 bg-white">
@@ -1153,14 +932,6 @@ export default function AdminDashboard() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => openEmailDialog(upload)}
-                            title="Verstuur email"
-                          >
-                            <Mail className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
                             onClick={() => copyLink(upload.slug)}
                             title="Kopieer link"
                           >
@@ -1343,165 +1114,7 @@ export default function AdminDashboard() {
           </Card>
         )}
 
-      {/* Email Dialog */}
-      {emailDialogOpen && selectedUploadForEmail && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold">Verstuur Email</h2>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Upload: {selectedUploadForEmail.slug}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setEmailDialogOpen(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
 
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="text-sm font-medium block mb-2">
-                  Ontvanger email *
-                </label>
-                <Input
-                  type="email"
-                  placeholder="naam@voorbeeld.nl"
-                  value={emailRecipient}
-                  onChange={(e) => setEmailRecipient(e.target.value)}
-                  disabled={sendingEmail}
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium block mb-2">
-                  Persoonlijk bericht (optioneel)
-                </label>
-                <textarea
-                  placeholder="Hoi! Hier zijn de foto's van onze fotoshoot..."
-                  value={emailMessage}
-                  onChange={(e) => setEmailMessage(e.target.value)}
-                  rows={6}
-                  disabled={sendingEmail}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Dit bericht wordt toegevoegd aan de email
-                </p>
-              </div>
-
-              
-            </div>
-
-            <div className="p-6 border-t bg-gray-50 flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setEmailDialogOpen(false)}
-                disabled={sendingEmail}
-                className="flex-1"
-              >
-                Annuleren
-              </Button>
-              <Button
-                onClick={sendEmail}
-                disabled={sendingEmail || !emailRecipient}
-                className="flex-1"
-              >
-                {sendingEmail ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Bezig...
-                  </>
-                ) : (
-                  <>
-                    <Mail className="h-4 w-4 mr-2" />
-                    Verstuur Email
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Template Save Dialog */}
-      {showTemplateDialog && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-md w-full shadow-xl">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Template opslaan</h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-1 block">Template naam</label>
-                  <Input
-                    type="text"
-                    placeholder="Bijv: Bruiloft, Bedrijfsevent, ..."
-                    value={templateName}
-                    onChange={(e) => setTemplateName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && saveTemplate()}
-                    autoFocus
-                  />
-                </div>
-
-                <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                  <p className="font-medium mb-1">Dit wordt opgeslagen:</p>
-                  <ul className="list-disc list-inside space-y-1 text-xs">
-                    <li>Email: {clientEmail || '(leeg)'}</li>
-                    <li>Bericht: {customMessage.substring(0, 50)}...</li>
-                  </ul>
-                </div>
-
-                {templates.length > 0 && (
-                  <div>
-                    <p className="text-sm font-medium mb-2">Bestaande templates:</p>
-                    <div className="space-y-1 max-h-32 overflow-y-auto">
-                      {templates.map((template, index) => (
-                        <div key={index} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded">
-                          <span>{template.name}</span>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => deleteTemplate(index)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="p-4 border-t bg-gray-50 flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowTemplateDialog(false);
-                  setTemplateName("");
-                }}
-                className="flex-1"
-              >
-                Annuleren
-              </Button>
-              <Button
-                onClick={saveTemplate}
-                disabled={!templateName.trim()}
-                className="flex-1"
-              >
-                Opslaan
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Settings Dialog */}
       {showSettingsDialog && (
