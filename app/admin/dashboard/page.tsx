@@ -865,8 +865,13 @@ export default function AdminDashboard() {
               >
                 <Upload className="h-10 w-10 mx-auto mb-3 text-gray-400" />
                 <p className="text-sm text-gray-600 mb-3">
-                  Selecteer bestanden om te uploaden (of sleep een map hierheen)
+                  Sleep bestanden of een map hierheen
                 </p>
+                {isDropzoneDragActive && (
+                  <p className="text-xs text-blue-600 mb-3">
+                    Submappen worden automatisch meegenomen
+                  </p>
+                )}
                 <div className="flex gap-3 justify-center">
                   <input
                     type="file"
@@ -904,9 +909,6 @@ export default function AdminDashboard() {
                     📁 Selecteer Folder
                   </Button>
                 </div>
-                <p className="text-xs text-gray-400 mt-3">
-                  Selecteer een folder om de mappenstructuur te behouden. Alle bestandstypes worden ondersteund.
-                </p>
               </div>
 
               {files.length > 0 && (
