@@ -19,13 +19,15 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Lightbox, LightboxImage } from "@/components/Lightbox";
-import { formatBytes, sortFilesNatural } from "@/lib/utils";
+import { formatBytes, sortFilesChronological } from "@/lib/utils";
 
 /** ====== Minimaal benodigde types (vervang door je projecttypes indien gewenst) ====== */
 type UploadFile = {
   key: string;
   name: string;
   size: number;
+  type?: string;
+  takenAt?: string;
 };
 
 type UploadMetadata = {
@@ -118,7 +120,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
 
   // Filter zichtbare bestanden
   const visibleFiles = useMemo(
-    () => sortFilesNatural(metadata.files).filter((f) => !shouldFilterFile(f.name)),
+    () => sortFilesChronological(metadata.files).filter((f) => !shouldFilterFile(f.name)),
     [metadata.files]
   );
   const imageFiles = useMemo(() => visibleFiles.filter((f) => isImage(f.name)), [visibleFiles]);

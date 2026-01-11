@@ -6,7 +6,7 @@ import { Upload, X, Copy, Trash2, LogOut, Check, ExternalLink, Star, Settings, B
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatBytes, formatDate, sortFilesNatural } from "@/lib/utils";
+import { formatBytes, formatDate, sortFilesChronological } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 import { useAutoLogout } from "@/lib/useAutoLogout";
 import { MAX_UPLOAD_FILE_SIZE_BYTES } from "@/lib/validation";
@@ -57,6 +57,7 @@ export default function AdminDashboard() {
   const [showOrphaned, setShowOrphaned] = useState(false);
   const [slugSuggestions, setSlugSuggestions] = useState<string[]>([]);
   const [selectedUploads, setSelectedUploads] = useState<Set<string>>(new Set());
+  const [recomputingExifSlug, setRecomputingExifSlug] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [monthlyCost, setMonthlyCost] = useState<any>(null);
     const [uploadsError, setUploadsError] = useState<string | null>(null);
@@ -434,6 +435,40 @@ export default function AdminDashboard() {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const isImageFilename = (name: string) => {
+    const ext = name.toLowerCase().split('.').pop();
+    return ["jpg", "jpeg", "png", "gif", "webp", "bmp", "heic", "heif", "tif", "tiff"].includes(ext || "");
+  };
+
+  const getTakenAtFromFile = async (file: File): Promise<string | undefined> => {
+    if (!(file.type?.startsWith('image/') || isImageFilename(file.name))) return undefined;
+
+    try {
+      const exifr = await import('exifr');
+      const data: any = await exifr.parse(file, {
+        pick: [
+          'DateTimeOriginal',
+          'CreateDate',
+          'MediaCreateDate',
+          'TrackCreateDate',
+          'ModifyDate',
+        ],
+      });
+
+      const d: unknown =
+        data?.DateTimeOriginal ??
+        data?.CreateDate ??
+        data?.MediaCreateDate ??
+        data?.TrackCreateDate ??
+        data?.ModifyDate;
+
+      if (d instanceof Date && Number.isFinite(d.getTime())) return d.toISOString();
+      return undefined;
+    } catch {
+      return undefined;
+    }
+  };
+
   const handleUpload = async () => {
     if (!slug || files.length === 0) {
       toast({
@@ -458,8 +493,19 @@ export default function AdminDashboard() {
     setUploadProgress(0);
 
     try {
-      const sortedFiles = sortFilesNatural(files);
-      const uploadedFiles: Array<{key: string; name: string; size: number; type: string}> = [];
+      const withExif = await Promise.all(
+        files.map(async (file) => ({
+          file,
+          name: file.name,
+          key: file.name,
+          takenAt: await getTakenAtFromFile(file),
+        }))
+      );
+      const sortedWithExif = sortFilesChronological(withExif);
+      const sortedFiles = sortedWithExif.map((w) => w.file);
+      const takenAtByName = new Map(sortedWithExif.map((w) => [w.name, w.takenAt] as const));
+
+      const uploadedFiles: Array<{key: string; name: string; size: number; type: string; takenAt?: string}> = [];
       let totalBytes = 0;
       let uploadedBytes = 0;
 
@@ -521,6 +567,7 @@ export default function AdminDashboard() {
           name: file.name,
           size: file.size,
           type: file.type,
+          takenAt: takenAtByName.get(file.name),
         });
       }
 
@@ -766,6 +813,32 @@ export default function AdminDashboard() {
     } catch (e) {
       console.error(e);
       toast({ title: "Fout", description: "Kon waarderingen niet wissen", variant: "destructive" });
+    }
+  };
+
+  const recomputeExifForUpload = async (uploadSlug: string) => {
+    setRecomputingExifSlug(uploadSlug);
+    try {
+      const res = await fetch('/api/admin/recompute-exif', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: uploadSlug }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Failed to recompute EXIF');
+
+      toast({
+        title: 'EXIF bijgewerkt',
+        description: `${data.updated ?? 0} foto(‘s) voorzien van datum (van ${data.images ?? 0} images).`,
+      });
+
+      await loadUploads();
+    } catch (e) {
+      console.error(e);
+      toast({ title: 'Fout', description: 'Kon EXIF datums niet bijwerken', variant: 'destructive' });
+    } finally {
+      setRecomputingExifSlug(null);
     }
   };
 
@@ -1071,6 +1144,17 @@ export default function AdminDashboard() {
                             title="Bekijk download pagina"
                           >
                             <ExternalLink className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => recomputeExifForUpload(upload.slug)}
+                            disabled={recomputingExifSlug === upload.slug}
+                            title="Sorteer / vul EXIF datums aan"
+                          >
+                            <span className="text-[10px] font-semibold">
+                              {recomputingExifSlug === upload.slug ? '…' : 'EXIF'}
+                            </span>
                           </Button>
                           <Button
                             size="sm"

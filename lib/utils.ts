@@ -29,6 +29,8 @@ export function formatDate(date: Date) {
 
 export type NamedFileLike = { name?: string; key?: string };
 
+export type ChronologicalFileLike = NamedFileLike & { takenAt?: string | Date | null };
+
 export function sortFilesNatural<T extends NamedFileLike>(files: T[]): T[] {
   const collator = new Intl.Collator("nl-NL", {
     numeric: true,
@@ -40,6 +42,47 @@ export function sortFilesNatural<T extends NamedFileLike>(files: T[]): T[] {
     const bName = (b.name ?? b.key ?? "").toString();
     const primary = collator.compare(aName, bName);
     if (primary !== 0) return primary;
+    const aKey = (a.key ?? "").toString();
+    const bKey = (b.key ?? "").toString();
+    return aKey.localeCompare(bKey);
+  });
+}
+
+function toSortableTime(value: ChronologicalFileLike["takenAt"]): number | null {
+  if (!value) return null;
+  if (value instanceof Date) {
+    const t = value.getTime();
+    return Number.isFinite(t) ? t : null;
+  }
+  const t = Date.parse(value.toString());
+  return Number.isFinite(t) ? t : null;
+}
+
+// Sort by EXIF/created date when available, else natural filename.
+// Files with no `takenAt` are placed last.
+export function sortFilesChronological<T extends ChronologicalFileLike>(files: T[]): T[] {
+  const collator = new Intl.Collator("nl-NL", {
+    numeric: true,
+    sensitivity: "base",
+  });
+
+  return [...files].sort((a, b) => {
+    const aTime = toSortableTime(a.takenAt);
+    const bTime = toSortableTime(b.takenAt);
+
+    if (aTime != null && bTime != null) {
+      if (aTime !== bTime) return aTime - bTime;
+    } else if (aTime != null) {
+      return -1;
+    } else if (bTime != null) {
+      return 1;
+    }
+
+    const aName = (a.name ?? a.key ?? "").toString();
+    const bName = (b.name ?? b.key ?? "").toString();
+    const primary = collator.compare(aName, bName);
+    if (primary !== 0) return primary;
+
     const aKey = (a.key ?? "").toString();
     const bKey = (b.key ?? "").toString();
     return aKey.localeCompare(bKey);
