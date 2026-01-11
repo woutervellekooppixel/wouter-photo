@@ -1341,7 +1341,7 @@ export default function AdminDashboard() {
                           setDefaultBackgroundFile(null);
                           // Update preview with the uploaded image URL
                           if (data.url) {
-                            setDefaultBackgroundPreview(data.url);
+                            setDefaultBackgroundPreview(`${data.url}?v=${Date.now()}`);
                           }
                         } else {
                           throw new Error('Upload failed');
