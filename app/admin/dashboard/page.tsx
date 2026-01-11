@@ -1,3 +1,63 @@
+  // ratingsEnabled aan/uit voor bestaande upload
+  const updateRatingsEnabledForUpload = async (uploadSlug: string, enabled: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/uploads/${encodeURIComponent(uploadSlug)}/ratings-enabled`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+
+      await loadUploads(); // of optimistisch updaten
+      toast({
+        title: "Bijgewerkt",
+        description: `Foto waardering is ${enabled ? "ingeschakeld" : "uitgeschakeld"}.",
+      });
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Fout", description: "Kon waardering niet bijwerken", variant: "destructive" });
+    }
+  };
+
+  // per-foto rating togglen (admin)
+  const togglePhotoRatingAdmin = async (uploadSlug: string, fileKey: string, nextRated: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/rate/${encodeURIComponent(uploadSlug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileKey, rated: nextRated }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+
+      // Optimistisch bijwerken in uploads state:
+      setUploads(prev =>
+        prev.map(u => {
+          if (u.slug !== uploadSlug) return u;
+          const next = { ...(u.ratings || {}) };
+          if (nextRated) next[fileKey] = true; else delete next[fileKey];
+          return { ...u, ratings: next };
+        })
+      );
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Fout", description: "Kon foto waardering niet opslaan", variant: "destructive" });
+    }
+  };
+
+  // (optioneel) alle ratings wissen
+  const clearAllRatings = async (uploadSlug: string) => {
+    if (!confirm("Weet je zeker dat je alle waarderingen wilt verwijderen?")) return;
+    try {
+      const res = await fetch(`/api/admin/ratings/${encodeURIComponent(uploadSlug)}/clear`, { method: "POST" });
+      if (!res.ok) throw new Error(await res.text());
+
+      setUploads(prev => prev.map(u => (u.slug === uploadSlug ? { ...u, ratings: {} } : u)));
+      toast({ title: "Opgeschoond", description: "Alle waarderingen zijn verwijderd." });
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Fout", description: "Kon waarderingen niet wissen", variant: "destructive" });
+    }
+  };
 "use client";
 
 import { useState, useEffect } from "react";
@@ -1133,12 +1193,26 @@ export default function AdminDashboard() {
                             </button>
                           )}
                         </div>
-                        {upload.ratings && Object.keys(upload.ratings).length > 0 && (
-                          <p className="flex items-center gap-1">
-                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                            Gewaardeerd: {Object.keys(upload.ratings).length} foto's
-                          </p>
-                        )}
+                        <div className="flex items-center gap-3">
+                          <label className="inline-flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              checked={!!upload.ratingsEnabled}
+                              onChange={(e) => updateRatingsEnabledForUpload(upload.slug, e.target.checked)}
+                            />
+                            <span>Foto waardering</span>
+                          </label>
+                          {upload.ratings && Object.keys(upload.ratings).length > 0 && (
+                            <button
+                              onClick={() => clearAllRatings(upload.slug)}
+                              className="text-xs text-red-600 hover:text-red-800 underline"
+                              title="Wis alle waarderingen voor deze upload"
+                            >
+                              Reset waardering
+                            </button>
+                          )}
+                        </div>
                       </div>
                       
                       {/* Photo grid for preview selection */}
@@ -1162,11 +1236,22 @@ export default function AdminDashboard() {
                                   }`}
                                   title={file.name}
                                 >
-                                  {isRated && (
-                                    <div className="absolute top-1 right-1 z-10">
-                                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 drop-shadow" />
-                                    </div>
-                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const next = !isRated;
+                                      togglePhotoRatingAdmin(upload.slug, file.key, next);
+                                    }}
+                                    className="absolute top-1 right-1 z-10 p-1 rounded-full bg-black/40 hover:bg-black/60"
+                                    title={isRated ? "Waardering verwijderen" : "Markeer als favoriet"}
+                                  >
+                                    <Star
+                                      className={`h-4 w-4 transition-colors ${
+                                        isRated ? "fill-yellow-400 text-yellow-400" : "text-white"
+                                      }`}
+                                    />
+                                  </button>
                                   {thumbnailUrl ? (
                                     <img
                                       src={thumbnailUrl}
