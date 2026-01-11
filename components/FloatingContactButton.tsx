@@ -47,8 +47,8 @@ export default function FloatingContactButton({ mobile = false }: { mobile?: boo
         onClick={() => setOpen(true)}
         className={
           mobile
-            ? "w-full max-w-xs bg-black text-white px-5 py-2.5 rounded-full shadow flex items-center justify-center gap-2 hover:bg-gray-900 transition-colors text-base"
-            : "bg-black text-white px-5 py-2 rounded-full shadow flex items-center gap-2 hover:bg-gray-900 transition-colors ml-2"
+            ? "w-full max-w-xs bg-black text-white dark:bg-white dark:text-black px-5 py-2.5 rounded-full shadow flex items-center justify-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors text-base"
+            : "bg-black text-white dark:bg-white dark:text-black px-5 py-2 rounded-full shadow flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors ml-2"
         }
         aria-label="Contact"
       >

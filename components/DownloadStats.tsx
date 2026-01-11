@@ -51,7 +51,6 @@ export default function DownloadStats() {
       <span>{metadata.files.length} bestand{metadata.files.length !== 1 ? 'en' : ''}</span>
       <span className="text-gray-400">•</span>
       <span>{formatBytes(totalSize)}</span>
-      <span className="text-gray-400">•</span>
     </div>
   )
 }
