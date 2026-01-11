@@ -1,5 +1,5 @@
 import './globals.css'
-import Header from '../components/Header'
+import HeaderWrapper from '../components/HeaderWrapper'
 import PWAHandler from '../components/PWAHandler'
 import { Toaster } from '@/components/ui/toaster'
 import FloatingContactWrapper from '../components/FloatingContactWrapper'
@@ -166,7 +166,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </noscript>
 
           <PWAHandler />
-          <Header />
+          <HeaderWrapper />
           <Toaster />
           {children}
           <FloatingContactWrapper />

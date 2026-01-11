@@ -67,6 +67,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [ratings, setRatings] = useState<Record<string, boolean>>({});
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
+  const [heroObjectPosition, setHeroObjectPosition] = useState<string>("50% 35%");
 
   // Fake loader percentage voor hero (kan gebruikt worden voor animaties)
   const [fakePercent, setFakePercent] = useState(0);
@@ -458,61 +459,46 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
         {/* Fullscreen loading overlay */}
         {showLoadingOverlay && (
           <div
-            className="fixed inset-0 z-50 transition-opacity duration-1000"
+            className="fixed inset-0 z-[100] transition-opacity duration-1000"
             style={{ opacity: loadingThumbnails ? 1 : 0 }}
           >
             {/* Fullscreen hero image */}
             <div className="absolute inset-0 bg-gray-900">
               {previewImage && thumbnailUrls[previewImage.key] ? (
-                <>
-                  <Image
-                    src={thumbnailUrls[previewImage.key]}
-                    alt=""
-                    fill
-                    className="object-cover blur-2xl scale-110 opacity-60"
-                    sizes="100vw"
-                    placeholder="empty"
-                    unoptimized={backgroundUrl?.startsWith("http")}
-                    aria-hidden
-                  />
-                  <Image
-                    src={thumbnailUrls[previewImage.key]}
-                    alt="Hero preview"
-                    fill
-                    className="object-contain animate-in fade-in duration-700"
-                    sizes="100vw"
-                    priority
-                    onLoad={() => setPreviewLoaded(true)}
-                    placeholder="empty"
-                    unoptimized={backgroundUrl?.startsWith("http")}
-                  />
-                  <div className="absolute inset-0 bg-black/15" />
-                </>
+                <Image
+                  src={thumbnailUrls[previewImage.key]}
+                  alt="Hero preview"
+                  fill
+                  className="object-cover animate-in fade-in duration-700"
+                  style={{ objectPosition: heroObjectPosition }}
+                  sizes="100vw"
+                  priority
+                  onLoad={() => setPreviewLoaded(true)}
+                  onLoadingComplete={(img) => {
+                    // Keep 'spread' but bias crop slightly upwards for portraits
+                    const isPortrait = img.naturalHeight > img.naturalWidth;
+                    setHeroObjectPosition(isPortrait ? "50% 25%" : "50% 35%");
+                  }}
+                  placeholder="empty"
+                  unoptimized={backgroundUrl?.startsWith("http")}
+                />
               ) : backgroundUrl ? (
-                <>
-                  <Image
-                    src={backgroundUrl}
-                    alt=""
-                    fill
-                    className="object-cover blur-2xl scale-110 opacity-60"
-                    sizes="100vw"
-                    placeholder="empty"
-                    unoptimized={backgroundUrl?.startsWith("http")}
-                    aria-hidden
-                  />
-                  <Image
-                    src={backgroundUrl}
-                    alt="Loading preview"
-                    fill
-                    className="object-contain animate-in fade-in duration-700"
-                    sizes="100vw"
-                    priority
-                    onLoad={() => setPreviewLoaded(true)}
-                    placeholder="empty"
-                    unoptimized={backgroundUrl?.startsWith("http")}
-                  />
-                  <div className="absolute inset-0 bg-black/15" />
-                </>
+                <Image
+                  src={backgroundUrl}
+                  alt="Loading preview"
+                  fill
+                  className="object-cover animate-in fade-in duration-700"
+                  style={{ objectPosition: heroObjectPosition }}
+                  sizes="100vw"
+                  priority
+                  onLoad={() => setPreviewLoaded(true)}
+                  onLoadingComplete={(img) => {
+                    const isPortrait = img.naturalHeight > img.naturalWidth;
+                    setHeroObjectPosition(isPortrait ? "50% 25%" : "50% 35%");
+                  }}
+                  placeholder="empty"
+                  unoptimized={backgroundUrl?.startsWith("http")}
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gray-900">
                   <div className="relative w-32 h-32">
