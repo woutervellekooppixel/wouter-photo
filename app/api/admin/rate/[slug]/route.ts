@@ -1,11 +1,18 @@
-import { NextResponse } from "next/server";
+
+import { NextResponse, type NextRequest } from "next/server";
 import { getMetadata, saveMetadata } from "@/lib/r2";
 
 /** POST body: { fileKey: string, rated: boolean } */
-export async function POST(req: Request, context: { params: { slug: string } }) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
   try {
-    const { slug } = context.params;
-    const { fileKey, rated } = (await req.json()) as { fileKey?: string; rated?: boolean };
+    const { slug } = await params;
+    const { fileKey, rated } = (await req.json()) as {
+      fileKey?: string;
+      rated?: boolean;
+    };
 
     if (!fileKey || typeof rated !== "boolean") {
       return NextResponse.json({ error: "Missing fileKey or rated" }, { status: 400 });
