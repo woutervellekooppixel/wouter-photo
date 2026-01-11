@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Upload, X, Copy, Trash2, LogOut, Check, ExternalLink, Star, Settings, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,8 @@ export default function AdminDashboard() {
   const [defaultBackgroundFile, setDefaultBackgroundFile] = useState<File | null>(null);
   const [defaultBackgroundPreview, setDefaultBackgroundPreview] = useState<string>("/default-background.svg");
   const [showStatisticsDialog, setShowStatisticsDialog] = useState(false);
+  const [isDropzoneDragActive, setIsDropzoneDragActive] = useState(false);
+  const dropzoneDragDepth = useRef(0);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -227,6 +229,147 @@ export default function AdminDashboard() {
     return false;
   };
 
+  const addSelectedFiles = (incomingFiles: File[]) => {
+    const filteredFiles = incomingFiles.filter((file) => !isSystemFile(file.name));
+
+    setFiles((prev) => {
+      const existing = new Set(prev.map((f) => `${f.name}-${f.size}`));
+      const newFiles = filteredFiles.filter((f) => !existing.has(`${f.name}-${f.size}`));
+      return [...prev, ...newFiles];
+    });
+
+    if (filteredFiles.length > 0 && !slug) {
+      generateSlugSuggestions(filteredFiles[0].name);
+    }
+  };
+
+  const getFilesFromDataTransfer = async (dt: DataTransfer): Promise<File[]> => {
+    const items = Array.from(dt.items || []);
+    const hasEntryApi = items.some((i) => typeof (i as any).webkitGetAsEntry === "function");
+
+    if (!hasEntryApi) {
+      return Array.from(dt.files || []).filter((f): f is File => f instanceof File);
+    }
+
+    const readEntriesOnce = (reader: any): Promise<any[]> =>
+      new Promise((resolve, reject) => reader.readEntries(resolve, reject));
+
+    const readAllEntries = async (reader: any): Promise<any[]> => {
+      const all: any[] = [];
+      // readEntries may return partial results; keep reading until empty
+      while (true) {
+        const batch = await readEntriesOnce(reader);
+        if (!batch || batch.length === 0) break;
+        all.push(...batch);
+      }
+      return all;
+    };
+
+    const fileFromEntry = async (
+      entry: any,
+      currentPath: string,
+      rootToStrip?: string
+    ): Promise<File | null> => {
+      const file: File = await new Promise((resolve, reject) => entry.file(resolve, reject));
+
+      const fullPath = `${currentPath}${file.name}`;
+      const relativePath = rootToStrip && fullPath.startsWith(`${rootToStrip}/`)
+        ? fullPath.slice(rootToStrip.length + 1)
+        : fullPath;
+
+      if (isSystemFile(relativePath) || isSystemFile(file.name)) return null;
+
+      return new File([file], relativePath, {
+        type: file.type,
+        lastModified: file.lastModified,
+      });
+    };
+
+    const walkEntry = async (
+      entry: any,
+      currentPath: string,
+      rootToStrip?: string
+    ): Promise<File[]> => {
+      if (!entry) return [];
+      if (entry.isFile) {
+        const f = await fileFromEntry(entry, currentPath, rootToStrip);
+        return f ? [f] : [];
+      }
+      if (entry.isDirectory) {
+        const reader = entry.createReader();
+        const entries = await readAllEntries(reader);
+        const nextPath = `${currentPath}${entry.name}/`;
+        const nextRootToStrip = rootToStrip ?? entry.name;
+        const nested = await Promise.all(entries.map((e: any) => walkEntry(e, nextPath, nextRootToStrip)));
+        return nested.flat();
+      }
+      return [];
+    };
+
+    const topEntries = items
+      .map((i) => (i as any).webkitGetAsEntry?.())
+      .filter(Boolean);
+
+    const nestedFiles = await Promise.all(topEntries.map((e: any) => walkEntry(e, "")));
+    return nestedFiles.flat();
+  };
+
+  const handleDropzoneDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzoneDragDepth.current += 1;
+    setIsDropzoneDragActive(true);
+  };
+
+  const handleDropzoneDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzoneDragDepth.current -= 1;
+    if (dropzoneDragDepth.current <= 0) {
+      dropzoneDragDepth.current = 0;
+      setIsDropzoneDragActive(false);
+    }
+  };
+
+  const handleDropzoneDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      e.dataTransfer.dropEffect = "copy";
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleDropzoneDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzoneDragDepth.current = 0;
+    setIsDropzoneDragActive(false);
+
+    try {
+      const droppedFiles = await getFilesFromDataTransfer(e.dataTransfer);
+
+      if (droppedFiles.length === 0) {
+        toast({
+          title: "Geen bestanden gevonden",
+          description: "Tip: map-slepen werkt het best in Chrome/Edge/Safari.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      addSelectedFiles(droppedFiles);
+    } catch (err) {
+      console.error("Failed to process drop:", err);
+      toast({
+        title: "Fout",
+        description: "Kon de gesleepte map/bestanden niet verwerken.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleFolderSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (!fileList) return;
@@ -251,11 +394,7 @@ export default function AdminDashboard() {
       allFiles.push(newFile);
     }
 
-    setFiles((prev) => {
-      const existing = new Set(prev.map(f => `${f.name}-${f.size}`));
-      const newFiles = allFiles.filter(f => !existing.has(`${f.name}-${f.size}`));
-      return [...prev, ...newFiles];
-    });
+    addSelectedFiles(allFiles);
 
     // Reset input
     e.target.value = '';
@@ -265,18 +404,8 @@ export default function AdminDashboard() {
     const fileList = e.target.files;
     if (!fileList) return;
 
-    const filesArray = Array.from(fileList).filter(f => !isSystemFile(f.name));
-
-    setFiles((prev) => {
-      const existing = new Set(prev.map(f => `${f.name}-${f.size}`));
-      const newFiles = filesArray.filter(f => !existing.has(`${f.name}-${f.size}`));
-      return [...prev, ...newFiles];
-    });
-
-    // Generate slug suggestions from first file
-    if (filesArray.length > 0 && !slug) {
-      generateSlugSuggestions(filesArray[0].name);
-    }
+    const filesArray = Array.from(fileList);
+    addSelectedFiles(filesArray);
 
     // Reset input
     e.target.value = '';
@@ -727,10 +856,16 @@ export default function AdminDashboard() {
                 </label>
               </div>
 
-              <div className="border-2 border-dashed rounded-lg p-6 text-center border-gray-300 bg-white">
+              <div
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${isDropzoneDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-white"}`}
+                onDragEnter={handleDropzoneDragEnter}
+                onDragLeave={handleDropzoneDragLeave}
+                onDragOver={handleDropzoneDragOver}
+                onDrop={handleDropzoneDrop}
+              >
                 <Upload className="h-10 w-10 mx-auto mb-3 text-gray-400" />
                 <p className="text-sm text-gray-600 mb-3">
-                  Selecteer bestanden om te uploaden
+                  Selecteer bestanden om te uploaden (of sleep een map hierheen)
                 </p>
                 <div className="flex gap-3 justify-center">
                   <input
