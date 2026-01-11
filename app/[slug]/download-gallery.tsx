@@ -116,7 +116,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
     return `/api/photos/by-key?key=${encodeURIComponent(key)}${fullParam}`;
   };
 
-  // Thumbnails ophalen (hier “opbouwen”, geen echte fetch nodig)
+  // Thumbnails "opbouwen" (geen echte fetch nodig; URLs naar je API)
   useEffect(() => {
     if (!metadata || !metadata.files) return;
     const imgs = metadata.files.filter((f) => !shouldFilterFile(f.name) && isImage(f.name));
@@ -437,8 +437,6 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
     setLightboxOpen(true);
   };
 
-  /** ===== Render ===== */
-
   return (
     <div className="min-h-screen relative bg-[hsl(var(--background))] text-[hsl(var(--foreground))]">
       {/* Content wrapper */}
@@ -524,9 +522,9 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                     )}
                   </Button>
                 ) : (
-                  <div className="relative w-40 h-9 bg-black rounded-md overflow-hidden border border-[hsl(var(--border))]">
+                  <div className="relative w-40 h-9 bg-[hsl(var(--muted))] rounded-md overflow-hidden border border-[hsl(var(--border))]">
                     <div
-                      className="absolute inset-0 bg-gradient-to-r from-gray-800 to-gray-900 dark:from-gray-200 dark:to-gray-800 transition-all duration-300 ease-out flex items-center justify-center"
+                      className="absolute left-0 top-0 h-full bg-gradient-to-r from-gray-800 to-gray-900 dark:from-gray-300 dark:to-gray-600 transition-all duration-300 ease-out flex items-center justify-center"
                       style={{ width: `${downloadProgress}%` }}
                     >
                       {downloadProgress > 10 && (
@@ -614,7 +612,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
 
                           {/* Thumbnail */}
                           <div
-                            className={`aspect-square bg-black flex items-center justify-center overflow-hidden relative select-none ${
+                            className={`aspect-square bg-[hsl(var(--muted))] flex items-center justify-center overflow-hidden relative select-none ${
                               isSelectMode ? "cursor-pointer" : "cursor-zoom-in"
                             }`}
                             onContextMenu={(e) => e.preventDefault()}
@@ -643,26 +641,13 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                               <ImageIcon className="h-12 w-12 text-gray-300" />
                             )}
 
-                            
-{/* Hover overlay with file info */}
-{!isSelectMode && (
-  <div className="
-    absolute inset-0
-    bg-gradient-to-t
-    from-black/70 via-black/30 to-transparent
-    opacity-0 group-hover:opacity-100
-    transition-opacity duration-200
-    flex flex-col justify-end p-3
-  ">
-    <p className="text-white text-sm font-medium truncate">
-      {displayName}
-    </p>
-    <p className="text-white/80 text-xs">
-      {formatBytes(file.size)}
-    </p>
-  </div>
-)}
-
+                            {/* Hover overlay met file info (altijd donker, geen dark: overrides) */}
+                            {!isSelectMode && (
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
+                                <p className="text-white text-sm font-medium truncate">{displayName}</p>
+                                <p className="text-white/80 text-xs">{formatBytes(file.size)}</p>
+                              </div>
+                            )}
                           </div>
 
                           {/* Direct download knop (thumb) */}
@@ -785,10 +770,9 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
               onIndexChange={setCurrentIndex}
               enableDownload
               onDownload={(current, idx) => {
-                // Download via je API (zelfde naam als in tile)
+                // Download via raw URL (of pas aan naar je eigen API)
                 const file = imageFiles[idx];
                 const name = (file?.name.split("/").pop() || `image-${idx + 1}`).toString();
-                // Als je de raw URL wilt gebruiken:
                 const a = document.createElement("a");
                 a.href = current.src;
                 a.download = name;
