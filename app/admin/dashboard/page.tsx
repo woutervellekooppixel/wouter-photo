@@ -1,63 +1,3 @@
-  // ratingsEnabled aan/uit voor bestaande upload
-  const updateRatingsEnabledForUpload = async (uploadSlug: string, enabled: boolean) => {
-    try {
-      const res = await fetch(`/api/admin/uploads/${encodeURIComponent(uploadSlug)}/ratings-enabled`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-
-      await loadUploads(); // of optimistisch updaten
-      toast({
-        title: "Bijgewerkt",
-        description: `Foto waardering is ${enabled ? "ingeschakeld" : "uitgeschakeld"}.",
-      });
-    } catch (e) {
-      console.error(e);
-      toast({ title: "Fout", description: "Kon waardering niet bijwerken", variant: "destructive" });
-    }
-  };
-
-  // per-foto rating togglen (admin)
-  const togglePhotoRatingAdmin = async (uploadSlug: string, fileKey: string, nextRated: boolean) => {
-    try {
-      const res = await fetch(`/api/admin/rate/${encodeURIComponent(uploadSlug)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileKey, rated: nextRated }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-
-      // Optimistisch bijwerken in uploads state:
-      setUploads(prev =>
-        prev.map(u => {
-          if (u.slug !== uploadSlug) return u;
-          const next = { ...(u.ratings || {}) };
-          if (nextRated) next[fileKey] = true; else delete next[fileKey];
-          return { ...u, ratings: next };
-        })
-      );
-    } catch (e) {
-      console.error(e);
-      toast({ title: "Fout", description: "Kon foto waardering niet opslaan", variant: "destructive" });
-    }
-  };
-
-  // (optioneel) alle ratings wissen
-  const clearAllRatings = async (uploadSlug: string) => {
-    if (!confirm("Weet je zeker dat je alle waarderingen wilt verwijderen?")) return;
-    try {
-      const res = await fetch(`/api/admin/ratings/${encodeURIComponent(uploadSlug)}/clear`, { method: "POST" });
-      if (!res.ok) throw new Error(await res.text());
-
-      setUploads(prev => prev.map(u => (u.slug === uploadSlug ? { ...u, ratings: {} } : u)));
-      toast({ title: "Opgeschoond", description: "Alle waarderingen zijn verwijderd." });
-    } catch (e) {
-      console.error(e);
-      toast({ title: "Fout", description: "Kon waarderingen niet wissen", variant: "destructive" });
-    }
-  };
 "use client";
 
 import { useState, useEffect } from "react";
@@ -98,14 +38,14 @@ interface Upload {
 }
 
 export default function AdminDashboard() {
-    // Redirect naar /admin als je niet bent ingelogd
-    useEffect(() => {
-      fetch('/api/admin/check-auth').then(async res => {
-        if (!res.ok) {
-          window.location.href = '/admin';
-        }
-      });
-    }, []);
+  // Redirect naar /admin als je niet bent ingelogd
+  useEffect(() => {
+    fetch('/api/admin/check-auth').then(async res => {
+      if (!res.ok) {
+        window.location.href = '/admin';
+      }
+    });
+  }, []);
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
@@ -787,6 +727,67 @@ export default function AdminDashboard() {
   };
 
   const totalSize = files.reduce((acc, file) => acc + file.size, 0);
+
+  // ratingsEnabled aan/uit voor bestaande upload
+  const updateRatingsEnabledForUpload = async (uploadSlug: string, enabled: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/uploads/${encodeURIComponent(uploadSlug)}/ratings-enabled`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+
+      await loadUploads(); // of optimistisch updaten
+      toast({
+        title: "Bijgewerkt",
+        description: `Foto waardering is ${enabled ? "ingeschakeld" : "uitgeschakeld"}.`,
+      });
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Fout", description: "Kon waardering niet bijwerken", variant: "destructive" });
+    }
+  };
+
+  // per-foto rating togglen (admin)
+  const togglePhotoRatingAdmin = async (uploadSlug: string, fileKey: string, nextRated: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/rate/${encodeURIComponent(uploadSlug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileKey, rated: nextRated }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+
+      // Optimistisch bijwerken in uploads state:
+      setUploads(prev =>
+        prev.map(u => {
+          if (u.slug !== uploadSlug) return u;
+          const next = { ...(u.ratings || {}) };
+          if (nextRated) next[fileKey] = true; else delete next[fileKey];
+          return { ...u, ratings: next };
+        })
+      );
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Fout", description: "Kon foto waardering niet opslaan", variant: "destructive" });
+    }
+  };
+
+  // (optioneel) alle ratings wissen
+  const clearAllRatings = async (uploadSlug: string) => {
+    if (!confirm("Weet je zeker dat je alle waarderingen wilt verwijderen?")) return;
+    try {
+      const res = await fetch(`/api/admin/ratings/${encodeURIComponent(uploadSlug)}/clear`, { method: "POST" });
+      if (!res.ok) throw new Error(await res.text());
+
+      setUploads(prev => prev.map(u => (u.slug === uploadSlug ? { ...u, ratings: {} } : u)));
+      toast({ title: "Opgeschoond", description: "Alle waarderingen zijn verwijderd." });
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Fout", description: "Kon waarderingen niet wissen", variant: "destructive" });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
