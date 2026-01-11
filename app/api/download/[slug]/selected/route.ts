@@ -3,7 +3,7 @@ import { getMetadata, getFile, updateDownloadCount } from "@/lib/r2";
 import archiver from "archiver";
 import { downloadRateLimit } from "@/lib/rateLimit";
 import { isValidSlug } from "@/lib/validation";
-import { sortFilesNatural } from "@/lib/utils";
+import { sortFilesChronological } from "@/lib/utils";
 
 // Configure route for large downloads
 export const maxDuration = 300; // 5 minutes
@@ -36,7 +36,7 @@ export async function POST(
 
 
     // Filter to only selected files
-    const selectedFiles = sortFilesNatural(
+    const selectedFiles = sortFilesChronological(
       metadata.files.filter(f => fileKeys.includes(f.key))
     );
 
