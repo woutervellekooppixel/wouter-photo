@@ -10,24 +10,11 @@ import {
   ChevronDown, 
   ChevronRight, 
   FileText, 
-  File as FileIcon, 
-  Folder,
-  FileArchive,
-  FileCode,
-  FileSpreadsheet,
-  Video,
-  Music,
-  Star
+  File as FileIcon 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatBytes, formatDate } from "@/lib/utils";
-import type { UploadMetadata } from "@/lib/r2";
-
-export default function DownloadGallery({
-  metadata,
-}: {
-  metadata: UploadMetadata;
-}) {
+import { formatBytes } from "@/lib/utils";
+export default function DownloadGallery({ metadata }: { metadata: UploadMetadata }) {
   const [downloading, setDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadingFile, setDownloadingFile] = useState<string | null>(null);
@@ -40,6 +27,78 @@ export default function DownloadGallery({
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [ratings, setRatings] = useState<Record<string, boolean>>({});
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
+
+  // Fake loader percentage voor hero
+  const [fakePercent, setFakePercent] = useState(0);
+
+  useEffect(() => {
+    if (!loadingThumbnails) {
+      setFakePercent(100);
+      return;
+    }
+    setFakePercent(0);
+    let start = Date.now();
+    let raf: number;
+    const duration = 6000;
+    const animate = () => {
+      const elapsed = Date.now() - start;
+      const percent = Math.min(100, Math.round((elapsed / duration) * 100));
+      setFakePercent(percent);
+      if (percent < 100 && loadingThumbnails) {
+        raf = requestAnimationFrame(animate);
+      }
+    };
+    raf = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf);
+  }, [loadingThumbnails]);
+    // Thumbnails ophalen voor alle imageFiles
+  useEffect(() => {
+    if (!metadata || !metadata.files) return;
+    const imageFiles = metadata.files.filter(f => !shouldFilterFile(f.name) && isImage(f.name));
+    if (imageFiles.length === 0) {
+      setThumbnailUrls({});
+      setLoadingThumbnails(false);
+      setThumbnailsLoaded(0);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingThumbnails(true);
+    setThumbnailsLoaded(0);
+    const urls: Record<string, string> = {};
+    let loaded = 0;
+
+    // Hero/preview image direct toevoegen aan thumbnailUrls
+    if (metadata.previewImageKey) {
+      const heroUrl = `/api/photos/by-key?key=${encodeURIComponent(metadata.previewImageKey)}`;
+      urls[metadata.previewImageKey] = heroUrl;
+    }
+
+    const fetchThumbnails = async () => {
+      for (const file of imageFiles) {
+        const url = `/api/photos/by-key?key=${encodeURIComponent(file.key)}`;
+        urls[file.key] = url;
+        loaded++;
+        if (!cancelled) setThumbnailsLoaded(loaded);
+      }
+      if (!cancelled) setThumbnailUrls(urls);
+      // Minimaal 6 seconden loader tonen
+      const minDelay = 6000;
+      const start = Date.now();
+      const finish = async () => {
+        const elapsed = Date.now() - start;
+        if (elapsed < minDelay) {
+          await new Promise(res => setTimeout(res, minDelay - elapsed));
+        }
+        if (!cancelled) setLoadingThumbnails(false);
+      };
+      finish();
+    };
+    fetchThumbnails();
+    return () => { cancelled = true; };
+  }, [metadata]);
+
+
 
   // Helper function to check if file should be filtered out
   const shouldFilterFile = (filename: string) => {
@@ -61,6 +120,15 @@ export default function DownloadGallery({
   };
 
   // Get icon for file type
+    // Filter out system files first
+    const visibleFiles = metadata.files.filter(f => !shouldFilterFile(f.name));
+    // Separate images and other files
+      // Get preview image - use previewImageKey if set, otherwise null
+      const previewImage = metadata.previewImageKey 
+        ? metadata.files.find(f => f.key === metadata.previewImageKey)
+        : null;
+    const imageFiles = visibleFiles.filter(f => isImage(f.name));
+    const otherFiles = visibleFiles.filter(f => !isImage(f.name));
   const getFileIcon = (filename: string) => {
     const ext = filename.toLowerCase().split('.').pop();
     
@@ -89,74 +157,14 @@ export default function DownloadGallery({
       return <Video className="h-5 w-5 text-pink-600 flex-shrink-0" />;
     }
     
+
     // Audio files
     if (['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a'].includes(ext || '')) {
       return <Music className="h-5 w-5 text-blue-600 flex-shrink-0" />;
     }
-    
     // Default
     return <FileIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />;
   };
-
-  // Filter out system files first
-  const visibleFiles = metadata.files.filter(f => !shouldFilterFile(f.name));
-  
-  // Separate images and other files
-  const imageFiles = visibleFiles.filter(f => isImage(f.name));
-  const otherFiles = visibleFiles.filter(f => !isImage(f.name));
-  
-  // Get preview image - use previewImageKey if set, otherwise use background
-  const previewImage = metadata.previewImageKey 
-    ? metadata.files.find(f => f.key === metadata.previewImageKey)
-    : null; // Don't use first image, use background instead
-
-  // Load thumbnail URLs
-  useEffect(() => {
-    const loadThumbnails = async () => {
-      setLoadingThumbnails(true);
-      setThumbnailsLoaded(0);
-      setPreviewLoaded(false);
-      const urls: Record<string, string> = {};
-      
-      // Smooth fake progress from 0 to 100% over 8 seconds
-      const totalDuration = 8000;
-      const intervalTime = 50;
-      const steps = totalDuration / intervalTime;
-      const increment = visibleFiles.length / steps;
-      
-      let currentProgress = 0;
-      const progressInterval = setInterval(() => {
-        currentProgress += increment;
-        if (currentProgress >= visibleFiles.length) {
-          currentProgress = visibleFiles.length;
-          clearInterval(progressInterval);
-        }
-        setThumbnailsLoaded(Math.floor(currentProgress));
-      }, intervalTime);
-      
-
-      // Gebruik altijd de interne API voor thumbnails
-      if (previewImage) {
-        urls[previewImage.key] = `/api/photos/by-key?key=${encodeURIComponent(previewImage.key)}`;
-        setThumbnailUrls({ ...urls });
-      }
-
-      metadata.files.forEach((file) => {
-        if (previewImage && file.key === previewImage.key) return;
-        urls[file.key] = `/api/photos/by-key?key=${encodeURIComponent(file.key)}`;
-      });
-      setThumbnailUrls(urls);
-      
-      // Hide loading screen after 8 seconds
-      setTimeout(() => {
-        clearInterval(progressInterval);
-        setThumbnailsLoaded(metadata.files.length);
-        setLoadingThumbnails(false);
-      }, totalDuration);
-    };
-
-    loadThumbnails();
-  }, [metadata, previewImage]);
 
   // Load ratings from metadata
   useEffect(() => {
@@ -432,7 +440,7 @@ export default function DownloadGallery({
   };
 
   return (
-    <div className="min-h-screen relative bg-white">
+    <div className="min-h-screen relative bg-[hsl(var(--background))] text-[hsl(var(--foreground))]">
       
       {/* Content wrapper */}
       <div className="relative z-10">
@@ -444,11 +452,23 @@ export default function DownloadGallery({
           className="fixed inset-0 z-50 transition-opacity duration-1000" 
           style={{ opacity: loadingThumbnails ? 1 : 0 }}
         >
-          {/* Fullscreen preview image - sharp and clear */}
+          {/* Fullscreen hero image - sharp and clear */}
           <div className="absolute inset-0 bg-gray-900">
-            {(previewImage && thumbnailUrls[previewImage.key]) || backgroundUrl ? (
+            {previewImage && thumbnailUrls[previewImage.key] ? (
               <Image
-                src={(previewImage && thumbnailUrls[previewImage.key]) || backgroundUrl || ''}
+                src={thumbnailUrls[previewImage.key]}
+                alt="Hero preview"
+                fill
+                className="object-cover animate-in fade-in duration-700"
+                sizes="100vw"
+                priority
+                onLoad={() => setPreviewLoaded(true)}
+                placeholder="empty"
+                unoptimized={backgroundUrl?.startsWith('http')}
+              />
+            ) : backgroundUrl ? (
+              <Image
+                src={backgroundUrl}
                 alt="Loading preview"
                 fill
                 className="object-cover animate-in fade-in duration-700"
@@ -468,24 +488,20 @@ export default function DownloadGallery({
             )}
           </div>
           
-          {/* Only show progress when preview image is loaded */}
+          {/* Progress bar onderaan: altijd 6 seconden animatie */}
           {previewLoaded && (
             <>
-              {/* Instagram-style progress bar at bottom */}
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20 animate-in fade-in duration-500">
                 <div 
-                  className="h-full bg-white transition-all duration-300 ease-out"
-                  style={{ 
-                    width: `${(thumbnailsLoaded / metadata.files.length) * 100}%` 
-                  }}
+                  className="h-full bg-white transition-all duration-75 ease-linear"
+                  style={{ width: `${fakePercent}%` }}
                 />
               </div>
-              
-              {/* Subtle percentage indicator bottom center */}
+              {/* Fake percentage indicator bottom center */}
               <div className="absolute bottom-8 left-0 right-0 flex justify-center animate-in fade-in duration-700 delay-300">
                 <div className="bg-black/30 backdrop-blur-sm px-6 py-2 rounded-full">
                   <div className="text-white text-sm font-light tracking-wide">
-                    {Math.round((thumbnailsLoaded / visibleFiles.length) * 100)}% • {thumbnailsLoaded} van {visibleFiles.length}
+                    {fakePercent}% • Please wait, the gallery is loading…
                   </div>
                 </div>
               </div>
@@ -497,7 +513,7 @@ export default function DownloadGallery({
       <div className={`container mx-auto p-6 max-w-6xl transition-opacity duration-1000 ${loadingThumbnails ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         {/* Project Title */}
         <div className="mb-8 mt-4">
-          <h1 className="text-3xl font-bold text-gray-900 text-center mb-6">
+          <h1 className="text-3xl font-bold text-[hsl(var(--foreground))] text-center mb-6">
             {metadata.title || metadata.slug.replace(/-/g, " ")}
           </h1>
         </div>
@@ -521,26 +537,26 @@ export default function DownloadGallery({
                     </>
                   ) : (
                     <>
-                      <span className="hidden sm:inline">Download Alles</span>
+                      <span className="hidden sm:inline">Download All</span>
                       <span className="sm:hidden">Download</span>
                     </>
                   )}
                 </Button>
               ) : (
-                <div className="relative w-40 h-9 bg-gray-100 rounded-md overflow-hidden border border-gray-200">
+                <div className="relative w-40 h-9 bg-[hsl(var(--muted))] rounded-md overflow-hidden border border-[hsl(var(--border))]">
                   <div
-                    className="absolute inset-0 bg-gradient-to-r from-gray-800 to-gray-900 transition-all duration-300 ease-out flex items-center justify-center"
+                    className="absolute inset-0 bg-gradient-to-r from-gray-800 to-gray-900 dark:from-gray-200 dark:to-gray-800 transition-all duration-300 ease-out flex items-center justify-center"
                     style={{ width: `${downloadProgress}%` }}
                   >
                     {downloadProgress > 10 && (
-                      <span className="text-white text-xs font-semibold">
+                      <span className="text-white dark:text-black text-xs font-semibold">
                         {downloadProgress}%
                       </span>
                     )}
                   </div>
                   {downloadProgress <= 10 && (
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-gray-600 text-xs font-semibold">
+                      <span className="text-gray-600 dark:text-gray-300 text-xs font-semibold">
                         {downloadProgress}%
                       </span>
                     </div>
@@ -557,7 +573,7 @@ export default function DownloadGallery({
                 variant="outline"
                 size="sm"
               >
-                {isSelectMode ? 'Annuleren' : 'Selecteren'}
+                {isSelectMode ? 'Cancel' : 'Select'}
               </Button>
             </div>
 
@@ -568,11 +584,11 @@ export default function DownloadGallery({
                   variant="outline"
                   size="sm"
                 >
-                  {selectedFiles.size === imageFiles.length ? 'Deselecteer alles' : 'Selecteer alles'}
+                  {selectedFiles.size === imageFiles.length ? 'Deselect all' : 'Select all'}
                 </Button>
                 {selectedFiles.size > 0 && (
                   <span className="text-sm text-gray-600">
-                    {selectedFiles.size} foto{selectedFiles.size !== 1 ? "'s" : ''} geselecteerd
+                    {selectedFiles.size} photo{selectedFiles.size !== 1 ? 's' : ''} selected
                   </span>
                 )}
               </div>
@@ -589,14 +605,14 @@ export default function DownloadGallery({
                   </h3>
                 )}
                 
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {imagesByFolder[folder].map((file, index) => {
                       const displayName = file.name.split('/').pop() || file.name;
                       const isSelected = selectedFiles.has(file.key);
                       return (
                         <div
                           key={`${file.key}-${index}`}
-                          className="group relative bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden"
+                          className="group relative bg-[hsl(var(--card))] rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden"
                         >
                           {/* Selection checkbox */}
                           {isSelectMode && (
@@ -628,7 +644,7 @@ export default function DownloadGallery({
 
                           {/* Thumbnail with hover zoom */}
                           <div 
-                            className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden relative select-none cursor-pointer"
+                            className="aspect-square bg-[hsl(var(--muted))] flex items-center justify-center overflow-hidden relative select-none cursor-pointer"
                             onContextMenu={(e) => e.preventDefault()}
                             onDragStart={(e) => e.preventDefault()}
                             onClick={() => isSelectMode && toggleSelectFile(file.key)}
@@ -651,9 +667,9 @@ export default function DownloadGallery({
                             
                             {/* Hover overlay with file info */}
                             {!isSelectMode && (
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
-                                <p className="text-white text-sm font-medium truncate">{displayName}</p>
-                                <p className="text-white/80 text-xs">{formatBytes(file.size)}</p>
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent dark:from-white/70 dark:via-white/20 dark:to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
+                                <p className="text-white dark:text-black text-sm font-medium truncate">{displayName}</p>
+                                <p className="text-white/80 dark:text-black/80 text-xs">{formatBytes(file.size)}</p>
                               </div>
                             )}
                           </div>
@@ -685,8 +701,8 @@ export default function DownloadGallery({
         {/* Files Section */}
         {otherFiles.length > 0 && (
           <div className="mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-              📁 Bestanden
+            <h2 className="text-2xl font-bold text-[hsl(var(--foreground))] mb-6 flex items-center gap-2">
+              📁 Files
               <span className="text-sm font-normal text-gray-500">
                 ({otherFiles.length})
               </span>
@@ -698,9 +714,9 @@ export default function DownloadGallery({
                 const isCollapsed = collapsedFolders[folder];
                 
                 return (
-                  <div key={folder} className="bg-white rounded-lg shadow-sm border border-gray-200">
+                  <div key={folder} className="bg-[hsl(var(--card))] rounded-lg shadow-sm border border-[hsl(var(--border))]">
                     {/* Folder Header */}
-                    <div className="p-4 flex items-center justify-between border-b border-gray-200">
+                    <div className="p-4 flex items-center justify-between border-b border-[hsl(var(--border))]">
                       <button
                         onClick={() => toggleFolder(folder)}
                         className="flex items-center gap-3 flex-1 text-left hover:bg-gray-50 -m-2 p-2 rounded transition-colors"
@@ -711,9 +727,9 @@ export default function DownloadGallery({
                           <ChevronDown className="h-5 w-5 text-gray-500" />
                         )}
                         <div className="flex-1">
-                          <p className="font-semibold text-gray-900">{folder}</p>
-                          <p className="text-xs text-gray-500">
-                            {folderFiles.length} bestand{folderFiles.length !== 1 ? 'en' : ''}
+                          <p className="font-semibold text-[hsl(var(--foreground))]">{folder}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {folderFiles.length} file{folderFiles.length !== 1 ? 's' : ''}
                           </p>
                         </div>
                       </button>
@@ -730,7 +746,7 @@ export default function DownloadGallery({
 
                     {/* File List */}
                     {!isCollapsed && (
-                      <div className="divide-y divide-gray-100">
+                      <div className="divide-y divide-gray-100 dark:divide-gray-800">
                         {folderFiles.map((file, index) => {
                           const displayName = file.name.split('/').pop() || file.name;
                           const ext = displayName.split('.').pop()?.toLowerCase();
@@ -743,10 +759,10 @@ export default function DownloadGallery({
                               <div className="flex items-center gap-3 flex-1 min-w-0">
                                 {getFileIcon(displayName)}
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-medium text-gray-900 truncate" title={displayName}>
+                                  <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate" title={displayName}>
                                     {displayName}
                                   </p>
-                                  <p className="text-xs text-gray-500">
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">
                                     {formatBytes(file.size)} {ext && `• ${ext.toUpperCase()}`}
                                   </p>
                                 </div>
@@ -772,7 +788,7 @@ export default function DownloadGallery({
         )}
 
         {/* Footer */}
-        <div className="text-center mt-12 text-sm text-gray-500">
+        <div className="text-center mt-12 text-sm text-gray-500 dark:text-gray-400">
           <p>© Wouter.Photo</p>
         </div>
       </div>
