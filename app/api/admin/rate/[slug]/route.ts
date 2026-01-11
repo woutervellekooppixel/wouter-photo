@@ -2,12 +2,9 @@ import { NextResponse } from "next/server";
 import { getMetadata, saveMetadata } from "@/lib/r2";
 
 /** POST body: { fileKey: string, rated: boolean } */
-export async function POST(
-  req: Request,
-  { params }: { params: { slug: string } }
-) {
+export async function POST(req: Request, context: { params: { slug: string } }) {
   try {
-    const { slug } = params;
+    const { slug } = context.params;
     const { fileKey, rated } = (await req.json()) as { fileKey?: string; rated?: boolean };
 
     if (!fileKey || typeof rated !== "boolean") {

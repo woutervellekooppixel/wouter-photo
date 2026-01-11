@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
 import { getMetadata, saveMetadata } from "@/lib/r2";
 
-export async function POST(
-  _req: Request,
-  { params }: { params: { slug: string } }
-) {
+export async function POST(_req: Request, context: { params: { slug: string } }) {
   try {
-    const { slug } = params;
+    const { slug } = context.params;
 
     const meta = await getMetadata(slug);
     if (!meta) return NextResponse.json({ error: "Not found" }, { status: 404 });

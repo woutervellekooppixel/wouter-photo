@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
 import { getMetadata, saveMetadata } from "@/lib/r2";
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { slug: string } }
-) {
+export async function PATCH(req: Request, context: { params: { slug: string } }) {
   try {
-    const { slug } = params;
+    const { slug } = context.params;
     const body = await req.json().catch(() => ({}));
     const { enabled } = body as { enabled?: boolean };
 
