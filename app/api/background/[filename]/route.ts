@@ -17,9 +17,22 @@ export async function GET(
     });
     
     const listResponse = await r2Client.send(listCommand);
-    const backgroundFile = listResponse.Contents?.find(obj => 
-      obj.Key?.includes(filename)
-    );
+    const contents = listResponse.Contents ?? [];
+
+    // If the default background has been uploaded multiple times with different
+    // extensions (default-background.jpg/png/webp/...), prefer the newest one.
+    const defaultPrefix = `backgrounds/${filename}.`;
+    const candidates = filename === "default-background"
+      ? contents.filter(obj => (obj.Key ?? "").startsWith(defaultPrefix))
+      : contents.filter(obj => (obj.Key ?? "").includes(filename));
+
+    const backgroundFile = candidates
+      .slice()
+      .sort((a, b) => {
+        const aTime = a.LastModified ? new Date(a.LastModified).getTime() : 0;
+        const bTime = b.LastModified ? new Date(b.LastModified).getTime() : 0;
+        return bTime - aTime;
+      })[0];
     
     if (!backgroundFile?.Key) {
       return new NextResponse("Background not found", { status: 404 });
@@ -50,11 +63,26 @@ export async function GET(
       ext === 'svg' ? 'image/svg+xml' :
       'image/jpeg';
 
+    // Default background can be changed via the admin panel, so avoid immutable caching.
+    const cacheControl = filename === "default-background"
+      ? "public, max-age=0, must-revalidate"
+      : "public, max-age=31536000, immutable";
+
+    const headers: Record<string, string> = {
+      "Content-Type": contentType,
+      "Cache-Control": cacheControl,
+    };
+
+    if (backgroundFile.LastModified) {
+      headers["Last-Modified"] = new Date(backgroundFile.LastModified).toUTCString();
+    }
+
+    if (response.ETag) {
+      headers["ETag"] = response.ETag;
+    }
+
     return new NextResponse(buffer, {
-      headers: {
-        "Content-Type": contentType,
-        "Cache-Control": "public, max-age=31536000, immutable",
-      },
+      headers,
     });
   } catch (error) {
     console.error("Error loading background:", error);
