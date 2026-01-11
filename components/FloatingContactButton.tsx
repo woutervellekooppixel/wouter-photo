@@ -1,6 +1,9 @@
+
 "use client";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { FaInstagram, FaLinkedin, FaWhatsapp, FaEnvelope } from "react-icons/fa";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,6 +59,9 @@ export default function FloatingContactButton({ mobile = false }: { mobile?: boo
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md w-full flex flex-col items-center gap-4">
+          <DialogPrimitive.Title asChild>
+            <VisuallyHidden>Contactformulier</VisuallyHidden>
+          </DialogPrimitive.Title>
           <div className="w-full flex flex-col items-center gap-2 mb-2">
             <div className="flex gap-4 mt-1">
               <a href="https://instagram.com/woutervellekoop" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-gray-700 hover:text-pink-500 text-xl"><FaInstagram /></a>

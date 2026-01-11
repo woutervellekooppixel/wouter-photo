@@ -18,7 +18,7 @@ type LightboxProps = {
 
   /** Lijst met afbeeldingen */
   images: LightboxImage[];
-  /** Huidige index in images */
+  /** Huidige index in images (prop-gedreven, geen interne state) */
   index: number;
   /** Wijzig de huidige index */
   onIndexChange: (index: number) => void;
@@ -43,17 +43,12 @@ export function Lightbox({
   className = "",
 }: LightboxProps) {
   const [mounted, setMounted] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(index);
   const overlayRef = useRef<HTMLDivElement>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
+
   const [isDragging, setIsDragging] = useState(false);
   const dragStartX = useRef(0);
   const dragDx = useRef(0);
-
-  // Zorg dat we de prop-index volgen
-  useEffect(() => {
-    setActiveIndex(index);
-  }, [index]);
 
   // Alleen renderen als we in de browser zitten (portal)
   useEffect(() => {
@@ -70,7 +65,18 @@ export function Lightbox({
     };
   }, [open]);
 
-  // Keyboard controls + focus
+  const goNext = () => {
+    const nextIndex = (index + 1) % images.length;
+    onIndexChange(nextIndex);
+  };
+
+  const goPrev = () => {
+    const prevIndex = (index - 1 + images.length) % images.length;
+    onIndexChange(prevIndex);
+  };
+
+  // Keyboard controls + focus — let op: afhankelijk van index/images.length
+  // zodat de handler altijd de actuele index gebruikt (geen stale closure)
   useEffect(() => {
     if (!open) return;
 
@@ -94,13 +100,13 @@ export function Lightbox({
       window.removeEventListener("keydown", onKey);
       clearTimeout(t);
     };
-  }, [open]);
+  }, [open, index, images.length, onOpenChange, onIndexChange]);
 
   // Preload naastgelegen images
   useEffect(() => {
     if (!open || images.length === 0) return;
-    const next = images[(activeIndex + 1) % images.length]?.src;
-    const prev = images[(activeIndex - 1 + images.length) % images.length]?.src;
+    const next = images[(index + 1) % images.length]?.src;
+    const prev = images[(index - 1 + images.length) % images.length]?.src;
     if (next) {
       const i = new Image();
       i.src = next;
@@ -109,19 +115,7 @@ export function Lightbox({
       const i = new Image();
       i.src = prev;
     }
-  }, [open, activeIndex, images]);
-
-  const goNext = () => {
-    const nextIndex = (activeIndex + 1) % images.length;
-    setActiveIndex(nextIndex);
-    onIndexChange(nextIndex);
-  };
-
-  const goPrev = () => {
-    const prevIndex = (activeIndex - 1 + images.length) % images.length;
-    setActiveIndex(prevIndex);
-    onIndexChange(prevIndex);
-  };
+  }, [open, index, images]);
 
   const onBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === overlayRef.current) {
@@ -152,7 +146,7 @@ export function Lightbox({
 
   if (!mounted || !open || images.length === 0) return null;
 
-  const current = images[activeIndex];
+  const current = images[index];
 
   const content = (
     <div
@@ -173,9 +167,9 @@ export function Lightbox({
         <X className="h-6 w-6" />
       </button>
 
-      {/* Counter + caption */}
+      {/* Counter */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 text-white/80 text-sm select-none">
-        {activeIndex + 1} / {images.length}
+        {index + 1} / {images.length}
       </div>
 
       {/* Prev/Next */}
@@ -212,12 +206,12 @@ export function Lightbox({
           onClick={(e) => {
             e.stopPropagation();
             if (onDownload) {
-              onDownload(current, activeIndex);
+              onDownload(current, index);
             } else {
               // Standaard: forceer download
               const a = document.createElement("a");
               a.href = current.src;
-              a.download = current.alt || `image-${activeIndex + 1}`;
+              a.download = current.alt || `image-${index + 1}`;
               document.body.appendChild(a);
               a.click();
               document.body.removeChild(a);
@@ -242,12 +236,6 @@ export function Lightbox({
           className="absolute inset-0 m-auto max-w-full max-h-full object-contain drop-shadow-lg transition-opacity duration-300"
           draggable={false}
         />
-        {/* Caption */}
-        {current.alt && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 max-w-[90%] text-center text-white text-sm md:text-base line-clamp-2 bg-black bg-opacity-80 rounded px-2 py-1">
-            {current.alt}
-          </div>
-        )}
       </div>
     </div>
   );
