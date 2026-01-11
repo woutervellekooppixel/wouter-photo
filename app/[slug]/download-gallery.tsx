@@ -464,29 +464,55 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
             {/* Fullscreen hero image */}
             <div className="absolute inset-0 bg-gray-900">
               {previewImage && thumbnailUrls[previewImage.key] ? (
-                <Image
-                  src={thumbnailUrls[previewImage.key]}
-                  alt="Hero preview"
-                  fill
-                  className="object-cover animate-in fade-in duration-700"
-                  sizes="100vw"
-                  priority
-                  onLoad={() => setPreviewLoaded(true)}
-                  placeholder="empty"
-                  unoptimized={backgroundUrl?.startsWith("http")}
-                />
+                <>
+                  <Image
+                    src={thumbnailUrls[previewImage.key]}
+                    alt=""
+                    fill
+                    className="object-cover blur-2xl scale-110 opacity-60"
+                    sizes="100vw"
+                    placeholder="empty"
+                    unoptimized={backgroundUrl?.startsWith("http")}
+                    aria-hidden
+                  />
+                  <Image
+                    src={thumbnailUrls[previewImage.key]}
+                    alt="Hero preview"
+                    fill
+                    className="object-contain animate-in fade-in duration-700"
+                    sizes="100vw"
+                    priority
+                    onLoad={() => setPreviewLoaded(true)}
+                    placeholder="empty"
+                    unoptimized={backgroundUrl?.startsWith("http")}
+                  />
+                  <div className="absolute inset-0 bg-black/15" />
+                </>
               ) : backgroundUrl ? (
-                <Image
-                  src={backgroundUrl}
-                  alt="Loading preview"
-                  fill
-                  className="object-cover animate-in fade-in duration-700"
-                  sizes="100vw"
-                  priority
-                  onLoad={() => setPreviewLoaded(true)}
-                  placeholder="empty"
-                  unoptimized={backgroundUrl?.startsWith("http")}
-                />
+                <>
+                  <Image
+                    src={backgroundUrl}
+                    alt=""
+                    fill
+                    className="object-cover blur-2xl scale-110 opacity-60"
+                    sizes="100vw"
+                    placeholder="empty"
+                    unoptimized={backgroundUrl?.startsWith("http")}
+                    aria-hidden
+                  />
+                  <Image
+                    src={backgroundUrl}
+                    alt="Loading preview"
+                    fill
+                    className="object-contain animate-in fade-in duration-700"
+                    sizes="100vw"
+                    priority
+                    onLoad={() => setPreviewLoaded(true)}
+                    placeholder="empty"
+                    unoptimized={backgroundUrl?.startsWith("http")}
+                  />
+                  <div className="absolute inset-0 bg-black/15" />
+                </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gray-900">
                   <div className="relative w-32 h-32">
