@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   if (authError) return authError;
 
   try {
-    const { slug, title, files, clientEmail, customMessage, ratingsEnabled } = await request.json();
+    const { slug, title, files, ratingsEnabled } = await request.json();
 
     if (!slug || !files || files.length === 0) {
       return NextResponse.json(
@@ -46,8 +46,6 @@ export async function POST(request: NextRequest) {
       createdAt: now.toISOString(),
       files: files,
       downloads: 0,
-      ...(clientEmail && { clientEmail }),
-      ...(customMessage && { customMessage }),
       ...(ratingsEnabled && { ratingsEnabled }),
     };
 
