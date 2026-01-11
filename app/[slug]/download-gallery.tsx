@@ -598,7 +598,9 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                           {!isSelectMode && metadata.ratingsEnabled && (
                             <button
                               onClick={(e) => toggleRating(file.key, e)}
-                              className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-all duration-200 group/star"
+                              className="absolute top-2 left-2 z-10 p-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-all duration-200 group/star"
+                              title="Favorite"
+                              aria-label="Toggle favorite"
                             >
                               <Star
                                 className={`h-4 w-4 transition-all duration-200 ${
