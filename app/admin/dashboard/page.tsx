@@ -370,6 +370,25 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDropzoneClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (uploading) return;
+
+    const openFolder = e.shiftKey || e.altKey;
+    const targetId = openFolder ? "folder-input" : "file-input";
+    document.getElementById(targetId)?.click();
+  };
+
+  const handleDropzoneKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (uploading) return;
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+
+    const openFolder = e.shiftKey || e.altKey;
+    const targetId = openFolder ? "folder-input" : "file-input";
+    document.getElementById(targetId)?.click();
+  };
+
   const handleFolderSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (!fileList) return;
@@ -857,58 +876,44 @@ export default function AdminDashboard() {
               </div>
 
               <div
-                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${isDropzoneDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-white"}`}
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer select-none ${isDropzoneDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-white"}`}
                 onDragEnter={handleDropzoneDragEnter}
                 onDragLeave={handleDropzoneDragLeave}
                 onDragOver={handleDropzoneDragOver}
                 onDrop={handleDropzoneDrop}
+                onClick={handleDropzoneClick}
+                onKeyDown={handleDropzoneKeyDown}
+                role="button"
+                tabIndex={0}
+                aria-label="Upload bestanden of map"
               >
+                <input
+                  type="file"
+                  id="file-input"
+                  multiple
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <input
+                  type="file"
+                  id="folder-input"
+                  {...({ webkitdirectory: "", mozdirectory: "", directory: "" } as any)}
+                  multiple
+                  onChange={handleFolderSelect}
+                  className="hidden"
+                />
                 <Upload className="h-10 w-10 mx-auto mb-3 text-gray-400" />
                 <p className="text-sm text-gray-600 mb-3">
                   Sleep bestanden of een map hierheen
+                </p>
+                <p className="text-xs text-gray-400">
+                  Klik om te kiezen (Shift/⌥ = folder)
                 </p>
                 {isDropzoneDragActive && (
                   <p className="text-xs text-blue-600 mb-3">
                     Submappen worden automatisch meegenomen
                   </p>
                 )}
-                <div className="flex gap-3 justify-center">
-                  <input
-                    type="file"
-                    id="file-input"
-                    multiple
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      document.getElementById('file-input')?.click();
-                    }}
-                  >
-                    � Selecteer Bestanden
-                  </Button>
-                  <input
-                    type="file"
-                    id="folder-input"
-                    {...({ webkitdirectory: "", mozdirectory: "", directory: "" } as any)}
-                    multiple
-                    onChange={handleFolderSelect}
-                    className="hidden"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      document.getElementById('folder-input')?.click();
-                    }}
-                  >
-                    📁 Selecteer Folder
-                  </Button>
-                </div>
               </div>
 
               {files.length > 0 && (
