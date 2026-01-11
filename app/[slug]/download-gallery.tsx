@@ -513,7 +513,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
 
             {/* Subtle label */}
             <div className="absolute left-5 top-5 sm:left-6 sm:top-6">
-              <p className="text-[11px] tracking-[0.18em] text-white/70">wouter.download</p>
+              <p className="text-[11px] tracking-[0.18em] text-white/70">WOUTER.DOWNLOAD</p>
             </div>
 
             {/* Center logo/wordmark with fill animation */}
