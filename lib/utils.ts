@@ -26,3 +26,22 @@ export function formatDate(date: Date) {
     minute: "2-digit",
   }).format(date);
 }
+
+export type NamedFileLike = { name?: string; key?: string };
+
+export function sortFilesNatural<T extends NamedFileLike>(files: T[]): T[] {
+  const collator = new Intl.Collator("nl-NL", {
+    numeric: true,
+    sensitivity: "base",
+  });
+
+  return [...files].sort((a, b) => {
+    const aName = (a.name ?? a.key ?? "").toString();
+    const bName = (b.name ?? b.key ?? "").toString();
+    const primary = collator.compare(aName, bName);
+    if (primary !== 0) return primary;
+    const aKey = (a.key ?? "").toString();
+    const bKey = (b.key ?? "").toString();
+    return aKey.localeCompare(bKey);
+  });
+}
