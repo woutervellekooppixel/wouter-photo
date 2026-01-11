@@ -45,6 +45,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import archiver from "archiver";
+import { sortFilesNatural } from "@/lib/utils";
 
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID!;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID!;
@@ -213,7 +214,8 @@ export async function createZipFile(slug: string): Promise<void> {
   });
 
   // Add all files to the archive
-  for (const file of metadata.files) {
+  const sortedFiles = sortFilesNatural(metadata.files);
+  for (const file of sortedFiles) {
     const buffer = await getFile(file.key);
     archive.append(buffer, { name: file.name });
   }
@@ -292,7 +294,8 @@ export async function deleteUpload(slug: string): Promise<void> {
   console.log('[deleteUpload] Metadata:', metadata);
 
   // Delete all files
-  for (const file of metadata.files) {
+  const sortedFiles = sortFilesNatural(metadata.files);
+  for (const file of sortedFiles) {
     try {
       console.log('[deleteUpload] Verwijder bestand:', file.key);
       await deleteFile(file.key);

@@ -6,7 +6,7 @@ import { Upload, X, Copy, Trash2, LogOut, Check, ExternalLink, Star, Settings, B
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatBytes, formatDate } from "@/lib/utils";
+import { formatBytes, formatDate, sortFilesNatural } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 import { useAutoLogout } from "@/lib/useAutoLogout";
 import { MAX_UPLOAD_FILE_SIZE_BYTES } from "@/lib/validation";
@@ -458,15 +458,16 @@ export default function AdminDashboard() {
     setUploadProgress(0);
 
     try {
+      const sortedFiles = sortFilesNatural(files);
       const uploadedFiles: Array<{key: string; name: string; size: number; type: string}> = [];
       let totalBytes = 0;
       let uploadedBytes = 0;
 
       // Calculate total bytes
-      files.forEach(file => totalBytes += file.size);
+      sortedFiles.forEach(file => totalBytes += file.size);
 
       // Upload each file directly to R2
-      for (const file of files) {
+      for (const file of sortedFiles) {
         // Get presigned URL
         const presignedRes = await fetch('/api/admin/presigned-url', {
           method: 'POST',

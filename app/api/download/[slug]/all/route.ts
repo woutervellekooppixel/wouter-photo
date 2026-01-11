@@ -4,6 +4,7 @@ import archiver from "archiver";
 import { sendDownloadNotification } from "@/lib/email";
 import { downloadRateLimit } from "@/lib/rateLimit";
 import { isValidSlug } from "@/lib/validation";
+import { sortFilesNatural } from "@/lib/utils";
 
 // Configure route for large downloads
 export const maxDuration = 300; // 5 minutes
@@ -79,7 +80,8 @@ export async function GET(
         // Start adding files to the archive
         (async () => {
           try {
-            for (const file of metadata.files) {
+            const sortedFiles = sortFilesNatural(metadata.files);
+            for (const file of sortedFiles) {
               const buffer = await getFile(file.key);
               archive.append(buffer, { name: file.name });
             }
