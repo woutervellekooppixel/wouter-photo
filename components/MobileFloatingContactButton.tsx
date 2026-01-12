@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FaInstagram, FaLinkedin, FaWhatsapp, FaEnvelope, FaCommentDots } from "react-icons/fa";
+import { FaInstagram, FaLinkedin, FaWhatsapp, FaEnvelope } from "react-icons/fa";
 
 export default function MobileFloatingContactButton() {
   const [open, setOpen] = useState(false);
@@ -44,11 +44,11 @@ export default function MobileFloatingContactButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed z-50 bottom-6 right-6 bg-black text-white rounded-full shadow-lg p-4 flex items-center justify-center sm:hidden hover:bg-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-black"
+        className="fixed z-50 bottom-6 right-6 bg-black text-white rounded-full shadow-lg p-4 flex items-center justify-center md:hidden hover:bg-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-black"
         aria-label="Contact"
         style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.18)' }}
       >
-        <FaCommentDots size={24} />
+        <FaEnvelope size={22} />
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md w-full flex flex-col items-center gap-4">

@@ -1,6 +1,5 @@
 "use client";
 
-import FloatingContactButton from "./FloatingContactButton";
 import MobileFloatingContactButton from "./MobileFloatingContactButton";
 import { usePathname } from "next/navigation";
 
@@ -16,7 +15,6 @@ export default function FloatingContactWrapper() {
   if (isAdmin || isAbout || isDownload || isSlugPage) return null;
   return (
     <>
-      <FloatingContactButton />
       <MobileFloatingContactButton />
     </>
   );
