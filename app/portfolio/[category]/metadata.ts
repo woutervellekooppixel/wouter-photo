@@ -25,17 +25,63 @@ export async function generateMetadata({
     concerts: {
       title: 'Concert Photography',
       description: 'Professional concert photography by Wouter Vellekoop. Capturing the energy and atmosphere of live music performances with dynamic lighting and powerful compositions.',
-      keywords: ['concert photography', 'music photography', 'live music', 'stage photography', 'concert photographer Netherlands', 'music venue photography', 'band photography', 'live performance photography']
+      keywords: [
+        // NL
+        'concertfotografie',
+        'concertfotograaf',
+        'muziekfotografie',
+        'live muziek fotografie',
+        // EN
+        'concert photography',
+        'music photography',
+        'live music',
+        'stage photography',
+        'concert photographer Netherlands',
+        'music venue photography',
+        'band photography',
+        'live performance photography',
+      ]
     },
     events: {
       title: 'Event Photography',
       description: 'Professional event photography services by Wouter Vellekoop. Documenting corporate events, festivals, and special occasions with attention to detail and storytelling.',
-      keywords: ['event photography', 'corporate photography', 'festival photography', 'professional event photographer', 'event photographer Netherlands', 'corporate events', 'conference photography', 'celebration photography']
+      keywords: [
+        // NL
+        'eventfotografie',
+        'eventfotograaf',
+        'bedrijfsfotografie',
+        'conferentie fotografie',
+        'festivalfotografie',
+        // EN
+        'event photography',
+        'corporate photography',
+        'festival photography',
+        'professional event photographer',
+        'event photographer Netherlands',
+        'corporate events',
+        'conference photography',
+        'celebration photography',
+      ]
     },
     misc: {
       title: 'Miscellaneous Photography',
       description: 'Diverse photography work by Wouter Vellekoop. Exploring various subjects and styles including portraits, landscapes, and creative projects.',
-      keywords: ['photographer Netherlands', 'creative photography', 'portrait photography', 'landscape photography', 'professional photographer', 'photography services', 'artistic photography', 'commercial photography']
+      keywords: [
+        // NL
+        'fotograaf Nederland',
+        'portretfotografie',
+        'creatieve fotografie',
+        'commerciële fotografie',
+        // EN
+        'photographer Netherlands',
+        'creative photography',
+        'portrait photography',
+        'landscape photography',
+        'professional photographer',
+        'photography services',
+        'artistic photography',
+        'commercial photography',
+      ]
     }
   }
 
@@ -59,7 +105,8 @@ export async function generateMetadata({
           alt: `${data.title} by Wouter Vellekoop`,
         }
       ],
-      locale: 'en_US',
+      locale: 'nl_NL',
+      alternateLocale: ['en_US'],
       type: 'website',
     },
     twitter: {

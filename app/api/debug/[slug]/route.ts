@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMetadata } from "@/lib/r2";
+import { requireAdminAuth } from "@/lib/auth";
 import { isValidSlug } from "@/lib/validation";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  if (process.env.NODE_ENV === "production") {
+    const authError = await requireAdminAuth();
+    if (authError) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const { slug } = await params;
   if (!isValidSlug(slug)) {
     return NextResponse.json({ error: "Invalid slug" }, { status: 400 });

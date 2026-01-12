@@ -14,8 +14,16 @@ export const metadata: Metadata = {
     default: 'Wouter Vellekoop – Concert & Event Photographer',
     template: '%s | Wouter.Photo'
   },
-  description: 'Concert, event, and advertising photographer based in the Netherlands. Capturing raw energy of live performances with speed, consistency and style.',
+  description: 'Concert- en eventfotograaf in Nederland (NL/EN). Concert photography, event photography en advertising shoots – snelle delivery, consistente kwaliteit.',
   keywords: [
+    // NL
+    'concertfotograaf',
+    'eventfotograaf',
+    'muziekfotografie',
+    'festivalfotograaf',
+    'bedrijfsfotografie',
+    'fotograaf inhuren',
+    // EN
     'concert photographer',
     'event photographer', 
     'live music photography',
@@ -42,11 +50,12 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
-    locale: 'en_US',
+    locale: 'nl_NL',
+    alternateLocale: ['en_US'],
     url: 'https://wouter.photo',
     siteName: 'Wouter Vellekoop Photography',
     title: 'Wouter Vellekoop – Concert & Event Photographer',
-    description: 'Concert, event, and advertising photographer based in the Netherlands. Capturing raw energy of live performances.',
+    description: 'Concert- en eventfotograaf in Nederland (NL/EN). Voor managers, marketing, productie en agencies.',
     images: [
       {
         url: '/2022_NSJF-Fri_1179.jpg',
@@ -116,7 +125,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="nl" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.png" />
         <link rel="canonical" href="https://wouter.photo" />
