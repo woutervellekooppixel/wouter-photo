@@ -8,17 +8,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  const canonicalHost = 'wouter.photo'
   const pathname = request.nextUrl.pathname
-  const search = request.nextUrl.search
 
-  const isNonCanonicalHost = host === 'www.wouter.photo' || host === 'download.wouter.photo'
-  const targetHost = isNonCanonicalHost ? canonicalHost : host
-  const targetPathname = pathname === '/' ? '/portfolio' : pathname
-
-  // Single-hop redirect to canonical host + non-root landing
-  if (isNonCanonicalHost || pathname === '/') {
-    return NextResponse.redirect(`https://${targetHost}${targetPathname}${search}`, { status: 308 })
+  // Redirect root to portfolio, but don't fight Vercel's primary-domain redirects.
+  // Host canonicalization should be configured in Vercel Domains to avoid redirect loops.
+  if (pathname === '/') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/portfolio'
+    return NextResponse.redirect(url, { status: 308 })
   }
 
   return NextResponse.next()
