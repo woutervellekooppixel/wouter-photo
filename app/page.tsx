@@ -54,10 +54,10 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="mt-8 flex flex-col items-center sm:flex-row sm:items-center gap-3 justify-center">
+            <div className="mt-8 flex w-full max-w-md flex-row items-center gap-3 justify-center mx-auto">
               <Link
                 href="/portfolio"
-                className="animate-in fade-in slide-in-from-bottom-3 duration-700 inline-flex items-center justify-center rounded-md border border-white/30 bg-white/10 px-6 py-3 text-white font-semibold uppercase tracking-widest backdrop-blur-md transition-colors hover:bg-white/20"
+                className="animate-in fade-in slide-in-from-bottom-3 duration-700 inline-flex basis-0 flex-1 items-center justify-center rounded-md border border-white/30 bg-white/10 px-4 py-2.5 text-white text-xs sm:px-6 sm:py-3 sm:text-sm font-semibold uppercase tracking-widest backdrop-blur-md transition-colors hover:bg-white/20 whitespace-nowrap"
                 style={{ animationDelay: '220ms' }}
               >
                 Portfolio
@@ -65,7 +65,7 @@ export default async function HomePage() {
 
               <Link
                 href="/about"
-                className="animate-in fade-in slide-in-from-bottom-3 duration-700 inline-flex items-center justify-center rounded-md border border-white/30 bg-white/10 px-6 py-3 text-white font-semibold uppercase tracking-widest backdrop-blur-md transition-colors hover:bg-white/20"
+                className="animate-in fade-in slide-in-from-bottom-3 duration-700 inline-flex basis-0 flex-1 items-center justify-center rounded-md border border-white/30 bg-white/10 px-4 py-2.5 text-white text-xs sm:px-6 sm:py-3 sm:text-sm font-semibold uppercase tracking-widest backdrop-blur-md transition-colors hover:bg-white/20 whitespace-nowrap"
                 style={{ animationDelay: '310ms' }}
               >
                 About
