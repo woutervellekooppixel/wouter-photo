@@ -526,9 +526,9 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
               <div className="relative">
                 {/* Base wordmark (subtle) */}
                 <div className="select-none text-2xl sm:text-3xl md:text-4xl tracking-tight text-white/25" aria-hidden>
-                  <span className="font-bold">wouter</span>
+                  <span className="font-bold">WOUTER</span>
                   <span className="font-bold">.</span>
-                  <span className="font-normal">download</span>
+                  <span className="font-normal">DOWNLOAD</span>
                 </div>
 
                 {/* Fill (reveals from bottom to top) */}
@@ -538,9 +538,9 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                     style={{ width: `${fakePercent}%` }}
                   >
                     <div className="select-none text-2xl sm:text-3xl md:text-4xl tracking-tight text-white drop-shadow-[0_6px_20px_rgba(0,0,0,0.35)]">
-                      <span className="font-bold">wouter</span>
+                      <span className="font-bold">WOUTER</span>
                       <span className="font-bold">.</span>
-                      <span className="font-normal">download</span>
+                      <span className="font-normal">DOWNLOAD</span>
                     </div>
                   </div>
                 </div>
