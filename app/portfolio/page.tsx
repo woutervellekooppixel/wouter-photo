@@ -70,7 +70,7 @@ export default async function PortfolioPage() {
                   {/* Big label bottom-left (smaller + animated on hover) */}
                   <div className="absolute left-6 bottom-6 md:left-8 md:bottom-8">
                     <div
-                      className="text-white text-[clamp(2.2rem,3.4vw,4.6rem)] font-extrabold tracking-tight leading-[0.9] drop-shadow-[0_18px_40px_rgba(0,0,0,0.55)] will-change-transform transition-all duration-500 ease-out group-hover:-translate-y-2 group-hover:scale-[1.02] group-hover:tracking-wide"
+                      className="text-white text-[clamp(1.25rem,1.9vw,2.5rem)] font-light tracking-[-0.02em] leading-[0.9] drop-shadow-[0_18px_40px_rgba(0,0,0,0.55)] will-change-transform transition-all duration-500 ease-out group-hover:-translate-y-2 group-hover:scale-[1.02] group-hover:tracking-[0.06em]"
                     >
                       {cat.bigLabel}
                     </div>
@@ -78,7 +78,7 @@ export default async function PortfolioPage() {
 
                   {/* Hover affordance */}
                   <div className="absolute right-6 bottom-6 md:right-8 md:bottom-8 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                    <div className="rounded-full bg-white/15 px-3 py-1.5 text-white text-xs font-semibold tracking-widest backdrop-blur-sm ring-1 ring-white/20">
+                    <div className="text-white text-xs font-light tracking-[0.35em] drop-shadow-[0_12px_30px_rgba(0,0,0,0.55)]">
                       OPEN ↗
                     </div>
                   </div>
