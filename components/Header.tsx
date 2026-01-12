@@ -48,8 +48,8 @@ export default function Header() {
     <header
       className={
         isHome
-          ? 'sticky top-0 z-50 flex items-center px-6 py-4 pt-4 border-b border-transparent bg-transparent text-white'
-          : 'sticky top-0 z-50 flex items-center px-6 py-4 pt-4 border-b border-gray-200 bg-white dark:bg-black dark:border-gray-700'
+          ? 'sticky top-0 z-[60] flex items-center px-6 py-4 pt-4 border-b border-transparent bg-transparent text-white'
+          : 'sticky top-0 z-[60] flex items-center px-6 py-4 pt-4 border-b border-gray-200 bg-white dark:bg-black dark:border-gray-700'
       }
     >
       <Link
@@ -66,12 +66,12 @@ export default function Header() {
         )}
       </Link>
 
-      <div className="hidden sm:flex flex-1 justify-center">
+      <div className="hidden md:flex flex-1 justify-center">
         <DownloadStats />
       </div>
 
       <nav
-        className={`hidden sm:flex items-center space-x-6 text-sm flex-shrink-0 ${
+        className={`hidden md:flex items-center space-x-6 text-sm flex-shrink-0 ${
           isHome ? 'text-white' : 'text-black dark:text-white'
         }`}
       >
@@ -160,11 +160,11 @@ export default function Header() {
       </nav>
 
       {/* Contact button helemaal rechts */}
-      <div className="hidden sm:flex flex-shrink-0 ml-4">
+      <div className="hidden md:flex flex-shrink-0 ml-4">
         <FloatingContactButton variant={isHome ? 'home' : 'default'} />
       </div>
 
-      <div className="sm:hidden flex-1 flex justify-end items-center h-full pr-0" style={{minHeight: 'inherit'}}>
+      <div className="md:hidden flex-1 flex justify-end items-center h-full pr-0" style={{minHeight: 'inherit'}}>
         <MobileMenu />
       </div>
 
