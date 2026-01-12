@@ -3,15 +3,18 @@ import { NextRequest, NextResponse } from 'next/server'
 export function middleware(request: NextRequest) {
   const host = request.headers.get('host')
 
-  // Redirect from download.wouter.photo to www.wouter.photo (or wouter.photo)
-  if (host?.includes('download.wouter.photo')) {
-    const pathname = request.nextUrl.pathname
-    const search = request.nextUrl.search
-    
-    return NextResponse.redirect(
-      `https://www.wouter.photo${pathname}${search}`,
-      { status: 301 } // Permanent redirect
-    )
+  // Skip redirects for local development
+  if (!host || host.includes('localhost') || host.startsWith('127.0.0.1')) {
+    return NextResponse.next()
+  }
+
+  const canonicalHost = 'wouter.photo'
+  const pathname = request.nextUrl.pathname
+  const search = request.nextUrl.search
+
+  // Canonicalize host: redirect www.* and download.* to apex
+  if (host === 'www.wouter.photo' || host === 'download.wouter.photo') {
+    return NextResponse.redirect(`https://${canonicalHost}${pathname}${search}`, { status: 301 })
   }
 
   return NextResponse.next()

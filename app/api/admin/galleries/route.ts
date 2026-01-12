@@ -1,73 +1,14 @@
-
 import { NextResponse } from 'next/server';
-import { listFiles, getGalleryOrder } from '@/lib/r2';
-
 import { NextRequest } from 'next/server';
-
-
-import { ListObjectsV2Command } from '@aws-sdk/client-s3';
-import { r2Client } from '@/lib/r2';
-
-const EXCLUDED_ROOT_PREFIXES = new Set([
-  'backgrounds',
-  'metadata',
-  'uploads',
-  'zips',
-]);
-
-// Dynamisch alle categorieën ophalen (alle mappen op rootniveau)
-async function getCategories(): Promise<string[]> {
-  const command = new ListObjectsV2Command({
-    Bucket: process.env.R2_BUCKET_NAME!,
-    Delimiter: '/',
-    Prefix: '',
-  });
-  const response = await r2Client.send(command);
-  // CommonPrefixes bevat alle mappen
-  return (response.CommonPrefixes || [])
-    .map((p) => p.Prefix?.replace(/\/$/, ''))
-    .filter(Boolean)
-    .filter((prefix) => !EXCLUDED_ROOT_PREFIXES.has(prefix as string)) as string[];
-}
+import { getPortfolioGalleryData } from '@/lib/portfolioGallery';
 
 
 export async function GET(request: Request) {
-  let orderData: Record<string, string[]> = await getGalleryOrder();
-  const result: Record<string, { id: string, src: string, alt: string, category: string }[]> = {};
-  const categories = await getCategories();
-  for (const cat of categories) {
-    let files: string[] = [];
-    try {
-      files = (await listFiles(`${cat}/`)).map(f => f.split('/').pop()!).filter(Boolean);
-    } catch (e) {
-      result[cat] = [];
-      continue;
-    }
-    // Filter blur-bestanden en alleen .webp of .jpg/.jpeg
-    let allPhotos = files.filter(f => (f.endsWith('.webp') || f.endsWith('.jpg') || f.endsWith('.jpeg')) && !f.includes('-blur')).map(f => ({
-      id: f,
-      src: `/api/photos/by-key?key=${encodeURIComponent(cat + '/' + f)}`,
-      alt: f,
-      category: cat,
-      key: cat + '/' + f
-    }));
-    // Sorteer exact volgens orderData, ontbrekende foto's achteraan
-    let photos: typeof allPhotos = [];
-    if (orderData[cat] && orderData[cat].length > 0) {
-      // Eerst alles uit orderData in die volgorde
-      photos = orderData[cat]
-        .map(fname => allPhotos.find(p => p.id === fname))
-        .filter(Boolean) as typeof allPhotos;
-      // Voeg ontbrekende foto's toe (nieuwe uploads etc)
-      const orderedSet = new Set(orderData[cat]);
-      const missing = allPhotos.filter(p => !orderedSet.has(p.id));
-      photos = [...photos, ...missing];
-    } else {
-      photos = allPhotos;
-    }
-    result[cat] = photos;
-  }
-  return NextResponse.json(result);
+  const result = await getPortfolioGalleryData();
+  const res = NextResponse.json(result);
+  // Cache at the edge/CDN; portfolio content doesn't need per-request freshness
+  res.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+  return res;
 }
 
 // CORS headers helper
