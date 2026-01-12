@@ -28,9 +28,24 @@ export default function WheelSuffix({ cycle, intervalMs = 450, className }: Prop
 
   const [mounted, setMounted] = useState(false)
   const [index, setIndex] = useState<number>(normalized.length - 1)
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)')
+    const onChange = () => setIsMobile(mq.matches)
+    onChange()
+
+    if (typeof mq.addEventListener === 'function') {
+      mq.addEventListener('change', onChange)
+      return () => mq.removeEventListener('change', onChange)
+    }
+
+    mq.addListener(onChange)
+    return () => mq.removeListener(onChange)
   }, [])
 
   useEffect(() => {
@@ -40,6 +55,8 @@ export default function WheelSuffix({ cycle, intervalMs = 450, className }: Prop
       setIndex(normalized.length - 1)
       return
     }
+
+    const effectiveIntervalMs = isMobile ? Math.round(intervalMs * 1.8) : intervalMs
 
     let current = 0
     setIndex(0)
@@ -55,10 +72,10 @@ export default function WheelSuffix({ cycle, intervalMs = 450, className }: Prop
       if (current === normalized.length - 1) {
         window.clearInterval(id)
       }
-    }, intervalMs)
+    }, effectiveIntervalMs)
 
     return () => window.clearInterval(id)
-  }, [mounted, shouldReduceMotion, normalized, intervalMs])
+  }, [mounted, shouldReduceMotion, normalized, intervalMs, isMobile])
 
   // Work around occasional framer-motion TS inference issues in some setups.
   const MotionDiv = (motion as any).div as any
@@ -80,7 +97,7 @@ export default function WheelSuffix({ cycle, intervalMs = 450, className }: Prop
       <MotionDiv
         className="will-change-transform"
         animate={{ y: `${-index}em` }}
-        transition={{ type: 'spring', stiffness: 150, damping: 24, mass: 0.7 }}
+        transition={{ type: 'spring', stiffness: isMobile ? 130 : 150, damping: isMobile ? 26 : 24, mass: 0.7 }}
       >
         {normalized.map((s) => (
           <div key={s} style={{ height: '1em', lineHeight: '1em' }}>
