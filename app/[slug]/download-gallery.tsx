@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Lightbox, LightboxImage } from "@/components/Lightbox";
-import { formatBytes, sortFilesChronological } from "@/lib/utils";
+import { formatBytes, formatDate, sortFilesChronological } from "@/lib/utils";
 
 /** ====== Minimaal benodigde types (vervang door je projecttypes indien gewenst) ====== */
 type UploadFile = {
@@ -33,6 +33,7 @@ type UploadFile = {
 type UploadMetadata = {
   slug: string;
   title?: string;
+  createdAt?: string;
   previewImageKey?: string;
   files: UploadFile[];
   ratingsEnabled?: boolean;
@@ -414,6 +415,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   }, [imageFiles]);
   const imageFolders = Object.keys(imagesByFolder);
   const hasImageFolders = imageFolders.length > 1 || !imagesByFolder["Hoofd"];
+  const folderCount = hasImageFolders ? imageFolders.filter((f) => f !== "Hoofd").length : 0;
 
   const otherFilesByFolder = useMemo(() => {
     return otherFiles.reduce((acc, file) => {
@@ -571,11 +573,25 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
             loadingThumbnails ? "opacity-0 pointer-events-none" : "opacity-100"
           }`}
         >
-          {/* Titel */}
-          <div className="mb-8 mt-4">
-            <h1 className="text-3xl font-bold text-[hsl(var(--foreground))] text-center mb-6">
+          {/* Titel + stats */}
+          <div className="mb-8 mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <h1 className="text-3xl font-bold text-[hsl(var(--foreground))] text-left">
               {metadata.title || metadata.slug.replace(/-/g, " ")}
             </h1>
+
+            <div className="text-xs sm:text-sm text-gray-600 sm:text-right whitespace-nowrap">
+              <span>
+                {metadata.createdAt ? formatDate(new Date(metadata.createdAt)) : ""}
+              </span>
+              <span className="mx-2 text-gray-400">|</span>
+              <span>
+                {imageFiles.length} foto{imageFiles.length === 1 ? "" : "'s"}
+              </span>
+              <span className="mx-2 text-gray-400">|</span>
+              <span>
+                {folderCount} map{folderCount === 1 ? "" : "pen"}
+              </span>
+            </div>
           </div>
 
           {/* Foto’s */}
