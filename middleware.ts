@@ -12,9 +12,13 @@ export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const search = request.nextUrl.search
 
-  // Canonicalize host: redirect www.* and download.* to apex
-  if (host === 'www.wouter.photo' || host === 'download.wouter.photo') {
-    return NextResponse.redirect(`https://${canonicalHost}${pathname}${search}`, { status: 301 })
+  const isNonCanonicalHost = host === 'www.wouter.photo' || host === 'download.wouter.photo'
+  const targetHost = isNonCanonicalHost ? canonicalHost : host
+  const targetPathname = pathname === '/' ? '/portfolio' : pathname
+
+  // Single-hop redirect to canonical host + non-root landing
+  if (isNonCanonicalHost || pathname === '/') {
+    return NextResponse.redirect(`https://${targetHost}${targetPathname}${search}`, { status: 308 })
   }
 
   return NextResponse.next()
