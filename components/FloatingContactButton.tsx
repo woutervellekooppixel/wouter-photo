@@ -8,7 +8,13 @@ import { FaInstagram, FaLinkedin, FaWhatsapp, FaEnvelope } from "react-icons/fa"
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function FloatingContactButton({ mobile = false }: { mobile?: boolean }) {
+export default function FloatingContactButton({
+  mobile = false,
+  variant = 'default',
+}: {
+  mobile?: boolean
+  variant?: 'default' | 'home'
+}) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<null | 'success' | 'error' | 'loading'>(null);
   const [message, setMessage] = useState('');
@@ -48,11 +54,17 @@ export default function FloatingContactButton({ mobile = false }: { mobile?: boo
       {/* Button wordt nu in de header gebruikt, niet meer floating */}
       <button
         onClick={() => setOpen(true)}
-        className={
-          mobile
-            ? "w-full max-w-xs bg-black text-white dark:bg-white dark:text-black px-5 py-2.5 rounded-full shadow flex items-center justify-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors text-base"
-            : "bg-black text-white dark:bg-white dark:text-black px-5 py-2 rounded-full shadow flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors ml-2"
-        }
+        className={(() => {
+          if (mobile) {
+            return "w-full max-w-xs bg-black text-white dark:bg-white dark:text-black px-5 py-2.5 rounded-full shadow flex items-center justify-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors text-base"
+          }
+
+          if (variant === 'home') {
+            return 'bg-white text-black px-5 py-2 rounded-full shadow flex items-center gap-2 hover:bg-white/90 transition-colors ml-2 text-sm font-medium'
+          }
+
+          return 'bg-black text-white dark:bg-white dark:text-black px-5 py-2 rounded-full shadow flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors ml-2 text-sm font-medium'
+        })()}
         aria-label="Contact"
       >
         Contact

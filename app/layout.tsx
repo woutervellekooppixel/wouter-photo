@@ -128,7 +128,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="nl" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.png" />
-        <link rel="canonical" href="https://wouter.photo" />
         
         {/* PWA Meta Tags - Cache cleared */}
         <link rel="manifest" href="/manifest.json" />
@@ -163,7 +162,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Google Analytics initialisatie nu client-side voor hydration fix */}
         <AnalyticsInit />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <noscript>
             <iframe

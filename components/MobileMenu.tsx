@@ -1,21 +1,12 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { FaInstagram, FaLinkedin, FaEnvelope } from 'react-icons/fa'
 import FloatingContactButton from './FloatingContactButton';
 import { X, Menu, Sun, Moon } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { motion, AnimatePresence } from 'framer-motion'
-import type { HTMLAttributes } from 'react'
-
-const MotionSpan = motion(function MotionSpanBase({
-  className,
-  style,
-  ...rest
-}: HTMLAttributes<HTMLSpanElement>) {
-  return <span className={className} style={style} {...rest} />
-})
+import WheelSuffix from './WheelSuffix'
 
 // import { useState } from 'react' (verwijderd, want al aanwezig)
 
@@ -24,64 +15,34 @@ export default function MobileMenu() {
   const [open, setOpen] = useState(false)
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
-  const [currentSuffixIndex, setCurrentSuffixIndex] = useState(0)
   const [mounted, setMounted] = useState(false)
+  const isHome = pathname === '/'
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Bepaal de suffixes op basis van de huidige pagina (zelfde logica als Header)
-  const getSuffixes = () => {
-    if (!pathname) {
-      return ['PHOTO']
-    }
-    if (pathname === '/') {
-      return ['CONCERTS', 'EVENTS', 'MISC', 'PHOTO']
-    } else if (pathname.startsWith('/portfolio/concerts')) {
-      return ['PHOTO', 'EVENTS', 'MISC', 'CONCERTS']
-    } else if (pathname.startsWith('/portfolio/events')) {
-      return ['PHOTO', 'CONCERTS', 'MISC', 'EVENTS']
-    } else if (pathname.startsWith('/portfolio/misc')) {
-      return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC']
-    } else if (pathname === '/about') {
-      return ['PHOTO', 'CONCERTS', 'EVENTS', 'MISC', 'ABOUT']
-    } else {
-      return ['PHOTO']
-    }
-  }
+  const targetSuffix = (() => {
+    if (!pathname) return 'PHOTO'
+    if (pathname === '/') return 'PHOTO'
+    if (pathname === '/portfolio') return 'PORTFOLIO'
+    if (pathname.startsWith('/portfolio/concerts')) return 'CONCERTS'
+    if (pathname.startsWith('/portfolio/events')) return 'EVENTS'
+    if (pathname.startsWith('/portfolio/misc')) return 'MISC'
+    if (pathname === '/about') return 'ABOUT'
+    if (pathname.startsWith('/admin')) return 'DOWNLOAD'
+    if (pathname === '/not-found' || /^\/[a-zA-Z0-9-]+$/.test(pathname)) return 'DOWNLOAD'
+    return 'PHOTO'
+  })()
 
-  const suffixes = getSuffixes()
-  const currentSuffix = suffixes[currentSuffixIndex]
+  const baseCycle = ['PORTFOLIO', 'CONCERTS', 'EVENTS', 'MISC', 'ABOUT', 'PHOTO', 'DOWNLOAD']
+  const menuCycle = [...baseCycle.filter((s) => s !== targetSuffix), targetSuffix]
 
-  // De volledige JSX-structuur blijft altijd gelijk. Alleen de dynamische tekst/animatie is afhankelijk van mounted.
-
-  // Cyclisch door de suffixes gaan en stoppen op de laatste (huidige pagina)
-  useEffect(() => {
-    if (!open || currentSuffixIndex >= suffixes.length - 1) return // Stop als menu niet open is of bij de laatste suffix
-
-    const interval = setInterval(() => {
-      setCurrentSuffixIndex((prevIndex) => {
-        const nextIndex = prevIndex + 1
-        if (nextIndex >= suffixes.length - 1) {
-          return suffixes.length - 1
-        }
-        return nextIndex
-      })
-    }, 800)
-
-    return () => clearInterval(interval)
-  }, [suffixes.length, currentSuffixIndex, open])
-
-  // Reset index wanneer pathname verandert of menu opent
-  useEffect(() => {
-    setCurrentSuffixIndex(0)
-  }, [pathname, open])
 
   return (
     <div className="md:hidden">
       <div className="flex justify-end items-center h-full pr-0">
-        <button onClick={() => setOpen(true)} className="text-black dark:text-white">
+        <button onClick={() => setOpen(true)} className={isHome ? 'text-white' : 'text-black dark:text-white'}>
           <Menu size={24} />
         </button>
       </div>
@@ -96,22 +57,22 @@ export default function MobileMenu() {
             <X size={28} />
           </button>
 
-          {/* Animated Logo */}
-          <div className="text-3xl tracking-tight text-black dark:text-white flex items-baseline mb-4">
+          {/* Logo: static on home, animated elsewhere */}
+          <Link
+            href="/"
+            onClick={() => setOpen(false)}
+            className="text-3xl tracking-tight text-black dark:text-white flex items-baseline mb-4"
+            aria-label="Go to homepage"
+          >
             <span className="font-extrabold">WOUTER</span>
-            <AnimatePresence mode="wait">
-              <MotionSpan
-                key={currentSuffix}
-                className="font-light inline-block"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3, ease: 'easeOut' }}
-              >
-                .{currentSuffix}
-              </MotionSpan>
-            </AnimatePresence>
-          </div>
+            {!mounted ? (
+              <span className="font-light inline-block opacity-0">.{targetSuffix}</span>
+            ) : isHome ? (
+              <span className="font-light inline-block opacity-90">.{targetSuffix}</span>
+            ) : (
+              <WheelSuffix cycle={menuCycle} intervalMs={360} className="font-light inline-block opacity-90" />
+            )}
+          </Link>
 
           <div className="flex flex-col items-center space-y-2">
   <Link href="/portfolio" onClick={() => setOpen(false)} className="text-lg font-medium">

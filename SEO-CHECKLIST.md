@@ -126,5 +126,5 @@
 
 ---
 
-**Laatste update**: 28 januari 2025
+**Laatste update**: 12 januari 2026
 **Status**: SEO implementatie voltooid ✅

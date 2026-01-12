@@ -44,7 +44,16 @@ module.exports = {
       },
       {
         userAgent: '*',
-        disallow: ['/api/', '/admin/', '/_next/'],
+        // Don't block public image/background APIs; only block sensitive/private endpoints.
+        disallow: [
+          '/admin/',
+          '/_next/',
+          '/api/admin/',
+          '/api/cron/',
+          '/api/debug/',
+          '/api/test-debug/',
+          '/api/debugdelete/',
+        ],
       },
     ],
     additionalSitemaps: [
