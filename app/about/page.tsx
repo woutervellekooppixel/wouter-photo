@@ -53,50 +53,55 @@ export default function AboutPage() {
         }}
       />
 
-      <main className="py-20 px-6 max-w-6xl mx-auto text-black dark:text-white bg-white dark:bg-black">
+      <main className="min-h-dvh bg-white dark:bg-black text-black dark:text-white">
+        <div className="py-20 px-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+            {/* FOTO */}
+            <div className="w-full relative aspect-[2/3]">
+              <Image
+                src="/2022_NSJF-Fri_1179.jpg"
+                alt="Wouter Vellekoop"
+                fill
+                priority
+                className="shadow-lg object-cover rounded-lg"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+            </div>
 
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-        {/* FOTO */}
-        <div className="w-full relative aspect-[2/3]">
-          <Image
-            src="/2022_NSJF-Fri_1179.jpg"
-            alt="Wouter Vellekoop"
-            fill
-            priority
-            className="shadow-lg object-cover rounded-lg"
-            sizes="(max-width: 768px) 100vw, 50vw"
-          />
+            {/* TEKST */}
+            <div className="text-lg leading-relaxed">
+              <h1 className="text-3xl font-bold mb-10">ABOUT</h1>
+              <p className="mb-6">
+                I'm Wouter Vellekoop – a photographer based in the Netherlands, specializing in concert, event, conceptual, and advertising photography.
+                My passion lies in capturing the raw energy of live performances and translating atmosphere into powerful visuals.
+              </p>
+              <p className="mb-6">
+                I’ve worked with a wide range of artists, venues, organisations and media outlets, combining speed, consistency and style.
+                Whether it's the chaos of a music festival or the intimacy of a backstage moment, I aim to tell stories that resonate.
+              </p>
+              <h2 className="text-xl font-semibold mb-2">Clients</h2>
+              <p className="text-sm mb-4">
+                MOJO, Radio 538, North Sea Jazz, Ahoy', Talpa, BNN VARA, Residentie Orkest, UNICEF Nederland and many more.
+              </p>
+              <p className="text-sm">
+                <a
+                  href="mailto:hello@wouter.photo"
+                  className="underline hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  hello@wouter.photo
+                </a>
+                {/* Phone number only visible for Dutch visitors */}
+                {isInNetherlands && (
+                  <>
+                    <br />
+                    +31 (0)6 16 290 418
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
         </div>
-
-        {/* TEKST */}
-        <div className="text-lg leading-relaxed">
-        <h1 className="text-3xl font-bold mb-10">ABOUT</h1>
-          <p className="mb-6">
-            I'm Wouter Vellekoop – a photographer based in the Netherlands, specializing in concert, event, conceptual, and advertising photography.  
-            My passion lies in capturing the raw energy of live performances and translating atmosphere into powerful visuals.
-          </p>
-          <p className="mb-6">
-            I’ve worked with a wide range of artists, venues, organisations and media outlets, combining speed, consistency and style.  
-            Whether it's the chaos of a music festival or the intimacy of a backstage moment, I aim to tell stories that resonate.
-          </p>
-          <h2 className="text-xl font-semibold mb-2">Clients</h2>
-          <p className="text-sm mb-4">
-            MOJO, Radio 538, North Sea Jazz, Ahoy', Talpa, BNN VARA, Residentie Orkest, UNICEF Nederland and many more.
-          </p>
-          <p className="text-sm">
-            <a href="mailto:hello@wouter.photo" className="underline hover:text-gray-600 dark:hover:text-gray-300">hello@wouter.photo</a>
-            {/* Phone number only visible for Dutch visitors */}
-            {isInNetherlands && (
-              <>
-                <br />
-                +31 (0)6 16 290 418
-              </>
-            )}
-          </p>
-        </div>
-      </div>
-    </main>
+      </main>
     </>
   )
 }

@@ -4,9 +4,13 @@ Allow: /
 
 # *
 User-agent: *
-Disallow: /api/
 Disallow: /admin/
 Disallow: /_next/
+Disallow: /api/admin/
+Disallow: /api/cron/
+Disallow: /api/debug/
+Disallow: /api/test-debug/
+Disallow: /api/debugdelete/
 
 # Host
 Host: https://wouter.photo
