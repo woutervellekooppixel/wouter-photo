@@ -57,7 +57,7 @@ export default async function HomePage() {
             <div className="mt-8 flex w-full max-w-md flex-row items-center gap-3 justify-center mx-auto">
               <Link
                 href="/portfolio"
-                className="animate-in fade-in slide-in-from-bottom-3 duration-700 inline-flex basis-0 flex-1 items-center justify-center rounded-md border border-white/30 bg-white/10 px-4 py-2.5 text-white text-xs sm:px-6 sm:py-3 sm:text-sm font-semibold uppercase tracking-widest backdrop-blur-md transition-colors hover:bg-white/20 whitespace-nowrap"
+                className="animate-in fade-in slide-in-from-bottom-3 duration-700 inline-flex basis-0 flex-1 items-center justify-center rounded-md border border-white/40 bg-transparent px-4 py-2.5 text-white text-xs sm:px-6 sm:py-3 sm:text-sm font-semibold uppercase tracking-widest transition-colors hover:border-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 whitespace-nowrap"
                 style={{ animationDelay: '220ms' }}
               >
                 Portfolio
@@ -65,7 +65,7 @@ export default async function HomePage() {
 
               <Link
                 href="/about"
-                className="animate-in fade-in slide-in-from-bottom-3 duration-700 inline-flex basis-0 flex-1 items-center justify-center rounded-md border border-white/30 bg-white/10 px-4 py-2.5 text-white text-xs sm:px-6 sm:py-3 sm:text-sm font-semibold uppercase tracking-widest backdrop-blur-md transition-colors hover:bg-white/20 whitespace-nowrap"
+                className="animate-in fade-in slide-in-from-bottom-3 duration-700 inline-flex basis-0 flex-1 items-center justify-center rounded-md border border-white/40 bg-transparent px-4 py-2.5 text-white text-xs sm:px-6 sm:py-3 sm:text-sm font-semibold uppercase tracking-widest transition-colors hover:border-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 whitespace-nowrap"
                 style={{ animationDelay: '310ms' }}
               >
                 About
