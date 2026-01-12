@@ -8,6 +8,13 @@ import { NextRequest } from 'next/server';
 import { ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { r2Client } from '@/lib/r2';
 
+const EXCLUDED_ROOT_PREFIXES = new Set([
+  'backgrounds',
+  'metadata',
+  'uploads',
+  'zips',
+]);
+
 // Dynamisch alle categorieën ophalen (alle mappen op rootniveau)
 async function getCategories(): Promise<string[]> {
   const command = new ListObjectsV2Command({
@@ -17,7 +24,10 @@ async function getCategories(): Promise<string[]> {
   });
   const response = await r2Client.send(command);
   // CommonPrefixes bevat alle mappen
-  return (response.CommonPrefixes || []).map((p) => p.Prefix?.replace(/\/$/, '')).filter(Boolean) as string[];
+  return (response.CommonPrefixes || [])
+    .map((p) => p.Prefix?.replace(/\/$/, ''))
+    .filter(Boolean)
+    .filter((prefix) => !EXCLUDED_ROOT_PREFIXES.has(prefix as string)) as string[];
 }
 
 
