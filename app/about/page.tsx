@@ -57,7 +57,7 @@ export default function AboutPage() {
         <div className="py-20 px-6 max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
             {/* FOTO */}
-            <div className="w-full relative aspect-[2/3]">
+            <div className="relative w-full h-[60vh] max-h-[520px] md:h-auto md:max-h-none md:aspect-[2/3]">
               <Image
                 src="/2022_NSJF-Fri_1179.jpg"
                 alt="Wouter Vellekoop"
