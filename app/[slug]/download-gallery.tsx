@@ -415,7 +415,9 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   }, [imageFiles]);
   const imageFolders = Object.keys(imagesByFolder);
   const hasImageFolders = imageFolders.length > 1 || !imagesByFolder["Hoofd"];
-  const folderCount = hasImageFolders ? imageFolders.filter((f) => f !== "Hoofd").length : 0;
+  // Count "folders" including the root bucket ("Hoofd").
+  // If there are images but no subfolders, we still show 1 folder.
+  const folderCount = imageFiles.length === 0 ? 0 : imageFolders.length;
 
   const otherFilesByFolder = useMemo(() => {
     return otherFiles.reduce((acc, file) => {
