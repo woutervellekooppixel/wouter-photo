@@ -42,13 +42,21 @@ export default function MobileMenu() {
   return (
     <div className="md:hidden">
       <div className="flex justify-end items-center h-full pr-0">
-        <button onClick={() => setOpen(true)} className={isHome ? 'text-white' : 'text-black dark:text-white'}>
+        <button
+          onClick={() => setOpen(true)}
+          aria-label="Open menu"
+          className={
+            isHome
+              ? 'text-white rounded-md p-2 bg-black/25 hover:bg-black/35 active:bg-black/40 transition-colors'
+              : 'text-black dark:text-white rounded-md p-2 hover:bg-black/5 dark:hover:bg-white/10 transition-colors'
+          }
+        >
           <Menu size={24} />
         </button>
       </div>
 
       {open && (
-        <div className="fixed inset-0 bg-white dark:bg-black z-50 flex flex-col items-center justify-center space-y-8 text-xl text-black dark:text-white">
+        <div className="fixed inset-0 bg-white dark:bg-black z-[80] flex flex-col items-center justify-center space-y-8 text-xl text-black dark:text-white">
           <button
             onClick={() => setOpen(false)}
             className="absolute top-6 right-6 text-black dark:text-white"

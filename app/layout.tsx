@@ -6,7 +6,12 @@ import FloatingContactWrapper from '../components/FloatingContactWrapper'
 import Script from 'next/script'
 import AnalyticsInit from '../components/AnalyticsInit'
 import { ThemeProvider } from 'next-themes'
-import { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://wouter.photo'),
