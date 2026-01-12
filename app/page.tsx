@@ -23,9 +23,9 @@ export default async function HomePage() {
   const gallery = await getPortfolioGalleryData()
 
   return (
-    <main className="min-h-screen bg-white dark:bg-black">
-      <section className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+    <main className="min-h-dvh bg-white dark:bg-black">
+      <section className="h-dvh w-full">
+        <div className="grid h-full w-full grid-cols-1 grid-rows-3 md:grid-cols-3 md:grid-rows-1">
           {HOME_CATEGORIES.map((cat, idx) => {
             const first = gallery[cat.key]?.[0]
             const src = first?.src ?? '/api/background/default-background'
@@ -34,10 +34,10 @@ export default async function HomePage() {
               <Link
                 key={cat.key}
                 href={cat.href}
-                className="group relative overflow-hidden rounded-2xl border border-black/10 dark:border-white/10 bg-gray-100 dark:bg-white/5"
+                className="group relative overflow-hidden bg-gray-100 dark:bg-white/5"
                 aria-label={`Open ${cat.label} portfolio`}
               >
-                <div className="relative aspect-[4/5]">
+                <div className="relative h-full">
                   <Image
                     src={src}
                     alt={first?.alt ?? cat.label}
