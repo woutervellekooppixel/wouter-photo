@@ -46,7 +46,7 @@ export default function AboutPage() {
             "jobTitle": "Photographer",
             "url": "https://wouter.photo",
             "sameAs": [
-              "https://instagram.com/woutervellekoop.nl",
+              "https://instagram.com/woutervellekoop",
               "https://linkedin.com/in/woutervellekoop"
             ]
           })

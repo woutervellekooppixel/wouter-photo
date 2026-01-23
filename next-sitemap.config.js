@@ -2,6 +2,11 @@
 module.exports = {
   siteUrl: 'https://wouter.photo',
   generateRobotsTxt: true,
+  exclude: [
+    '/admin*',
+    '/api*',
+    '/preview-home',
+  ],
   changefreq: 'weekly',
   priority: 0.7,
   sitemapSize: 5000,
@@ -41,9 +46,6 @@ module.exports = {
       {
         userAgent: '*',
         allow: '/',
-      },
-      {
-        userAgent: '*',
         // Don't block public image/background APIs; only block sensitive/private endpoints.
         disallow: [
           '/admin/',
