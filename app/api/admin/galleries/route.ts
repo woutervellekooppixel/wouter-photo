@@ -3,11 +3,14 @@ import { NextRequest } from 'next/server';
 import { getPortfolioGalleryData } from '@/lib/portfolioGallery';
 
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(request: Request) {
   const result = await getPortfolioGalleryData();
   const res = NextResponse.json(result);
-  // Cache at the edge/CDN; portfolio content doesn't need per-request freshness
-  res.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+  // Admin endpoint: must reflect uploads/deletes immediately
+  res.headers.set('Cache-Control', 'private, no-store, max-age=0, must-revalidate');
   return res;
 }
 
@@ -16,6 +19,8 @@ function withCORS(res: Response) {
   res.headers.set('Access-Control-Allow-Origin', '*');
   res.headers.set('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
   res.headers.set('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  // Admin endpoint responses should never be cached
+  res.headers.set('Cache-Control', 'private, no-store, max-age=0, must-revalidate');
   return res;
 }
 
