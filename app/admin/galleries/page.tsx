@@ -154,7 +154,7 @@ export default function AdminGalleries() {
   }
 
   // Sortable item component voor dnd-kit
-  function SortablePhoto({ photo, idx }: { photo: Photo, idx: number }) {
+  function SortablePhoto({ photo, idx, cat }: { photo: Photo, idx: number, cat: Category }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: photo.id });
     return (
       <div
@@ -184,7 +184,7 @@ export default function AdminGalleries() {
           {/* Chevron up/down als visuele drag handle, optioneel interactief */}
           <ChevronUp className="w-4 h-4 text-gray-400" aria-label="Sleep omhoog" />
           <ChevronDown className="w-4 h-4 text-gray-400" aria-label="Sleep omlaag" />
-          <Button size="icon" variant="destructive" onClick={() => deletePhoto('concerts', idx)} title="Verwijder foto">
+          <Button size="icon" variant="destructive" onClick={() => deletePhoto(cat, idx)} title="Verwijder foto">
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
@@ -277,7 +277,7 @@ export default function AdminGalleries() {
                   <div className="flex flex-col gap-4 min-h-[60px]">
                     {photos[cat].length === 0 && <div className="text-gray-400">Geen foto's</div>}
                     {photos[cat].map((photo, idx) => (
-                      <SortablePhoto key={photo.id} photo={photo} idx={idx} />
+                      <SortablePhoto key={photo.id} photo={photo} idx={idx} cat={cat} />
                     ))}
                   </div>
                 </SortableContext>
