@@ -41,7 +41,6 @@ export async function GET(
     // Try to use pre-made zip first
     const preMadeZip = await getZipFile(slug);
     if (preMadeZip) {
-      console.log(`[Download] Using pre-made zip for ${slug}`);
       return new NextResponse(new Uint8Array(preMadeZip), {
         headers: {
           "Content-Type": "application/zip",
@@ -52,7 +51,6 @@ export async function GET(
     }
 
     // Fallback: create zip on-the-fly with streaming
-    console.log(`[Download] Pre-made zip not found for ${slug}, creating on-the-fly`);
 
     // Trigger background creation of pre-made zip for next time
     createZipFile(slug).catch(error => {

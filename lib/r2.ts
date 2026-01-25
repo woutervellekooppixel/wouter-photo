@@ -151,7 +151,6 @@ export async function getSignedDownloadUrl(
 }
 
 export async function listFiles(prefix: string): Promise<string[]> {
-  console.log("DEBUG listFiles", prefix);
   const allFiles: string[] = [];
   let continuationToken: string | undefined;
 
@@ -179,7 +178,6 @@ export async function deleteFile(key: string): Promise<void> {
   });
 
   const response = await r2Client.send(command);
-  console.log('[R2] Delete response for', key, ':', response.$metadata.httpStatusCode);
   
   if (response.$metadata.httpStatusCode !== 204 && response.$metadata.httpStatusCode !== 200) {
     throw new Error(`Failed to delete ${key}: HTTP ${response.$metadata.httpStatusCode}`);
@@ -206,7 +204,6 @@ export async function getMetadata(slug: string): Promise<UploadMetadata | null> 
 }
 
 export async function createZipFile(slug: string): Promise<void> {
-  console.log(`[R2] Creating pre-made zip for ${slug}`);
   const metadata = await getMetadata(slug);
   if (!metadata) {
     throw new Error(`Metadata not found for ${slug}`);
@@ -241,8 +238,6 @@ export async function createZipFile(slug: string): Promise<void> {
   const zipBuffer = Buffer.concat(chunks);
   const zipKey = `zips/${slug}.zip`;
   await uploadFile(zipBuffer, zipKey, "application/zip");
-  
-  console.log(`[R2] Pre-made zip created: ${zipKey} (${zipBuffer.length} bytes)`);
 }
 
 export async function getZipFile(slug: string): Promise<Buffer | null> {
@@ -298,19 +293,15 @@ export async function listAllUploads(): Promise<UploadMetadata[]> {
 }
 
 export async function deleteUpload(slug: string): Promise<void> {
-  console.log('[deleteUpload] Start voor slug:', slug);
   const metadata = await getMetadata(slug);
   if (!metadata) {
-    console.log('[deleteUpload] Geen metadata gevonden voor', slug);
     throw new Error('Geen metadata gevonden voor ' + slug);
   }
-  console.log('[deleteUpload] Metadata:', metadata);
 
   // Delete all files
   const sortedFiles = sortFilesChronological(metadata.files);
   for (const file of sortedFiles) {
     try {
-      console.log('[deleteUpload] Verwijder bestand:', file.key);
       await deleteFile(file.key);
     } catch (err) {
       console.error('[deleteUpload] Fout bij verwijderen van', file.key, err);
@@ -320,50 +311,37 @@ export async function deleteUpload(slug: string): Promise<void> {
 
   // Delete metadata
   try {
-    console.log('[deleteUpload] Verwijder metadata:', `metadata/${slug}.json`);
     await deleteFile(`metadata/${slug}.json`);
   } catch (err) {
     console.error('[deleteUpload] Fout bij verwijderen van metadata', err);
     throw err;
   }
-  console.log('[deleteUpload] Klaar voor slug:', slug);
 }
 
 export async function deleteFolder(prefix: string): Promise<void> {
-  console.log('[R2] Listing files in folder:', prefix);
   const files = await listFiles(prefix);
-  console.log('[R2] Found', files.length, 'files to delete:', files);
   
   if (files.length === 0) {
-    console.log('[R2] No files found with prefix:', prefix);
     // Try without trailing slash
     const prefixWithoutSlash = prefix.endsWith('/') ? prefix.slice(0, -1) : prefix;
-    console.log('[R2] Trying without trailing slash:', prefixWithoutSlash);
     const filesAlt = await listFiles(prefixWithoutSlash);
-    console.log('[R2] Found', filesAlt.length, 'files:', filesAlt);
     
     if (filesAlt.length === 0) {
-      console.log('[R2] Still no files found. Folder may already be empty or not exist.');
       return;
     }
   }
   
   for (const key of files) {
-    console.log('[R2] Deleting file:', key);
     await deleteFile(key);
   }
   
   // Verify deletion
-  console.log('[R2] Verifying deletion...');
   const remainingFiles = await listFiles(prefix);
-  console.log('[R2] Files remaining after deletion:', remainingFiles.length);
   
   if (remainingFiles.length > 0) {
     console.error('[R2] WARNING: Some files were not deleted:', remainingFiles);
     throw new Error(`Failed to delete all files. ${remainingFiles.length} files remaining.`);
   }
-  
-  console.log('[R2] Successfully deleted all files in folder:', prefix);
 }
 
 export async function findOrphanedUploads(): Promise<string[]> {

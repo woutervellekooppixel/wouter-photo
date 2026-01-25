@@ -14,6 +14,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Legacy/removed route: always redirect.
+  if (pathname === '/preview-home') {
+    return NextResponse.redirect(new URL('/', request.url), 308)
+  }
+
   const response = NextResponse.next()
 
   // Discourage indexing of download pages.
@@ -27,9 +32,6 @@ export function middleware(request: NextRequest) {
     response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex')
   }
 
-  if (pathname === '/preview-home') {
-    response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex')
-  }
 
   return response
 }

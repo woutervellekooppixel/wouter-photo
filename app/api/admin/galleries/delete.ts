@@ -13,7 +13,6 @@ function withCORS(res: Response) {
 export const runtime = "nodejs";
 
 export async function DELETE(req: NextRequest) {
-  console.log('DELETE handler start');
   let debug: any = {};
   let slug = '';
   let metadata = null;
@@ -47,7 +46,6 @@ export async function DELETE(req: NextRequest) {
         orderData[cat] = orderData[cat].filter((fname: string) => fname !== id);
         const after = orderData[cat].length;
         if (before !== after) {
-          console.log(`[delete] ${id} verwijderd uit galleries-order.json categorie ${cat}`);
         }
       }
       await fs.writeFile(ORDER_PATH, JSON.stringify(orderData, null, 2), 'utf-8');
