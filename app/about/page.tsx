@@ -26,7 +26,6 @@ export default function AboutPage() {
         setIsInNetherlands(data.country_code === 'NL')
       } catch (error) {
         // Als beide falen, assumeer niet-Nederlandse bezoeker voor privacy
-        console.log('Geolocation check failed, hiding phone number for privacy')
         setIsInNetherlands(false)
       }
     }

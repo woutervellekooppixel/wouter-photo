@@ -12,7 +12,7 @@ export { generateMetadata };
 export default async function PortfolioPage({ params }: any) {
   const { category } = await params;
 
-  const validCategories = ['concerts', 'events', 'misc', 'all'];
+  const validCategories = ['concerts', 'events', 'misc', 'commercial', 'all'];
   if (!validCategories.includes(category)) {
     notFound();
   }
@@ -21,6 +21,7 @@ export default async function PortfolioPage({ params }: any) {
     concerts: 'Concert Photography',
     events: 'Event Photography', 
     misc: 'Miscellaneous Photography',
+    commercial: 'Commercial Photography',
     all: 'All Photography'
   };
 
@@ -36,7 +37,11 @@ export default async function PortfolioPage({ params }: any) {
     misc: {
       name: 'Miscellaneous Photography',
       description: 'Diverse photography work including portraits, landscapes, and creative projects.',
-    }
+    },
+    commercial: {
+      name: 'Commercial Photography',
+      description: 'Commercial and advertising photography for brands, agencies and marketing teams.',
+    },
   };
 
   const data = categoryData[category as keyof typeof categoryData];
@@ -65,7 +70,7 @@ export default async function PortfolioPage({ params }: any) {
   const dataApi = await getGalleryData();
   let photos: any[] = [];
   if (category === 'all') {
-    photos = [...(dataApi.concerts || []), ...(dataApi.events || []), ...(dataApi.misc || [])];
+    photos = Object.values(dataApi || {}).flat();
   } else {
     photos = dataApi[category] || [];
   }
@@ -79,7 +84,7 @@ export default async function PortfolioPage({ params }: any) {
         />
       )}
       <div className="min-h-screen bg-white dark:bg-black py-6">
-        <GalleryScroller category={category as 'all' | 'concerts' | 'events' | 'misc'} photos={photos} />
+        <GalleryScroller category={category as string} photos={photos} />
       </div>
     </>
   );

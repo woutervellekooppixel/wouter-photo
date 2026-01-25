@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-const validCategories = ['concerts', 'events', 'misc'] as const
+const validCategories = ['concerts', 'events', 'misc', 'commercial', 'all'] as const
 type Category = (typeof validCategories)[number]
 
 export async function generateMetadata({
@@ -82,7 +82,42 @@ export async function generateMetadata({
         'artistic photography',
         'commercial photography',
       ]
-    }
+    },
+    commercial: {
+      title: 'Commercial Photography',
+      description: 'Commercial and advertising photography by Wouter Vellekoop. Clean, bold visuals for brands, agencies and marketing teams.',
+      keywords: [
+        // NL
+        'commerciële fotografie',
+        'commercial fotograaf',
+        'advertising fotografie',
+        'campagne fotografie',
+        'brand fotografie',
+        // EN
+        'commercial photography',
+        'advertising photography',
+        'campaign photography',
+        'brand content',
+        'agency photographer',
+        'Netherlands commercial photographer',
+      ]
+    },
+    all: {
+      title: 'Portfolio',
+      description: 'Portfolio of concert, event and commercial photography by Wouter Vellekoop (NL/EN).',
+      keywords: [
+        // NL
+        'portfolio fotograaf',
+        'concertfotograaf',
+        'eventfotograaf',
+        'commerciële fotografie',
+        // EN
+        'photography portfolio',
+        'concert photographer',
+        'event photographer',
+        'commercial photographer',
+      ]
+    },
   }
 
   const data = categoryData[category as Category]
@@ -99,7 +134,7 @@ export async function generateMetadata({
       siteName: 'Wouter.Photo',
       images: [
         {
-          url: `${baseUrl}/photos/${category}/portfolio-${category}1.webp`,
+          url: `${baseUrl}/2022_NSJF-Fri_1179.jpg`,
           width: 1200,
           height: 800,
           alt: `${data.title} by Wouter Vellekoop`,
@@ -113,7 +148,7 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title: `${data.title} – Wouter.Photo`,
       description: data.description,
-      images: [`${baseUrl}/photos/${category}/portfolio-${category}1.webp`],
+      images: [`${baseUrl}/2022_NSJF-Fri_1179.jpg`],
     },
     alternates: {
       canonical: `${baseUrl}/portfolio/${category}`,

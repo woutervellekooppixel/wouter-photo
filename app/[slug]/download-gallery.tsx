@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import {
   Download,
@@ -69,17 +69,30 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [ratings, setRatings] = useState<Record<string, boolean>>({});
+
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
   const [heroObjectPosition, setHeroObjectPosition] = useState<string>("50% 35%");
 
   // Fake loader percentage voor hero (kan gebruikt worden voor animaties)
   const [fakePercent, setFakePercent] = useState(0);
 
+  const previewLoadedRef = useRef(previewLoaded);
+  useEffect(() => {
+    previewLoadedRef.current = previewLoaded;
+  }, [previewLoaded]);
+
   useEffect(() => {
     if (!loadingThumbnails) {
       setFakePercent(100);
       return;
     }
+
+    // Keep the timer at 0 until the hero image has actually loaded.
+    if (!previewLoaded) {
+      setFakePercent(0);
+      return;
+    }
+
     setFakePercent(0);
     const start = performance.now();
     let raf = 0 as unknown as number;
@@ -97,8 +110,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
     };
     raf = requestAnimationFrame(animate) as unknown as number;
     return () => cancelAnimationFrame(raf as unknown as number);
-  }, [loadingThumbnails]);
-
+  }, [loadingThumbnails, previewLoaded]);
   // Houd overlay kort in DOM voor fade-out animatie
   useEffect(() => {
     if (loadingThumbnails) {
@@ -126,15 +138,15 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   );
   const imageFiles = useMemo(() => visibleFiles.filter((f) => isImage(f.name)), [visibleFiles]);
   const otherFiles = useMemo(() => visibleFiles.filter((f) => !isImage(f.name)), [visibleFiles]);
-  const previewImage = useMemo(
-    () => (metadata.previewImageKey ? metadata.files.find((f) => f.key === metadata.previewImageKey) : null),
-    [metadata.previewImageKey, metadata.files]
-  );
 
   // API helper voor image url
-  const getImageUrl = (key: string, opts?: { full?: boolean }) => {
-    const fullParam = opts?.full ? "&full=1" : "";
-    return `/api/photos/by-key?key=${encodeURIComponent(key)}${fullParam}`;
+  const getFullImageUrl = (key: string) => {
+    return `/api/photos/by-key?key=${encodeURIComponent(key)}`;
+  };
+
+  const getThumbUrl = (key: string) => {
+    // Serve real resized thumbnails (webp) to keep the page light.
+    return `/api/thumbnail/${metadata.slug}?key=${encodeURIComponent(key)}&w=640`;
   };
 
   // Thumbnails "opbouwen" (geen echte fetch nodig; URLs naar je API)
@@ -149,6 +161,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
     }
 
     let cancelled = false;
+    setPreviewLoaded(false);
     setLoadingThumbnails(true);
     setThumbnailsLoaded(0);
     const urls: Record<string, string> = {};
@@ -156,13 +169,18 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
 
     // Hero/preview direct klaarzetten
     if (metadata.previewImageKey) {
-      const heroUrl = getImageUrl(metadata.previewImageKey);
+      const heroUrl = getThumbUrl(metadata.previewImageKey);
       urls[metadata.previewImageKey] = heroUrl;
+    }
+
+    // Push the hero URL into state immediately so it can start loading ASAP.
+    if (!cancelled && metadata.previewImageKey) {
+      setThumbnailUrls({ ...urls });
     }
 
     const build = async () => {
       for (const file of imgs) {
-        const url = getImageUrl(file.key);
+        const url = getThumbUrl(file.key);
         urls[file.key] = url;
         loaded++;
         if (!cancelled) setThumbnailsLoaded(loaded);
@@ -176,6 +194,14 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
         const elapsed = Date.now() - start;
         if (elapsed < minDelay) {
           await new Promise((res) => setTimeout(res, minDelay - elapsed));
+        }
+
+        // Don't dismiss the overlay until the hero image is loaded.
+        // Safety: if the hero never loads, continue after a short grace period.
+        const graceMs = 4000;
+        const t0 = Date.now();
+        while (!cancelled && !previewLoadedRef.current && Date.now() - t0 < graceMs) {
+          await new Promise((res) => setTimeout(res, 75));
         }
         if (!cancelled) setLoadingThumbnails(false);
       };
@@ -202,7 +228,6 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
         const resp = await fetch(url, { method: "HEAD" });
         if (resp.ok) {
           setBackgroundUrl(url);
-          setPreviewLoaded(true);
           return;
         }
       } catch {
@@ -210,7 +235,6 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
       }
       const localUrl = "/default-background.svg";
       setBackgroundUrl(localUrl);
-      if (!metadata.previewImageKey) setPreviewLoaded(true);
     };
     checkBackground();
   }, [metadata.previewImageKey]);
@@ -436,13 +460,13 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
 
   /** ===== Lightbox integratie ===== */
 
-  // Volledige resolutie in Lightbox (voorkeur: full=1)
+  // Volledige resolutie in Lightbox
   const lightboxImages: LightboxImage[] = useMemo(
     () =>
       imageFiles.map((f) => ({
-        src: getImageUrl(f.key, { full: true }),
+        src: getFullImageUrl(f.key),
         alt: f.name.split("/").pop() || f.name,
-        thumb: thumbnailUrls[f.key] || getImageUrl(f.key),
+        thumb: thumbnailUrls[f.key] || getThumbUrl(f.key),
       })),
     [imageFiles, thumbnailUrls]
   );
@@ -473,21 +497,22 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
           >
             {/* Fullscreen hero image */}
             <div className="absolute inset-0 bg-gray-900">
-              {previewImage && thumbnailUrls[previewImage.key] ? (
+              {metadata.previewImageKey && thumbnailUrls[metadata.previewImageKey] ? (
                 <Image
-                  src={thumbnailUrls[previewImage.key]}
+                  src={thumbnailUrls[metadata.previewImageKey]}
                   alt="Hero preview"
                   fill
                   className="object-cover animate-in fade-in duration-700"
                   style={{ objectPosition: heroObjectPosition }}
                   sizes="100vw"
                   priority
-                  onLoad={() => setPreviewLoaded(true)}
                   onLoadingComplete={(img) => {
+                    setPreviewLoaded(true);
                     // Keep 'spread' but bias crop slightly upwards for portraits
                     const isPortrait = img.naturalHeight > img.naturalWidth;
                     setHeroObjectPosition(isPortrait ? "50% 25%" : "50% 35%");
                   }}
+                  onError={() => setPreviewLoaded(true)}
                   placeholder="empty"
                   unoptimized={backgroundUrl?.startsWith("http")}
                 />
@@ -500,11 +525,12 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                   style={{ objectPosition: heroObjectPosition }}
                   sizes="100vw"
                   priority
-                  onLoad={() => setPreviewLoaded(true)}
                   onLoadingComplete={(img) => {
+                    setPreviewLoaded(true);
                     const isPortrait = img.naturalHeight > img.naturalWidth;
                     setHeroObjectPosition(isPortrait ? "50% 25%" : "50% 35%");
                   }}
+                  onError={() => setPreviewLoaded(true)}
                   placeholder="empty"
                   unoptimized={backgroundUrl?.startsWith("http")}
                 />
@@ -517,8 +543,6 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                 </div>
               )}
             </div>
-
-            {/* Minimal loader UI (Instagram stories style) */}
 
             {/* Subtle label */}
             <div className="absolute left-5 top-5 sm:left-6 sm:top-6">
@@ -535,12 +559,9 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                   <span className="font-normal">DOWNLOAD</span>
                 </div>
 
-                {/* Fill (reveals from bottom to top) */}
+                {/* Fill (reveals from left to right) */}
                 <div className="absolute inset-0 overflow-hidden" aria-hidden>
-                  <div
-                    className="absolute left-0 top-0 bottom-0 overflow-hidden"
-                    style={{ width: `${fakePercent}%` }}
-                  >
+                  <div className="absolute left-0 top-0 bottom-0 overflow-hidden" style={{ width: `${fakePercent}%` }}>
                     <div className="select-none text-2xl sm:text-3xl md:text-4xl tracking-tight text-white drop-shadow-[0_6px_20px_rgba(0,0,0,0.35)]">
                       <span className="font-bold">WOUTER</span>
                       <span className="font-bold">.</span>
@@ -548,7 +569,6 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                     </div>
                   </div>
                 </div>
-
               </div>
             </div>
 

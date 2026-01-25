@@ -125,18 +125,9 @@ export default function AdminDashboard() {
       for (const file of imageFiles) {
         // Skip if already loaded
         if (thumbnailUrls[file.key]) continue;
-        
-        try {
-          const res = await fetch(`/api/thumbnail/${upload.slug}?key=${encodeURIComponent(file.key)}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.url) {
-              setThumbnailUrls(prev => ({ ...prev, [file.key]: data.url }));
-            }
-          }
-        } catch (error) {
-          console.error('Failed to load thumbnail:', error);
-        }
+
+        const thumbUrl = `/api/thumbnail/${upload.slug}?key=${encodeURIComponent(file.key)}&w=480`;
+        setThumbnailUrls(prev => ({ ...prev, [file.key]: thumbUrl }));
       }
     };
     

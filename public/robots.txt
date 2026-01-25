@@ -1,9 +1,6 @@
 # *
 User-agent: *
 Allow: /
-
-# *
-User-agent: *
 Disallow: /admin/
 Disallow: /_next/
 Disallow: /api/admin/

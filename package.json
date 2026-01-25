@@ -8,10 +8,6 @@
     "build": "next build",
     "start": "next start",
     "postbuild": "next-sitemap",
-    "migrate:pre": "cp package.json package.json.bak && jq '.type = \"commonjs\"' package.json > package.tmp && mv package.tmp package.json",
-    "migrate:run": "node scripts/migrate-photos-to-r2.cjs",
-    "migrate:post": "mv package.json.bak package.json",
-    "migrate:all": "npm run migrate:pre && npm run migrate:run && npm run migrate:post",
     "deploy": "vercel --prod"
   },
   "dependencies": {
@@ -20,7 +16,6 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@netlify/plugin-nextjs": "^5.11.1",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-label": "^2.1.1",
     "@radix-ui/react-slot": "^1.1.1",
