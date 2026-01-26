@@ -47,6 +47,8 @@ export default function AdminDashboard() {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const [slugToken, setSlugToken] = useState<string>("");
   // Removed expiryDays state and logic
   const [ratingsEnabled, setRatingsEnabled] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -71,6 +73,29 @@ export default function AdminDashboard() {
   const dropzoneDragDepth = useRef(0);
   const { toast } = useToast();
   const router = useRouter();
+
+  const slugifyForUrl = (value: string) => {
+    return value
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+  };
+
+  const generateUrlToken = (bytes = 6) => {
+    // 6 bytes => 12 hex chars (~48 bits). Short but effectively unguessable.
+    const arr = new Uint8Array(bytes);
+    crypto.getRandomValues(arr);
+    return Array.from(arr)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  };
+
+  const buildSecretSlug = (base: string, token: string) => {
+    if (!base) return "";
+    const safeToken = token || generateUrlToken();
+    return `${base}-${safeToken}`;
+  };
 
   // Load current background image
   useEffect(() => {
@@ -587,6 +612,8 @@ export default function AdminDashboard() {
       setFiles([]);
       setTitle("");
       setSlug("");
+      setSlugManuallyEdited(false);
+      setSlugToken("");
       setRatingsEnabled(false);
       
       // Reload uploads list
@@ -728,12 +755,15 @@ export default function AdminDashboard() {
     const now = new Date();
     const month = now.toLocaleDateString('nl-NL', { month: 'short' });
     const year = now.getFullYear();
+
+    const token = slugToken || generateUrlToken();
+    if (!slugToken) setSlugToken(token);
     
     const suggestions = [
-      name,
-      `${name}-${month}-${year}`,
-      `${name}-${year}`,
-      `${name}-${now.getDate()}-${month}`,
+      buildSecretSlug(name, token),
+      buildSecretSlug(`${name}-${month}-${year}`, token),
+      buildSecretSlug(`${name}-${year}`, token),
+      buildSecretSlug(`${name}-${now.getDate()}-${month}`, token),
     ].filter(s => s.length > 0 && s !== '-');
     
     setSlugSuggestions(suggestions.slice(0, 3));
@@ -896,13 +926,20 @@ export default function AdminDashboard() {
                   onChange={(e) => {
                     const newTitle = e.target.value;
                     setTitle(newTitle);
-                    // Auto-generate slug from title
-                    if (newTitle) {
-                      const autoSlug = newTitle
-                        .toLowerCase()
-                        .replace(/[^a-z0-9]+/g, '-')
-                        .replace(/^-|-$/g, '');
-                      setSlug(autoSlug);
+                    // Auto-generate slug from title (titel-slug-randomtoken)
+                    if (!newTitle) {
+                      if (!slugManuallyEdited) {
+                        setSlug("");
+                        setSlugToken("");
+                      }
+                      return;
+                    }
+
+                    if (!slugManuallyEdited) {
+                      const base = slugifyForUrl(newTitle);
+                      const token = slugToken || generateUrlToken();
+                      if (!slugToken) setSlugToken(token);
+                      setSlug(buildSecretSlug(base, token));
                     }
                   }}
                 />
@@ -913,10 +950,17 @@ export default function AdminDashboard() {
                   Custom URL
                 </label>
                 <Input
-                  placeholder="fotoshoot-emma-tom"
+                  placeholder="fotoshoot-emma-tom-1a2b3c4d5e6f"
                   value={slug}
                   onChange={(e) => {
-                    setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""));
+                    setSlugManuallyEdited(true);
+                    const next = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+                    setSlug(next);
+
+                    const last = next.split("-").pop() || "";
+                    if (/^[a-f0-9]{10,}$/i.test(last)) {
+                      setSlugToken(last.toLowerCase());
+                    }
                   }}
                 />
                 {slug && (
