@@ -66,9 +66,7 @@ export default function Header() {
         )}
       </Link>
 
-      <div className="hidden md:flex flex-1 justify-center">
-        <DownloadStats />
-      </div>
+
 
       <nav
         className={`hidden md:flex items-center space-x-6 text-sm flex-shrink-0 ${
