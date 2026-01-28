@@ -27,7 +27,7 @@ export async function GET(
     const widthParam = searchParams.get('w');
     const requestedWidth = widthParam ? Number(widthParam) : 640;
     const width = Number.isFinite(requestedWidth)
-      ? Math.max(200, Math.min(1600, Math.round(requestedWidth)))
+      ? Math.max(200, Math.min(4096, Math.round(requestedWidth)))
       : 640;
 
     if (!fileKey) {
