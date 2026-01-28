@@ -6,7 +6,6 @@ import { FaInstagram, FaLinkedin, FaWhatsapp } from 'react-icons/fa'
 import { useEffect, useState } from 'react'
 // import { SocialLightbox } from './SocialLightbox' (verwijderd)
 import MobileMenu from './MobileMenu'
-import DownloadStats from './DownloadStats'
 import { Sun, Moon } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import WheelSuffix from './WheelSuffix'
@@ -66,7 +65,8 @@ export default function Header() {
         )}
       </Link>
 
-
+      {/* Spacer keeps the nav on the right without showing DownloadStats */}
+      <div className="hidden md:flex flex-1" aria-hidden="true" />
 
       <nav
         className={`hidden md:flex items-center space-x-6 text-sm flex-shrink-0 ${
