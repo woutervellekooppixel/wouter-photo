@@ -71,6 +71,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   const [ratings, setRatings] = useState<Record<string, boolean>>({});
 
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
+  const [heroUrl, setHeroUrl] = useState<string | null>(null);
   const [heroObjectPosition, setHeroObjectPosition] = useState<string>("50% 35%");
 
   // Fake loader percentage voor hero (kan gebruikt worden voor animaties)
@@ -173,16 +174,9 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
     const urls: Record<string, string> = {};
     let loaded = 0;
 
-    // Hero/preview direct klaarzetten
-    if (metadata.previewImageKey) {
-      const heroUrl = getHeroUrl(metadata.previewImageKey);
-      urls[metadata.previewImageKey] = heroUrl;
-    }
-
-    // Push the hero URL into state immediately so it can start loading ASAP.
-    if (!cancelled && metadata.previewImageKey) {
-      setThumbnailUrls({ ...urls });
-    }
+    // Hero/preview URL: keep separate so the grid can stay on small thumbnails.
+    if (metadata.previewImageKey) setHeroUrl(getHeroUrl(metadata.previewImageKey));
+    else setHeroUrl(null);
 
     const build = async () => {
       for (const file of imgs) {
@@ -503,9 +497,9 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
           >
             {/* Fullscreen hero image */}
             <div className="absolute inset-0 bg-gray-900">
-              {metadata.previewImageKey && thumbnailUrls[metadata.previewImageKey] ? (
+              {metadata.previewImageKey && heroUrl ? (
                 <Image
-                  src={thumbnailUrls[metadata.previewImageKey]}
+                  src={heroUrl}
                   alt="Hero preview"
                   fill
                   className="object-cover animate-in fade-in duration-700"
@@ -520,7 +514,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                   }}
                   onError={() => setPreviewLoaded(true)}
                   placeholder="empty"
-                  unoptimized={backgroundUrl?.startsWith("http")}
+                  unoptimized={heroUrl?.startsWith("http")}
                 />
               ) : backgroundUrl ? (
                 <Image
