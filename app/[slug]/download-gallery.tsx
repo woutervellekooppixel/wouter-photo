@@ -149,6 +149,12 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
     return `/api/thumbnail/${metadata.slug}?key=${encodeURIComponent(key)}&w=640`;
   };
 
+  const getHeroUrl = (key: string) => {
+    // Hero is full-bleed on most screens; use a much larger rendition than the grid thumbnails.
+    // This avoids the hero looking blurry after selecting it in /admin.
+    return `/api/thumbnail/${metadata.slug}?key=${encodeURIComponent(key)}&w=1920`;
+  };
+
   // Thumbnails "opbouwen" (geen echte fetch nodig; URLs naar je API)
   useEffect(() => {
     if (!metadata || !metadata.files) return;
@@ -169,7 +175,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
 
     // Hero/preview direct klaarzetten
     if (metadata.previewImageKey) {
-      const heroUrl = getThumbUrl(metadata.previewImageKey);
+      const heroUrl = getHeroUrl(metadata.previewImageKey);
       urls[metadata.previewImageKey] = heroUrl;
     }
 
