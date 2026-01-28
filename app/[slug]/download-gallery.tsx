@@ -71,6 +71,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   const [ratings, setRatings] = useState<Record<string, boolean>>({});
 
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
+  const [heroKey, setHeroKey] = useState<string | null>(null);
   const [heroUrl, setHeroUrl] = useState<string | null>(null);
   const [heroObjectPosition, setHeroObjectPosition] = useState<string>("50% 35%");
 
@@ -156,6 +157,108 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
     return `/api/thumbnail/${metadata.slug}?key=${encodeURIComponent(key)}&w=3840&v=2`;
   };
 
+  const probeImageSize = (src: string, timeoutMs = 2500) => {
+    return new Promise<{ width: number; height: number }>((resolve, reject) => {
+      const img = new window.Image();
+      let done = false;
+      const t = window.setTimeout(() => {
+        if (done) return;
+        done = true;
+        reject(new Error("probe timeout"));
+      }, timeoutMs);
+
+      img.onload = () => {
+        if (done) return;
+        done = true;
+        window.clearTimeout(t);
+        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.onerror = () => {
+        if (done) return;
+        done = true;
+        window.clearTimeout(t);
+        reject(new Error("probe error"));
+      };
+
+      img.src = src;
+    });
+  };
+
+  // Auto-choose hero if admin hasn't picked one.
+  // Rule: first (chronological) photo that is ~3:2 becomes hero.
+  useEffect(() => {
+    let cancelled = false;
+
+    const imgs = sortFilesChronological(metadata.files)
+      .filter((f) => !shouldFilterFile(f.name) && isImage(f.name))
+      .map((f) => f.key);
+
+    // Manual override from /admin always wins.
+    if (metadata.previewImageKey) {
+      setHeroKey(metadata.previewImageKey);
+      setHeroUrl(getHeroUrl(metadata.previewImageKey));
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (imgs.length === 0) {
+      setHeroKey(null);
+      setHeroUrl(null);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    // Start with the first image so the overlay has something immediately.
+    const fallbackKey = imgs[0];
+    setHeroKey(fallbackKey);
+    setHeroUrl(getHeroUrl(fallbackKey));
+
+    const tolerance = 0.03;
+    const isClose = (value: number, target: number) => Math.abs(value - target) <= tolerance;
+
+    (async () => {
+      try {
+        let firstPortraitMatch: string | null = null;
+        for (const key of imgs) {
+          if (cancelled) return;
+          // Probe using the small thumbnail for speed; aspect ratio is preserved.
+          const src = `${getThumbUrl(key)}&probe=1`;
+          const { width, height } = await probeImageSize(src);
+          if (!width || !height) continue;
+          const r = width / height;
+
+          // Prefer landscape 3:2.
+          if (isClose(r, 3 / 2)) {
+            if (!cancelled) {
+              setHeroKey(key);
+              setHeroUrl(getHeroUrl(key));
+            }
+            return;
+          }
+
+          // Keep a portrait 2:3 as a secondary option.
+          if (!firstPortraitMatch && isClose(r, 2 / 3)) {
+            firstPortraitMatch = key;
+          }
+        }
+
+        if (firstPortraitMatch && !cancelled) {
+          setHeroKey(firstPortraitMatch);
+          setHeroUrl(getHeroUrl(firstPortraitMatch));
+        }
+      } catch {
+        // Ignore probe failures; fallbackKey already set.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [metadata.slug, metadata.previewImageKey, metadata.files]);
+
   // Thumbnails "opbouwen" (geen echte fetch nodig; URLs naar je API)
   useEffect(() => {
     if (!metadata || !metadata.files) return;
@@ -173,10 +276,6 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
     setThumbnailsLoaded(0);
     const urls: Record<string, string> = {};
     let loaded = 0;
-
-    // Hero/preview URL: keep separate so the grid can stay on small thumbnails.
-    if (metadata.previewImageKey) setHeroUrl(getHeroUrl(metadata.previewImageKey));
-    else setHeroUrl(null);
 
     const build = async () => {
       for (const file of imgs) {
@@ -221,7 +320,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
 
   // Achtergrond (fallback) laden als geen preview
   useEffect(() => {
-    if (metadata.previewImageKey) return;
+    if (heroKey) return;
     const checkBackground = async () => {
       try {
         const url = "/api/background/default-background";
@@ -237,7 +336,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
       setBackgroundUrl(localUrl);
     };
     checkBackground();
-  }, [metadata.previewImageKey]);
+  }, [heroKey]);
 
   const getFileIcon = (filename: string) => {
     const ext = filename.toLowerCase().split(".").pop();
@@ -497,7 +596,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
           >
             {/* Fullscreen hero image */}
             <div className="absolute inset-0 bg-gray-900">
-              {metadata.previewImageKey && heroUrl ? (
+              {heroKey && heroUrl ? (
                 <Image
                   src={heroUrl}
                   alt="Hero preview"
