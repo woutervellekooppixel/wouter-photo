@@ -153,7 +153,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   const getHeroUrl = (key: string) => {
     // Hero is full-bleed on most screens; use a much larger rendition than the grid thumbnails.
     // This avoids the hero looking blurry after selecting it in /admin.
-    return `/api/thumbnail/${metadata.slug}?key=${encodeURIComponent(key)}&w=3840`;
+    return `/api/thumbnail/${metadata.slug}?key=${encodeURIComponent(key)}&w=3840&v=2`;
   };
 
   // Thumbnails "opbouwen" (geen echte fetch nodig; URLs naar je API)
