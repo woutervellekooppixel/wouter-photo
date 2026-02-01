@@ -309,6 +309,21 @@ export async function deleteUpload(slug: string): Promise<void> {
     }
   }
 
+  // Delete pre-made zip if present
+  try {
+    await deleteFile(`zips/${slug}.zip`);
+  } catch (err) {
+    console.error('[deleteUpload] Fout bij verwijderen van zip', err);
+  }
+
+  // Best-effort: remove any remaining objects under uploads/<slug>/
+  try {
+    await deleteFolder(`uploads/${slug}/`);
+  } catch (err) {
+    // Don't fail the whole operation; we already removed the referenced objects.
+    console.error('[deleteUpload] WARNING: deleteFolder uploads/<slug> failed', err);
+  }
+
   // Delete metadata
   try {
     await deleteFile(`metadata/${slug}.json`);
@@ -320,6 +335,7 @@ export async function deleteUpload(slug: string): Promise<void> {
 
 export async function deleteFolder(prefix: string): Promise<void> {
   const files = await listFiles(prefix);
+  let keysToDelete = files;
   
   if (files.length === 0) {
     // Try without trailing slash
@@ -329,9 +345,11 @@ export async function deleteFolder(prefix: string): Promise<void> {
     if (filesAlt.length === 0) {
       return;
     }
+
+    keysToDelete = filesAlt;
   }
   
-  for (const key of files) {
+  for (const key of keysToDelete) {
     await deleteFile(key);
   }
   

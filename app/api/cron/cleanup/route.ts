@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listFiles, getMetadata, deleteFolder } from "@/lib/r2";
+import { listFiles, getMetadata, saveMetadata, deleteUpload } from "@/lib/r2";
+import { computeExpiresAtDate, computeExpiresAtIso } from "@/lib/expiry";
 
 // This runs as a cron job (configured in vercel.json)
 export async function GET(request: NextRequest) {
-  // Verify cron secret to prevent unauthorized access
+  // Allow Vercel Cron OR a shared secret for external schedulers.
+  // Note: x-vercel-cron is not cryptographically secure; prefer CRON_SECRET where possible.
+  const vercelCron = request.headers.get('x-vercel-cron');
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const secret = process.env.CRON_SECRET;
+  const secretOk = secret && authHeader === `Bearer ${secret}`;
+  const vercelOk = vercelCron === '1';
+  if (!secretOk && !vercelOk) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -21,6 +27,34 @@ export async function GET(request: NextRequest) {
         // Extract slug from metadata/slug.json
         const slug = metadataFile.replace('metadata/', '').replace('.json', '');
         const metadata = await getMetadata(slug);
+
+        if (!metadata) {
+          continue;
+        }
+
+        // Never auto-delete gallery background uploads
+        if (metadata.gallery) {
+          continue;
+        }
+
+        // Backfill expiresAt if missing (so admin can display it)
+        if (!metadata.expiresAt) {
+          const iso = computeExpiresAtIso(metadata);
+          if (iso) {
+            metadata.expiresAt = iso;
+            await saveMetadata(metadata);
+          }
+        }
+
+        const expiresAt = computeExpiresAtDate(metadata, now);
+        if (!expiresAt) {
+          continue;
+        }
+
+        if (now.getTime() > expiresAt.getTime()) {
+          await deleteUpload(slug);
+          deletedSlugs.push(slug);
+        }
         
       } catch (error) {
         console.error(`[Cleanup] Error processing ${metadataFile}:`, error);

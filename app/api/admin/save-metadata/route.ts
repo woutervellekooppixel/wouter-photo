@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdminAuth } from "@/lib/auth";
 import { saveMetadata, type UploadMetadata } from "@/lib/r2";
 import { isValidSlug, MAX_UPLOAD_FILE_SIZE_BYTES } from "@/lib/validation";
+import { DEFAULT_DOWNLOAD_EXPIRY_DAYS } from "@/lib/expiry";
 
 export async function POST(request: NextRequest) {
   const authError = await requireAdminAuth();
   if (authError) return authError;
 
   try {
-    const { slug, title, files, ratingsEnabled } = await request.json();
+    const { slug, title, files, ratingsEnabled, expiresAt } = await request.json();
 
     if (!slug || !files || files.length === 0) {
       return NextResponse.json(
@@ -38,12 +39,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Save metadata zonder expiresAt
     const now = new Date();
+
+    let resolvedExpiresAt: string | undefined;
+    if (typeof expiresAt === 'string' && expiresAt.trim()) {
+      const d = new Date(expiresAt);
+      if (Number.isFinite(d.getTime())) {
+        resolvedExpiresAt = d.toISOString();
+      }
+    }
+    if (!resolvedExpiresAt) {
+      const d = new Date(now.getTime());
+      d.setUTCDate(d.getUTCDate() + DEFAULT_DOWNLOAD_EXPIRY_DAYS);
+      resolvedExpiresAt = d.toISOString();
+    }
+
     const metadata: UploadMetadata = {
       slug,
       ...(title && { title }),
       createdAt: now.toISOString(),
+      expiresAt: resolvedExpiresAt,
       files: files,
       downloads: 0,
       ...(ratingsEnabled && { ratingsEnabled }),

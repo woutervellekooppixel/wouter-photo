@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getFile, getMetadata } from "@/lib/r2";
 import { isValidSlug } from "@/lib/validation";
 import sharp from "sharp";
+import { isExpired } from "@/lib/expiry";
 
 export const runtime = 'nodejs';
 
@@ -42,6 +43,10 @@ export async function GET(
 
     if (!metadata) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    if (isExpired(metadata)) {
+      return NextResponse.json({ error: "Expired" }, { status: 410 });
     }
 
     // Find the file

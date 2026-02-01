@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getFile } from '@/lib/r2';
+import { getFile, getMetadata } from '@/lib/r2';
 import { isValidSlug } from '@/lib/validation';
+import { isExpired } from '@/lib/expiry';
 
 export const runtime = 'nodejs';
 
@@ -70,6 +71,17 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    if (key.startsWith('uploads/')) {
+      const parts = key.split('/').filter(Boolean);
+      const slug = parts.length >= 2 ? parts[1] : null;
+      if (slug && isValidSlug(slug)) {
+        const meta = await getMetadata(slug);
+        if (!meta || isExpired(meta)) {
+          return NextResponse.json({ error: 'Not found' }, { status: 404 });
+        }
+      }
+    }
+
     const buffer = await getFile(key);
     if (!buffer || buffer.length === 0) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });

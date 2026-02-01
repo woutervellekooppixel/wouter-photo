@@ -5,6 +5,7 @@ import { sendDownloadNotification } from "@/lib/email";
 import { downloadRateLimit } from "@/lib/rateLimit";
 import { isValidSlug } from "@/lib/validation";
 import { sortFilesChronological } from "@/lib/utils";
+import { isExpired } from "@/lib/expiry";
 
 // Configure route for large downloads
 export const maxDuration = 300; // 5 minutes
@@ -27,6 +28,10 @@ export async function GET(
 
     if (!metadata) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    if (isExpired(metadata)) {
+      return NextResponse.json({ error: "Expired" }, { status: 410 });
     }
 
 
