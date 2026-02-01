@@ -3,5 +3,11 @@
     "env": {
       "NEXT_PRIVATE_IGNORE_TS_CONFIG_REWRITE": "true"
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/cleanup",
+      "schedule": "15 3 * * *"
+    }
+  ]
 }

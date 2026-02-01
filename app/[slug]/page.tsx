@@ -3,6 +3,8 @@ import { getMetadata } from '@/lib/r2';
 import DownloadGallery from './download-gallery';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
+import ExpiredRedirect from '@/components/ExpiredRedirect';
+import { computeExpiresAtDate, isExpired } from '@/lib/expiry';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -15,6 +17,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!metadata) {
     return {
       title: '404 - Not Found',
+    };
+  }
+
+  if (isExpired(metadata)) {
+    return {
+      title: 'Link verlopen',
+      description: 'Deze download is niet meer beschikbaar.',
+      robots: {
+        index: false,
+        follow: false,
+      },
     };
   }
 
@@ -62,6 +75,22 @@ export default async function DownloadPage({ params }: PageProps) {
 
   if (!metadata) {
     notFound();
+  }
+
+  if (isExpired(metadata)) {
+    const expiresAt = computeExpiresAtDate(metadata);
+    const destination = 'https://wouter.photo';
+    return (
+      <ExpiredRedirect
+        destination={destination}
+        title="Deze download is verlopen"
+        description={
+          expiresAt
+            ? `Deze link is verlopen op ${expiresAt.toLocaleDateString('nl-NL')}.`
+            : 'Deze link is verlopen.'
+        }
+      />
+    );
   }
 
 

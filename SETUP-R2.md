@@ -35,6 +35,13 @@ De download portal functionaliteit vereist Cloudflare R2 opslag. Volg deze stapp
    R2_ACCESS_KEY_ID="je-access-key-id"       # Van stap 2
    R2_SECRET_ACCESS_KEY="je-secret-key"      # Van stap 2
    R2_BUCKET_NAME="wouter-photo-uploads"     # Naam van je bucket uit stap 1
+
+   # Download links verlopen automatisch
+   DEFAULT_DOWNLOAD_EXPIRY_DAYS="31"
+
+   # (Optioneel) cleanup endpoint beveiligen voor externe cron services
+   # Als je Vercel Cron gebruikt, kan het ook zonder secret via x-vercel-cron.
+   CRON_SECRET="kies-een-random-secret"
    
    # Admin credentials
    ADMIN_PASSWORD="kies-een-sterk-wachtwoord"

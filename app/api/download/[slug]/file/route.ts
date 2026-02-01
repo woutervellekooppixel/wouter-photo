@@ -3,6 +3,7 @@ import { getMetadata, getFile, updateDownloadCount } from "@/lib/r2";
 import { sendDownloadNotification } from "@/lib/email";
 import { downloadRateLimit } from "@/lib/rateLimit";
 import { isValidSlug } from "@/lib/validation";
+import { isExpired } from "@/lib/expiry";
 
 export async function GET(
   request: NextRequest,
@@ -28,6 +29,10 @@ export async function GET(
 
     if (!metadata) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    if (isExpired(metadata)) {
+      return NextResponse.json({ error: "Expired" }, { status: 410 });
     }
 
 

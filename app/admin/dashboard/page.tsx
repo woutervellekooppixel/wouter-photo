@@ -20,6 +20,7 @@ interface Upload {
   slug: string;
   title?: string;
   createdAt: string;
+  expiresAt?: string;
   files: { key: string; name: string; size: number; type: string }[];
   downloads: number;
   downloadHistory?: {
@@ -73,6 +74,19 @@ export default function AdminDashboard() {
   const dropzoneDragDepth = useRef(0);
   const { toast } = useToast();
   const router = useRouter();
+
+  const DEFAULT_EXPIRY_DAYS = 31;
+  const getExpiresAt = (u: Upload): Date | null => {
+    if (u.expiresAt) {
+      const d = new Date(u.expiresAt);
+      return Number.isFinite(d.getTime()) ? d : null;
+    }
+    const created = new Date(u.createdAt);
+    if (!Number.isFinite(created.getTime())) return null;
+    const d = new Date(created.getTime());
+    d.setDate(d.getDate() + DEFAULT_EXPIRY_DAYS);
+    return d;
+  };
 
   const slugifyForUrl = (value: string) => {
     return value
@@ -1215,7 +1229,16 @@ export default function AdminDashboard() {
                       </div>
                       <div className="text-xs text-gray-600 space-y-1">
                         <p>Aangemaakt: {formatDate(new Date(upload.createdAt))}</p>
-                        {/* Geen vervaldatum meer */}
+                        {(() => {
+                          const expiresAt = getExpiresAt(upload);
+                          if (!expiresAt) return null;
+                          const expired = Date.now() > expiresAt.getTime();
+                          return (
+                            <p className={expired ? 'text-red-600' : undefined}>
+                              Verloopt: {formatDate(expiresAt)}
+                            </p>
+                          );
+                        })()}
                         <div className="flex items-center gap-2">
                           <p>Downloads: {upload.downloads}×</p>
                           {upload.downloadHistory && upload.downloadHistory.length > 0 && (
