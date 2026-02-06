@@ -21,7 +21,7 @@ interface Upload {
   title?: string;
   createdAt: string;
   expiresAt?: string;
-  files: { key: string; name: string; size: number; type: string }[];
+  files: { key: string; name: string; size: number; type: string; takenAt?: string }[];
   downloads: number;
   downloadHistory?: {
     timestamp: string;
@@ -65,6 +65,12 @@ export default function AdminDashboard() {
   const [monthlyCost, setMonthlyCost] = useState<any>(null);
     const [uploadsError, setUploadsError] = useState<string | null>(null);
   const [expandedUpload, setExpandedUpload] = useState<string | null>(null);
+    const [manageFilesSlug, setManageFilesSlug] = useState<string | null>(null);
+    const [manageFilesToAdd, setManageFilesToAdd] = useState<FileWithPreview[]>([]);
+    const [manageUploading, setManageUploading] = useState(false);
+    const [manageUploadProgress, setManageUploadProgress] = useState(0);
+    const [manageSearch, setManageSearch] = useState("");
+    const [manageSelectedKeys, setManageSelectedKeys] = useState<Set<string>>(new Set());
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [defaultBackgroundFile, setDefaultBackgroundFile] = useState<File | null>(null);
@@ -459,6 +465,253 @@ export default function AdminDashboard() {
 
     // Reset input
     e.target.value = '';
+  };
+
+  const addManageSelectedFiles = (incomingFiles: File[]) => {
+    const filteredFiles = incomingFiles.filter((file) => !isSystemFile(file.name));
+
+    setManageFilesToAdd((prev) => {
+      const existing = new Set(prev.map((f) => `${f.name}-${f.size}`));
+      const newFiles = filteredFiles.filter((f) => !existing.has(`${f.name}-${f.size}`));
+      return [...prev, ...newFiles];
+    });
+  };
+
+  const handleManageFolderSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileList = e.target.files;
+    if (!fileList) return;
+
+    const filesArray = Array.from(fileList);
+    const allFiles: File[] = [];
+
+    for (const file of filesArray) {
+      const relativePath = (file as any).webkitRelativePath || file.name;
+
+      if (isSystemFile(relativePath) || isSystemFile(file.name)) {
+        continue;
+      }
+
+      const pathParts = relativePath.split('/');
+      const nameWithoutRoot = pathParts.length > 1 ? pathParts.slice(1).join('/') : pathParts[0];
+
+      const newFile = new File([file], nameWithoutRoot, { type: file.type });
+      allFiles.push(newFile);
+    }
+
+    addManageSelectedFiles(allFiles);
+    e.target.value = '';
+  };
+
+  const handleManageFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileList = e.target.files;
+    if (!fileList) return;
+
+    const filesArray = Array.from(fileList);
+    addManageSelectedFiles(filesArray);
+    e.target.value = '';
+  };
+
+  const removeManageFile = (index: number) => {
+    setManageFilesToAdd((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const openManageForUpload = (uploadSlug: string) => {
+    setManageSearch('');
+    setManageFilesToAdd([]);
+    setManageUploadProgress(0);
+    setManageSelectedKeys(new Set());
+    setManageFilesSlug((prev) => (prev === uploadSlug ? null : uploadSlug));
+  };
+
+  const handleManageDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (manageUploading) return;
+
+    try {
+      const droppedFiles = await getFilesFromDataTransfer(e.dataTransfer);
+      addManageSelectedFiles(droppedFiles);
+    } catch (err) {
+      console.error('Failed to process manage drop:', err);
+      toast({
+        title: 'Fout',
+        description: 'Kon de gesleepte map/bestanden niet verwerken.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const uploadAdditionalFilesToExisting = async (uploadSlug: string) => {
+    if (!uploadSlug) return;
+    if (manageFilesToAdd.length === 0) {
+      toast({
+        title: 'Geen bestanden',
+        description: 'Selecteer eerst bestanden om toe te voegen.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const oversizedFile = manageFilesToAdd.find((file) => file.size > MAX_UPLOAD_FILE_SIZE_BYTES);
+    if (oversizedFile) {
+      toast({
+        title: 'Bestand te groot',
+        description: `${oversizedFile.name} is groter dan ${formatBytes(MAX_UPLOAD_FILE_SIZE_BYTES)}`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setManageUploading(true);
+    setManageUploadProgress(0);
+
+    try {
+      const withExif = await Promise.all(
+        manageFilesToAdd.map(async (file) => ({
+          file,
+          name: file.name,
+          key: file.name,
+          takenAt: await getTakenAtFromFile(file),
+        }))
+      );
+
+      const sortedWithExif = sortFilesChronological(withExif);
+      const sortedFiles: File[] = sortedWithExif.map((w) => w.file);
+      const takenAtByName = new Map(sortedWithExif.map((w) => [w.name, w.takenAt] as const));
+
+      const uploadedFiles: Array<{ key: string; name: string; size: number; type: string; takenAt?: string }> = [];
+      let totalBytes = 0;
+      let uploadedBytes = 0;
+      sortedFiles.forEach((file) => (totalBytes += file.size));
+
+      for (const file of sortedFiles) {
+        const presignedRes = await fetch('/api/admin/presigned-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            slug: uploadSlug,
+            fileName: file.name,
+            fileType: file.type,
+            fileSize: file.size,
+          }),
+        });
+
+        if (!presignedRes.ok) {
+          const err = await presignedRes.json().catch(() => ({}));
+          throw new Error(err.error || 'Failed to get upload URL');
+        }
+
+        const { presignedUrl, key } = await presignedRes.json();
+
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+
+          xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+              const fileProgress = uploadedBytes + e.loaded;
+              const percentComplete = Math.round((fileProgress / totalBytes) * 100);
+              setManageUploadProgress(percentComplete);
+            }
+          });
+
+          xhr.addEventListener('load', () => {
+            if (xhr.status === 200) {
+              uploadedBytes += file.size;
+              resolve();
+            } else {
+              reject(new Error(`Upload failed for ${file.name}`));
+            }
+          });
+
+          xhr.addEventListener('error', () => reject(new Error(`Upload failed for ${file.name}`)));
+
+          xhr.open('PUT', presignedUrl);
+          xhr.setRequestHeader('Content-Type', file.type);
+          xhr.send(file);
+        });
+
+        uploadedFiles.push({
+          key,
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          takenAt: takenAtByName.get(file.name),
+        });
+      }
+
+      const res = await fetch(`/api/admin/uploads/${encodeURIComponent(uploadSlug)}/files`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files: uploadedFiles }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to update metadata');
+      }
+
+      toast({
+        title: 'Toegevoegd!',
+        description: `${uploadedFiles.length} bestand(en) toegevoegd aan ${uploadSlug}`,
+      });
+
+      setManageFilesToAdd([]);
+      setManageUploadProgress(0);
+      await loadUploads();
+    } catch (error) {
+      console.error('Add files error:', error);
+      toast({
+        title: 'Fout',
+        description: error instanceof Error ? error.message : 'Bestanden toevoegen mislukt',
+        variant: 'destructive',
+      });
+    } finally {
+      setManageUploading(false);
+    }
+  };
+
+  const removeFilesFromExistingUpload = async (uploadSlug: string, fileKeys: string[], confirmText?: string) => {
+    if (fileKeys.length === 0) return;
+    if (!confirm(confirmText || `Weet je zeker dat je ${fileKeys.length} bestand(en) wilt verwijderen?`)) return;
+    try {
+      const res = await fetch(`/api/admin/uploads/${encodeURIComponent(uploadSlug)}/files`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keys: fileKeys, hardDelete: true }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Verwijderen mislukt');
+      }
+
+      toast({
+        title: 'Verwijderd',
+        description: `${fileKeys.length} bestand(en) verwijderd`,
+      });
+      await loadUploads();
+      setManageSelectedKeys(new Set());
+    } catch (error) {
+      console.error('Remove file error:', error);
+      toast({
+        title: 'Fout',
+        description: error instanceof Error ? error.message : 'Bestand verwijderen mislukt',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const toggleManageSelectedKey = (key: string) => {
+    setManageSelectedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const setManageSelectedKeysFor = (keys: string[]) => {
+    setManageSelectedKeys(new Set(keys));
   };
 
   const removeFile = (index: number) => {
@@ -922,7 +1175,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6">
           {/* Upload Section */}
           <Card>
             <CardHeader>
@@ -1139,7 +1392,7 @@ export default function AdminDashboard() {
               )}
             </CardHeader>
             <CardContent>
-              <div className="space-y-3 max-h-[600px] overflow-y-auto">
+              <div className="space-y-3">
                 {uploadsError ? (
                   <p className="text-center text-red-500 py-8 font-semibold">Fout: {uploadsError}</p>
                 ) : uploads.length === 0 ? (
@@ -1193,6 +1446,14 @@ export default function AdminDashboard() {
                             title="Bekijk download pagina"
                           >
                             <ExternalLink className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={manageFilesSlug === upload.slug ? 'default' : 'outline'}
+                            onClick={() => openManageForUpload(upload.slug)}
+                            title="Bestanden toevoegen/verwijderen"
+                          >
+                            <Upload className="h-4 w-4" />
                           </Button>
                           <Button
                             size="sm"
@@ -1272,6 +1533,265 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       
+                      {/* Manage files (add/remove) */}
+                      {manageFilesSlug === upload.slug && (
+                        <div className="mt-4 pt-4 border-t space-y-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold">Bestanden beheren</p>
+                              <p className="text-xs text-gray-500">
+                                Voeg bestanden toe of verwijder bestaande bestanden voor deze download.
+                              </p>
+                            </div>
+                            <Button size="sm" variant="ghost" onClick={() => openManageForUpload(upload.slug)}>
+                              Sluiten
+                            </Button>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium block">Bestaande bestanden</label>
+                            <Input
+                              value={manageSearch}
+                              onChange={(e) => setManageSearch(e.target.value)}
+                              placeholder="Zoek op bestandsnaam…"
+                            />
+                            <div className="border rounded-md max-h-64 overflow-y-auto bg-white">
+                              {(() => {
+                                const q = manageSearch.trim().toLowerCase();
+                                const filtered = q
+                                  ? upload.files.filter((f) => f.name.toLowerCase().includes(q))
+                                  : upload.files;
+                                const capped = filtered.slice(0, 200);
+                                const visibleKeys = capped.map((f) => f.key);
+                                const selectedVisibleCount = visibleKeys.filter((k) => manageSelectedKeys.has(k)).length;
+                                const allVisibleSelected = capped.length > 0 && selectedVisibleCount === capped.length;
+
+                                if (filtered.length === 0) {
+                                  return (
+                                    <p className="text-xs text-gray-500 p-3">Geen resultaten</p>
+                                  );
+                                }
+
+                                return (
+                                  <div className="divide-y">
+                                    <div className="flex items-center justify-between gap-3 p-2 bg-gray-50">
+                                      <div className="flex items-center gap-3">
+                                        <input
+                                          type="checkbox"
+                                          checked={allVisibleSelected}
+                                          onChange={(e) => {
+                                            if (e.target.checked) {
+                                              setManageSelectedKeysFor(Array.from(new Set([...manageSelectedKeys, ...visibleKeys])));
+                                            } else {
+                                              const next = new Set(manageSelectedKeys);
+                                              for (const k of visibleKeys) next.delete(k);
+                                              setManageSelectedKeysFor(Array.from(next));
+                                            }
+                                          }}
+                                          className="h-4 w-4 rounded border-gray-300"
+                                          aria-label="Selecteer alle zichtbare bestanden"
+                                        />
+                                        <span className="text-xs text-gray-600">
+                                          {manageSelectedKeys.size} geselecteerd
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => setManageSelectedKeysFor([])}
+                                          disabled={manageSelectedKeys.size === 0}
+                                        >
+                                          Deselecteer
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="destructive"
+                                          disabled={manageSelectedKeys.size === 0}
+                                          onClick={() =>
+                                            removeFilesFromExistingUpload(
+                                              upload.slug,
+                                              Array.from(manageSelectedKeys),
+                                              `Weet je zeker dat je ${manageSelectedKeys.size} bestand(en) definitief wilt verwijderen?`
+                                            )
+                                          }
+                                        >
+                                          <Trash2 className="h-4 w-4 mr-2" />
+                                          Verwijder geselecteerde
+                                        </Button>
+                                      </div>
+                                    </div>
+                                    {capped.map((f) => (
+                                      <div key={f.key} className="flex items-center justify-between gap-3 p-2">
+                                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                                          <input
+                                            type="checkbox"
+                                            checked={manageSelectedKeys.has(f.key)}
+                                            onChange={() => toggleManageSelectedKey(f.key)}
+                                            className="h-4 w-4 rounded border-gray-300"
+                                            aria-label={`Selecteer ${f.name}`}
+                                          />
+                                          <div className="min-w-0">
+                                            <p className="text-sm truncate">{f.name}</p>
+                                            <p className="text-xs text-gray-500">{formatBytes(f.size)}</p>
+                                          </div>
+                                        </div>
+                                        <Button
+                                          size="sm"
+                                          variant="destructive"
+                                          onClick={() =>
+                                            removeFilesFromExistingUpload(
+                                              upload.slug,
+                                              [f.key],
+                                              'Weet je zeker dat je dit bestand definitief wilt verwijderen?'
+                                            )
+                                          }
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    ))}
+                                    {filtered.length > capped.length && (
+                                      <p className="text-xs text-gray-500 p-2">
+                                        Toon eerste {capped.length} van {filtered.length} bestanden (gebruik zoek om te filteren)
+                                      </p>
+                                    )}
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium block">Bestanden toevoegen</label>
+
+                            <div
+                              className="border-2 border-dashed rounded-lg p-4 text-center transition-colors bg-white border-gray-300"
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                              }}
+                              onDrop={handleManageDrop}
+                              onClick={() => {
+                                if (manageUploading) return;
+                                document.getElementById(`manage-file-input-${upload.slug}`)?.click();
+                              }}
+                              role="button"
+                              tabIndex={0}
+                              aria-label="Voeg bestanden toe"
+                            >
+                              <input
+                                type="file"
+                                id={`manage-file-input-${upload.slug}`}
+                                multiple
+                                onChange={handleManageFileSelect}
+                                className="hidden"
+                              />
+                              <input
+                                type="file"
+                                id={`manage-folder-input-${upload.slug}`}
+                                {...({ webkitdirectory: "", mozdirectory: "", directory: "" } as any)}
+                                multiple
+                                onChange={handleManageFolderSelect}
+                                className="hidden"
+                              />
+
+                              <p className="text-sm text-gray-600">
+                                Sleep bestanden/map hierheen, of klik om te kiezen
+                              </p>
+                              <div className="mt-2 flex justify-center gap-2">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (manageUploading) return;
+                                    document.getElementById(`manage-file-input-${upload.slug}`)?.click();
+                                  }}
+                                >
+                                  Bestanden kiezen
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (manageUploading) return;
+                                    document.getElementById(`manage-folder-input-${upload.slug}`)?.click();
+                                  }}
+                                >
+                                  Map kiezen
+                                </Button>
+                              </div>
+                            </div>
+
+                            {manageFilesToAdd.length > 0 && (
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between text-sm">
+                                  <span className="font-medium">{manageFilesToAdd.length} geselecteerd</span>
+                                  <span className="text-gray-600">
+                                    {formatBytes(manageFilesToAdd.reduce((acc, f) => acc + f.size, 0))}
+                                  </span>
+                                </div>
+                                <div className="max-h-40 overflow-y-auto space-y-1">
+                                  {manageFilesToAdd.map((file, index) => (
+                                    <div
+                                      key={`${file.name}-${file.size}-${index}`}
+                                      className="flex items-center justify-between bg-gray-50 p-2 rounded text-sm"
+                                    >
+                                      <span className="truncate flex-1">{file.name}</span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-gray-500 text-xs">{formatBytes(file.size)}</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => removeManageFile(index)}
+                                          className="text-red-500 hover:text-red-700"
+                                          disabled={manageUploading}
+                                          title="Verwijder uit selectie"
+                                        >
+                                          <X className="h-4 w-4" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+
+                                {manageUploading ? (
+                                  <div className="w-full space-y-2">
+                                    <div className="relative w-full h-10 bg-gray-100 rounded-md overflow-hidden border border-gray-200">
+                                      <div
+                                        className="absolute inset-0 bg-gradient-to-r from-gray-800 to-gray-900 transition-all duration-300 ease-out flex items-center justify-center"
+                                        style={{ width: `${manageUploadProgress}%` }}
+                                      >
+                                        {manageUploadProgress > 10 && (
+                                          <span className="text-white text-sm font-semibold">{manageUploadProgress}%</span>
+                                        )}
+                                      </div>
+                                      {manageUploadProgress <= 10 && (
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                          <span className="text-gray-600 text-sm font-semibold">{manageUploadProgress}%</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-center text-gray-500">Bestanden uploaden…</p>
+                                  </div>
+                                ) : (
+                                  <Button
+                                    type="button"
+                                    className="w-full"
+                                    onClick={() => uploadAdditionalFilesToExisting(upload.slug)}
+                                  >
+                                    Voeg toe aan download
+                                  </Button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Photo grid for preview selection */}
                       {isExpanded && imageFiles.length > 0 && (
                         <div className="mt-4 pt-4 border-t">
