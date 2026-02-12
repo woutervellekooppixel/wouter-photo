@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   if (authError) return authError;
 
   try {
-    const { slug, title, files, ratingsEnabled, expiresAt } = await request.json();
+    const { slug, title, files, expiresAt } = await request.json();
 
     if (!slug || !files || files.length === 0) {
       return NextResponse.json(
@@ -61,7 +61,6 @@ export async function POST(request: NextRequest) {
       expiresAt: resolvedExpiresAt,
       files: files,
       downloads: 0,
-      ...(ratingsEnabled && { ratingsEnabled }),
     };
 
     await saveMetadata(metadata);

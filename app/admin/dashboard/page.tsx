@@ -51,7 +51,6 @@ export default function AdminDashboard() {
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   const [slugToken, setSlugToken] = useState<string>("");
   // Removed expiryDays state and logic
-  const [ratingsEnabled, setRatingsEnabled] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploads, setUploads] = useState<Upload[]>([]);
@@ -862,7 +861,6 @@ export default function AdminDashboard() {
           slug,
           title: title.trim() || undefined,
           files: uploadedFiles,
-          ratingsEnabled,
         }),
       });
 
@@ -881,7 +879,6 @@ export default function AdminDashboard() {
       setSlug("");
       setSlugManuallyEdited(false);
       setSlugToken("");
-      setRatingsEnabled(false);
       
       // Reload uploads list
       await loadUploads();
@@ -1042,27 +1039,6 @@ export default function AdminDashboard() {
   };
 
   const totalSize = files.reduce((acc, file) => acc + file.size, 0);
-
-  // ratingsEnabled aan/uit voor bestaande upload
-  const updateRatingsEnabledForUpload = async (uploadSlug: string, enabled: boolean) => {
-    try {
-      const res = await fetch(`/api/admin/uploads/${encodeURIComponent(uploadSlug)}/ratings-enabled`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-
-      await loadUploads(); // of optimistisch updaten
-      toast({
-        title: "Bijgewerkt",
-        description: `Foto waardering is ${enabled ? "ingeschakeld" : "uitgeschakeld"}.`,
-      });
-    } catch (e) {
-      console.error(e);
-      toast({ title: "Fout", description: "Kon waardering niet bijwerken", variant: "destructive" });
-    }
-  };
 
   // per-foto rating togglen (admin)
   const togglePhotoRatingAdmin = async (uploadSlug: string, fileKey: string, nextRated: boolean) => {
@@ -1238,18 +1214,6 @@ export default function AdminDashboard() {
               </div>
 
               {/* Expiry UI removed: no vervaldatum/expiry fields shown */}
-
-              <div>
-                <label className="flex items-center gap-2 text-sm cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={ratingsEnabled}
-                    onChange={(e) => setRatingsEnabled(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span>Foto waardering inschakelen</span>
-                </label>
-              </div>
 
               <div
                 className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer select-none ${isDropzoneDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-white"}`}
@@ -1511,26 +1475,17 @@ export default function AdminDashboard() {
                             </button>
                           )}
                         </div>
-                        <div className="flex items-center gap-3">
-                          <label className="inline-flex items-center gap-2 text-sm">
-                            <input
-                              type="checkbox"
-                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                              checked={!!upload.ratingsEnabled}
-                              onChange={(e) => updateRatingsEnabledForUpload(upload.slug, e.target.checked)}
-                            />
-                            <span>Foto waardering</span>
-                          </label>
-                          {upload.ratings && Object.keys(upload.ratings).length > 0 && (
+                        {upload.ratings && Object.keys(upload.ratings).length > 0 && (
+                          <div className="flex items-center gap-3">
                             <button
                               onClick={() => clearAllRatings(upload.slug)}
                               className="text-xs text-red-600 hover:text-red-800 underline"
-                              title="Wis alle waarderingen voor deze upload"
+                              title="Wis alle favorieten voor deze upload"
                             >
-                              Reset waardering
+                              Reset favorieten
                             </button>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
                       
                       {/* Manage files (add/remove) */}
