@@ -15,7 +15,7 @@ import {
   FileSpreadsheet,
   Video,
   Music,
-  Star,
+  Heart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Lightbox, LightboxImage } from "@/components/Lightbox";
@@ -69,6 +69,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [ratings, setRatings] = useState<Record<string, boolean>>({});
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
   const [heroKey, setHeroKey] = useState<string | null>(null);
@@ -140,6 +141,16 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   );
   const imageFiles = useMemo(() => visibleFiles.filter((f) => isImage(f.name)), [visibleFiles]);
   const otherFiles = useMemo(() => visibleFiles.filter((f) => !isImage(f.name)), [visibleFiles]);
+
+  const favoriteImageFiles = useMemo(
+    () => imageFiles.filter((f) => !!ratings[f.key]),
+    [imageFiles, ratings]
+  );
+  const displayedImageFiles = useMemo(
+    () => (showFavoritesOnly ? favoriteImageFiles : imageFiles),
+    [showFavoritesOnly, favoriteImageFiles, imageFiles]
+  );
+  const favoriteCount = favoriteImageFiles.length;
 
   // API helper voor image url
   const getFullImageUrl = (key: string) => {
@@ -372,8 +383,54 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   };
 
   const toggleSelectAll = () => {
-    if (selectedFiles.size === imageFiles.length) setSelectedFiles(new Set());
-    else setSelectedFiles(new Set(imageFiles.map((f) => f.key)));
+    if (selectedFiles.size === displayedImageFiles.length) setSelectedFiles(new Set());
+    else setSelectedFiles(new Set(displayedImageFiles.map((f) => f.key)));
+  };
+
+  const downloadKeysAsZip = async (fileKeys: string[], zipFileName: string) => {
+    if (!fileKeys || fileKeys.length === 0) return;
+    setDownloading(true);
+    setDownloadProgress(0);
+    const progressInterval = setInterval(() => {
+      setDownloadProgress((p) => {
+        if (p >= 95) {
+          clearInterval(progressInterval);
+          return 95;
+        }
+        return p + 5;
+      });
+    }, 150);
+
+    try {
+      const response = await fetch(`/api/download/${metadata.slug}/selected`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileKeys }),
+      });
+      if (!response.ok) throw new Error("Download failed");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = zipFileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      setDownloadProgress(100);
+      setTimeout(() => {
+        clearInterval(progressInterval);
+        setDownloading(false);
+        setDownloadProgress(0);
+      }, 500);
+    } catch (error) {
+      console.error("Download failed:", error);
+      clearInterval(progressInterval);
+      setDownloading(false);
+      setDownloadProgress(0);
+    }
   };
 
   const toggleRating = async (fileKey: string, e: React.MouseEvent) => {
@@ -474,29 +531,9 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
           await downloadSingle(file.key, displayName);
         }
       } else {
-        const response = await fetch(`/api/download/${metadata.slug}/selected`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fileKeys: Array.from(selectedFiles) }),
-        });
-        if (!response.ok) throw new Error("Download failed");
-
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${metadata.slug}-selected.zip`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-
-        setDownloadProgress(100);
-        setTimeout(() => {
-          clearInterval(progressInterval);
-          setDownloading(false);
-          setDownloadProgress(0);
-        }, 500);
+        // Delegate to shared helper (also used by favorites/folders)
+        clearInterval(progressInterval);
+        await downloadKeysAsZip(Array.from(selectedFiles), `${metadata.slug}-selected.zip`);
       }
     } catch (error) {
       console.error("Download failed:", error);
@@ -528,19 +565,26 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
 
   // Groeperen per map
   const imagesByFolder = useMemo(() => {
-    return imageFiles.reduce((acc, file) => {
+    return displayedImageFiles.reduce((acc, file) => {
       const parts = file.name.split("/");
       const folder = parts.length > 1 ? parts[0] : "Hoofd";
       if (!acc[folder]) acc[folder] = [];
       acc[folder].push(file);
       return acc;
     }, {} as Record<string, typeof imageFiles>);
-  }, [imageFiles]);
+  }, [displayedImageFiles]);
   const imageFolders = Object.keys(imagesByFolder);
   const hasImageFolders = imageFolders.length > 1 || !imagesByFolder["Hoofd"];
   // Count "folders" including the root bucket ("Hoofd").
   // If there are images but no subfolders, we still show 1 folder.
-  const folderCount = imageFiles.length === 0 ? 0 : imageFolders.length;
+  const folderCount = imageFiles.length === 0 ? 0 : Object.keys(
+    imageFiles.reduce((acc, file) => {
+      const parts = file.name.split("/");
+      const folder = parts.length > 1 ? parts[0] : "Hoofd";
+      acc[folder] = true;
+      return acc;
+    }, {} as Record<string, boolean>)
+  ).length;
 
   const otherFilesByFolder = useMemo(() => {
     return otherFiles.reduce((acc, file) => {
@@ -562,20 +606,20 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   // Volledige resolutie in Lightbox
   const lightboxImages: LightboxImage[] = useMemo(
     () =>
-      imageFiles.map((f) => ({
+      displayedImageFiles.map((f) => ({
         src: getFullImageUrl(f.key),
         alt: f.name.split("/").pop() || f.name,
         thumb: thumbnailUrls[f.key] || getThumbUrl(f.key),
       })),
-    [imageFiles, thumbnailUrls]
+    [displayedImageFiles, thumbnailUrls]
   );
 
   // Map van fileKey -> index (handig bij klikken op thumb)
   const keyToIndex = useMemo(() => {
     const m = new Map<string, number>();
-    imageFiles.forEach((f, idx) => m.set(f.key, idx));
+    displayedImageFiles.forEach((f, idx) => m.set(f.key, idx));
     return m;
-  }, [imageFiles]);
+  }, [displayedImageFiles]);
 
   const openLightboxAt = (fileKey: string) => {
     const idx = keyToIndex.get(fileKey);
@@ -721,16 +765,38 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
               <div className="flex items-center justify-between mb-6">
                 {!downloading ? (
                   <Button
-                    onClick={isSelectMode && selectedFiles.size > 0 ? downloadSelected : downloadAll}
+                    onClick={() => {
+                      if (isSelectMode && selectedFiles.size > 0) {
+                        downloadSelected();
+                        return;
+                      }
+
+                      if (showFavoritesOnly) {
+                        if (favoriteCount > 0) {
+                          downloadKeysAsZip(
+                            favoriteImageFiles.map((f) => f.key),
+                            `${metadata.slug}-favorites.zip`
+                          );
+                        }
+                        return;
+                      }
+
+                      downloadAll();
+                    }}
                     variant="outline"
                     size="sm"
-                    disabled={isSelectMode && selectedFiles.size === 0}
+                    disabled={(isSelectMode && selectedFiles.size === 0) || (showFavoritesOnly && favoriteCount === 0)}
                   >
                     <Download className="mr-2 h-4 w-4" />
                     {isSelectMode && selectedFiles.size > 0 ? (
                       <>
                         <span className="hidden sm:inline">Download {selectedFiles.size}</span>
                         <span className="sm:hidden">Download {selectedFiles.size}</span>
+                      </>
+                    ) : showFavoritesOnly ? (
+                      <>
+                        <span className="hidden sm:inline">Download favorites ({favoriteCount})</span>
+                        <span className="sm:hidden">Favorites ({favoriteCount})</span>
                       </>
                     ) : (
                       <>
@@ -758,38 +824,80 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                     )}
                   </div>
                 )}
-                <Button
-                  onClick={() => {
-                    setIsSelectMode(!isSelectMode);
-                    if (isSelectMode) setSelectedFiles(new Set());
-                  }}
-                  variant="outline"
-                  size="sm"
-                >
-                  {isSelectMode ? "Cancel" : "Select"}
-                </Button>
-              </div>
-
-              {isSelectMode && (
-                <div className="mb-4 flex items-center gap-4">
-                  <Button onClick={toggleSelectAll} variant="outline" size="sm">
-                    {selectedFiles.size === imageFiles.length ? "Deselect all" : "Select all"}
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => setShowFavoritesOnly((v) => !v)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Heart
+                      className={`mr-2 h-4 w-4 ${
+                        showFavoritesOnly ? "fill-red-500 text-red-500" : ""
+                      }`}
+                    />
+                    {showFavoritesOnly ? `All photos` : `Favorites (${favoriteCount})`}
                   </Button>
-                  {selectedFiles.size > 0 && (
-                    <span className="text-sm text-gray-600">
-                      {selectedFiles.size} photo{selectedFiles.size !== 1 ? "s" : ""} selected
-                    </span>
+                  {isSelectMode && (
+                    <Button
+                      onClick={toggleSelectAll}
+                      variant="ghost"
+                      size="sm"
+                      className="px-2"
+                      disabled={downloading || displayedImageFiles.length === 0}
+                      aria-label={
+                        selectedFiles.size === displayedImageFiles.length
+                          ? "Deselect all"
+                          : "Select all"
+                      }
+                    >
+                      {selectedFiles.size === displayedImageFiles.length ? "None" : "All"}
+                    </Button>
                   )}
+                  <Button
+                    onClick={() => {
+                      if (!isSelectMode) {
+                        setIsSelectMode(true);
+                        setSelectedFiles(new Set());
+                        return;
+                      }
+
+                      // Exit selection mode (download happens via the left download button)
+                      setIsSelectMode(false);
+                      setSelectedFiles(new Set());
+                    }}
+                    variant="outline"
+                    size="sm"
+                    disabled={downloading}
+                  >
+                    {!isSelectMode ? "Select" : "Done"}
+                  </Button>
                 </div>
-              )}
+              </div>
 
               {imageFolders.map((folder) => (
                 <div key={folder} className="mb-8">
                   {hasImageFolders && (
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      {folder}
-                      <span className="text-sm font-normal text-gray-500">({imagesByFolder[folder].length})</span>
-                    </h3>
+                    <div className="mb-4 flex items-center justify-between gap-3 group">
+                      <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 min-w-0">
+                        <span className="truncate">{folder}</span>
+                        <span className="text-sm font-normal text-gray-500">({imagesByFolder[folder].length})</span>
+                      </h3>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                        aria-label={`Download folder ${folder}`}
+                        onClick={() =>
+                          downloadKeysAsZip(
+                            imagesByFolder[folder].map((f) => f.key),
+                            `${metadata.slug}-${folder.replace(/[^a-zA-Z0-9-_]/g, "-")}.zip`
+                          )
+                        }
+                        disabled={downloading || imagesByFolder[folder].length === 0}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </div>
                   )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {imagesByFolder[folder].map((file, index) => {
@@ -813,17 +921,17 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                           )}
 
                           {/* Ster-rating */}
-                          {!isSelectMode && metadata.ratingsEnabled && (
+                          {!isSelectMode && (
                             <button
                               onClick={(e) => toggleRating(file.key, e)}
                               className="absolute top-2 left-2 z-10 p-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-all duration-200 group/star"
                               title="Favorite"
                               aria-label="Toggle favorite"
                             >
-                              <Star
+                              <Heart
                                 className={`h-4 w-4 transition-all duration-200 ${
                                   ratings[file.key]
-                                    ? "fill-white text-white"
+                                    ? "fill-red-500 text-red-500"
                                     : "text-white group-hover/star:fill-white/50"
                                 }`}
                               />
@@ -990,15 +1098,11 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
               onIndexChange={setCurrentIndex}
               enableDownload
               onDownload={(current, idx) => {
-                // Download via raw URL (of pas aan naar je eigen API)
-                const file = imageFiles[idx];
+                // Download via jouw download API (tracking + correcte filename)
+                const file = displayedImageFiles[idx];
+                if (!file) return;
                 const name = (file?.name.split("/").pop() || `image-${idx + 1}`).toString();
-                const a = document.createElement("a");
-                a.href = current.src;
-                a.download = name;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+                downloadSingle(file.key, name);
               }}
             />
           )}
