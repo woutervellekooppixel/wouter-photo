@@ -42,10 +42,12 @@ import {
   GetObjectCommand,
   ListObjectsV2Command,
   DeleteObjectCommand,
+  HeadObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import archiver from "archiver";
 import { sortFilesChronological } from "@/lib/utils";
+import { PassThrough, Readable } from "stream";
 
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID!;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID!;
@@ -126,6 +128,21 @@ export async function getFile(key: string): Promise<Buffer> {
   return Buffer.from(bytes || []);
 }
 
+export async function getFileStream(key: string): Promise<Readable> {
+  const command = new GetObjectCommand({
+    Bucket: R2_BUCKET_NAME,
+    Key: key,
+  });
+
+  const response = await r2Client.send(command);
+  if (!response.Body) {
+    throw new Error(`Empty body for key: ${key}`);
+  }
+
+  // In Node.js runtimes, AWS SDK v3 returns a Node readable stream here.
+  return response.Body as unknown as Readable;
+}
+
 export async function getFileRange(key: string, range: string): Promise<Buffer> {
   const command = new GetObjectCommand({
     Bucket: R2_BUCKET_NAME,
@@ -148,6 +165,43 @@ export async function getSignedDownloadUrl(
   });
 
   return getSignedUrl(r2Client, command, { expiresIn });
+}
+
+export async function headObject(key: string): Promise<{ contentLength: number } | null> {
+  try {
+    const command = new HeadObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: key,
+    });
+    const response = await r2Client.send(command);
+    const contentLength = response.ContentLength;
+    if (typeof contentLength !== 'number') return null;
+    return { contentLength };
+  } catch {
+    return null;
+  }
+}
+
+export async function getZipSignedUrl(slug: string, expiresIn: number = 3600): Promise<string> {
+  const zipKey = `zips/${slug}.zip`;
+  return getSignedDownloadUrl(zipKey, expiresIn);
+}
+
+export async function isZipFileValid(slug: string): Promise<boolean> {
+  // Basic validity check: confirm file exists and tail contains End Of Central Directory (EOCD) signature.
+  const zipKey = `zips/${slug}.zip`;
+  const head = await headObject(zipKey);
+  if (!head) return false;
+  if (head.contentLength < 22) return false;
+
+  const tailWindow = Math.min(65_536, head.contentLength);
+  const start = Math.max(0, head.contentLength - tailWindow);
+  const end = head.contentLength - 1;
+
+  const tail = await getFileRange(zipKey, `bytes=${start}-${end}`);
+  // EOCD signature: 0x50 0x4b 0x05 0x06
+  const signature = Buffer.from([0x50, 0x4b, 0x05, 0x06]);
+  return tail.lastIndexOf(signature) !== -1;
 }
 
 export async function listFiles(prefix: string): Promise<string[]> {
@@ -209,35 +263,33 @@ export async function createZipFile(slug: string): Promise<void> {
     throw new Error(`Metadata not found for ${slug}`);
   }
 
+  const zipKey = `zips/${slug}.zip`;
+
+  // Stream ZIP directly to R2 to avoid OOM/truncation for large galleries.
+  const passThrough = new PassThrough();
+  const uploadPromise = r2Client.send(
+    new PutObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: zipKey,
+      Body: passThrough,
+      ContentType: "application/zip",
+    })
+  );
+
   const archive = archiver("zip", { zlib: { level: 6 } });
-  const chunks: Buffer[] = [];
-
-  // Collect chunks from the archive
-  archive.on("data", (chunk: Buffer) => {
-    chunks.push(chunk);
+  archive.on("error", (err) => {
+    passThrough.destroy(err);
   });
+  archive.pipe(passThrough);
 
-  // Wait for archive to finish
-  const archivePromise = new Promise<void>((resolve, reject) => {
-    archive.on("end", resolve);
-    archive.on("error", reject);
-  });
-
-  // Add all files to the archive
   const sortedFiles = sortFilesChronological(metadata.files);
   for (const file of sortedFiles) {
-    const buffer = await getFile(file.key);
-    archive.append(buffer, { name: file.name });
+    const fileStream = await getFileStream(file.key);
+    archive.append(fileStream, { name: file.name });
   }
 
-  // Finalize the archive
   await archive.finalize();
-  await archivePromise;
-
-  // Combine all chunks and upload
-  const zipBuffer = Buffer.concat(chunks);
-  const zipKey = `zips/${slug}.zip`;
-  await uploadFile(zipBuffer, zipKey, "application/zip");
+  await uploadPromise;
 }
 
 export async function getZipFile(slug: string): Promise<Buffer | null> {

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMetadata, getFile, getZipFile, createZipFile, updateDownloadCount } from "@/lib/r2";
+import { getMetadata, getFileStream, isZipFileValid, getZipSignedUrl, updateDownloadCount } from "@/lib/r2";
 import archiver from "archiver";
 import { sendDownloadNotification } from "@/lib/email";
 import { downloadRateLimit } from "@/lib/rateLimit";
 import { isValidSlug } from "@/lib/validation";
 import { sortFilesChronological } from "@/lib/utils";
 import { isExpired } from "@/lib/expiry";
+import { Readable } from "stream";
 
 // Configure route for large downloads
 export const maxDuration = 300; // 5 minutes
@@ -43,59 +44,37 @@ export async function GET(
     // Send notification email (async, don't wait)
     sendDownloadNotification(slug, metadata.files.length).catch(console.error);
 
-    // Try to use pre-made zip first
-    const preMadeZip = await getZipFile(slug);
-    if (preMadeZip) {
-      return new NextResponse(new Uint8Array(preMadeZip), {
-        headers: {
-          "Content-Type": "application/zip",
-          "Content-Disposition": `attachment; filename="${slug}.zip"`,
-          "Content-Length": preMadeZip.length.toString(),
-        },
-      });
+    // If a pre-made ZIP exists and is valid, redirect to a signed R2 URL.
+    // This avoids proxying large files through the server (which can truncate/time out).
+    const zipIsValid = await isZipFileValid(slug);
+    if (zipIsValid) {
+      const signedUrl = await getZipSignedUrl(slug, 3600);
+      return NextResponse.redirect(signedUrl, { status: 307 });
     }
 
-    // Fallback: create zip on-the-fly with streaming
+    // Fallback: create ZIP on-the-fly with streaming
 
-    // Trigger background creation of pre-made zip for next time
-    createZipFile(slug).catch(error => {
-      console.error(`[Download] Failed to create pre-made zip for ${slug}:`, error);
+    const archive = archiver("zip", { zlib: { level: 6 } });
+    archive.on("warning", (err) => {
+      console.warn("[Download] ZIP warning:", err);
     });
 
-    // Create zip archive with streaming
-    const archive = archiver("zip", { zlib: { level: 6 } }); // Reduced compression for faster processing
-    
-    // Create a readable stream from the archive
-    const stream = new ReadableStream({
-      start(controller) {
-        archive.on("data", (chunk: Buffer) => {
-          controller.enqueue(new Uint8Array(chunk));
-        });
+    // Start adding files to the archive (streamed from R2; no buffering)
+    (async () => {
+      try {
+        const sortedFiles = sortFilesChronological(metadata.files);
+        for (const file of sortedFiles) {
+          const fileStream = await getFileStream(file.key);
+          archive.append(fileStream, { name: file.name });
+        }
+        await archive.finalize();
+      } catch (error) {
+        archive.destroy();
+      }
+    })();
 
-        archive.on("end", () => {
-          controller.close();
-        });
-
-        archive.on("error", (err) => {
-          controller.error(err);
-        });
-
-        // Start adding files to the archive
-        (async () => {
-          try {
-            const sortedFiles = sortFilesChronological(metadata.files);
-            for (const file of sortedFiles) {
-              const buffer = await getFile(file.key);
-              archive.append(buffer, { name: file.name });
-            }
-            await archive.finalize();
-          } catch (error) {
-            archive.destroy();
-            controller.error(error);
-          }
-        })();
-      },
-    });
+    // Convert Node stream to Web stream (better backpressure handling than manual 'data' events)
+    const stream = Readable.toWeb(archive) as unknown as ReadableStream<Uint8Array>;
 
     // Return the streaming zip file
     return new NextResponse(stream, {
