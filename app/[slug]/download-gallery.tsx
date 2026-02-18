@@ -46,6 +46,9 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Per-thumbnail aspect ratio (width / height). Used to render each tile in its original proportion.
+  const [thumbAspectRatios, setThumbAspectRatios] = useState<Record<string, number>>({});
+
   // Track mobile
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -60,6 +63,8 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   const [downloading, setDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadingFile, setDownloadingFile] = useState<string | null>(null);
+  const [fileDownloadProgress, setFileDownloadProgress] = useState(0);
+  const [fileDownloadPhase, setFileDownloadPhase] = useState<"idle" | "downloading" | "resetting">("idle");
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
   const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>({});
   const [loadingThumbnails, setLoadingThumbnails] = useState(true);
@@ -79,10 +84,28 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   // Fake loader percentage voor hero (kan gebruikt worden voor animaties)
   const [fakePercent, setFakePercent] = useState(0);
 
+  const introCompletedRef = useRef(false);
+
   const previewLoadedRef = useRef(previewLoaded);
   useEffect(() => {
     previewLoadedRef.current = previewLoaded;
   }, [previewLoaded]);
+
+  const hasImagesForIntro = useMemo(() => {
+    const shouldFilter = (filename: string) => {
+      const name = filename.toLowerCase();
+      return (
+        [".ds_store", ".xmp", "thumbs.db", "desktop.ini"].some((p) => name.includes(p)) ||
+        name.startsWith(".")
+      );
+    };
+    const isImg = (filename: string) => {
+      const ext = filename.toLowerCase().split(".").pop();
+      return ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "heic", "heif"].includes(ext || "");
+    };
+
+    return (metadata.files || []).some((f) => !shouldFilter(f.name) && isImg(f.name));
+  }, [metadata.files]);
 
   useEffect(() => {
     if (!loadingThumbnails) {
@@ -113,13 +136,18 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
     };
     raf = requestAnimationFrame(animate) as unknown as number;
     return () => cancelAnimationFrame(raf as unknown as number);
-  }, [loadingThumbnails, previewLoaded]);
+  }, [loadingThumbnails, previewLoaded, hasImagesForIntro]);
   // Houd overlay kort in DOM voor fade-out animatie
   useEffect(() => {
     if (loadingThumbnails) {
-      setShowLoadingOverlay(true);
+      if (!introCompletedRef.current) {
+        setShowLoadingOverlay(true);
+      }
       return;
     }
+
+    // Once the intro completed, never show it again for this page instance.
+    introCompletedRef.current = true;
     const t = window.setTimeout(() => setShowLoadingOverlay(false), 900);
     return () => window.clearTimeout(t);
   }, [loadingThumbnails]);
@@ -142,6 +170,13 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   const imageFiles = useMemo(() => visibleFiles.filter((f) => isImage(f.name)), [visibleFiles]);
   const otherFiles = useMemo(() => visibleFiles.filter((f) => !isImage(f.name)), [visibleFiles]);
 
+  const isZip = (filename: string, contentType?: string) => {
+    const ext = filename.toLowerCase().split(".").pop();
+    if (ext === "zip") return true;
+    if ((contentType || "").toLowerCase().includes("zip")) return true;
+    return false;
+  };
+
   const favoriteImageFiles = useMemo(
     () => imageFiles.filter((f) => !!ratings[f.key]),
     [imageFiles, ratings]
@@ -151,6 +186,8 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
     [showFavoritesOnly, favoriteImageFiles, imageFiles]
   );
   const favoriteCount = favoriteImageFiles.length;
+
+  const ROOT_FILES_FOLDER = "__ROOT__";
 
   // API helper voor image url
   const getFullImageUrl = (key: string) => {
@@ -276,9 +313,23 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
     const imgs = metadata.files.filter((f) => !shouldFilterFile(f.name) && isImage(f.name));
     if (imgs.length === 0) {
       setThumbnailUrls({});
-      setLoadingThumbnails(false);
       setThumbnailsLoaded(0);
-      return;
+
+      // Files-only (no images): keep the hero intro overlay visible briefly,
+      // and allow the fakePercent fill animation to run.
+      setPreviewLoaded(true);
+      setLoadingThumbnails(true);
+
+      let cancelled = false;
+      const minDelay = 6000;
+      const t = window.setTimeout(() => {
+        if (!cancelled) setLoadingThumbnails(false);
+      }, minDelay);
+
+      return () => {
+        cancelled = true;
+        window.clearTimeout(t);
+      };
     }
 
     let cancelled = false;
@@ -422,8 +473,9 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
       setDownloadProgress(100);
       setTimeout(() => {
         clearInterval(progressInterval);
+        // Hide the progress UI first, then reset state (prevents a visible 100->0 flash).
         setDownloading(false);
-        setDownloadProgress(0);
+        setTimeout(() => setDownloadProgress(0), 0);
       }, 500);
     } catch (error) {
       console.error("Download failed:", error);
@@ -473,8 +525,9 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
         setDownloadProgress(100);
         setTimeout(() => {
           clearInterval(progressInterval);
+          // Hide the progress UI first, then reset state (prevents a visible 100->0 flash).
           setDownloading(false);
-          setDownloadProgress(0);
+          setTimeout(() => setDownloadProgress(0), 0);
         }, 500);
       }, 2000);
     } catch (error) {
@@ -485,10 +538,50 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
     }
   };
 
-  const downloadSingle = async (fileKey: string, fileName: string) => {
+  const handlePrimaryDownload = () => {
+    if (downloading) return;
+    if (isSelectMode && selectedFiles.size > 0) {
+      downloadSelected();
+      return;
+    }
+
+    if (showFavoritesOnly) {
+      if (favoriteCount > 0) {
+        downloadKeysAsZip(
+          favoriteImageFiles.map((f) => f.key),
+          `${metadata.slug}-favorites.zip`
+        );
+      }
+      return;
+    }
+
+    downloadAll();
+  };
+
+  const downloadSingle = async (fileKey: string, fileName: string, animateProgress = false) => {
+    if (downloadingFile === fileKey) return;
+
     setDownloadingFile(fileKey);
+
+    let progressInterval: number | null = null;
+    if (animateProgress) {
+      setFileDownloadPhase("downloading");
+      setFileDownloadProgress(0);
+      progressInterval = window.setInterval(() => {
+        setFileDownloadProgress((p) => {
+          if (p >= 95) {
+            if (progressInterval) window.clearInterval(progressInterval);
+            return 95;
+          }
+          return p + 5;
+        });
+      }, 150);
+    }
+
     try {
       const response = await fetch(`/api/download/${metadata.slug}/file?key=${encodeURIComponent(fileKey)}`);
+      if (!response.ok) throw new Error("Download failed");
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -498,10 +591,31 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+
+      if (animateProgress) {
+        // Finish strong, then hide the progress UI before resetting state
+        // (prevents a visible 100->0 flash right before the browser save dialog appears).
+        setFileDownloadProgress(100);
+        setFileDownloadPhase("resetting");
+        window.setTimeout(() => {
+          setFileDownloadPhase("idle");
+          setDownloadingFile(null);
+          // Reset after hiding (row overlay is only shown when phase !== "idle").
+          window.setTimeout(() => setFileDownloadProgress(0), 0);
+        }, 420);
+      }
     } catch (error) {
       console.error("Download failed:", error);
-    } finally {
+      if (animateProgress) {
+        setFileDownloadProgress(0);
+        setFileDownloadPhase("idle");
+      }
       setDownloadingFile(null);
+    } finally {
+      if (progressInterval) window.clearInterval(progressInterval);
+      if (!animateProgress) {
+        setDownloadingFile(null);
+      }
     }
   };
 
@@ -567,20 +681,20 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   const imagesByFolder = useMemo(() => {
     return displayedImageFiles.reduce((acc, file) => {
       const parts = file.name.split("/");
-      const folder = parts.length > 1 ? parts[0] : "Hoofd";
+      const folder = parts.length > 1 ? parts[0] : "Main";
       if (!acc[folder]) acc[folder] = [];
       acc[folder].push(file);
       return acc;
     }, {} as Record<string, typeof imageFiles>);
   }, [displayedImageFiles]);
   const imageFolders = Object.keys(imagesByFolder);
-  const hasImageFolders = imageFolders.length > 1 || !imagesByFolder["Hoofd"];
-  // Count "folders" including the root bucket ("Hoofd").
+  const hasImageFolders = imageFolders.length > 1 || !imagesByFolder["Main"];
+  // Count "folders" including the root bucket ("Main").
   // If there are images but no subfolders, we still show 1 folder.
   const folderCount = imageFiles.length === 0 ? 0 : Object.keys(
     imageFiles.reduce((acc, file) => {
       const parts = file.name.split("/");
-      const folder = parts.length > 1 ? parts[0] : "Hoofd";
+      const folder = parts.length > 1 ? parts[0] : "Main";
       acc[folder] = true;
       return acc;
     }, {} as Record<string, boolean>)
@@ -589,13 +703,17 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   const otherFilesByFolder = useMemo(() => {
     return otherFiles.reduce((acc, file) => {
       const parts = file.name.split("/");
-      const folder = parts.length > 1 ? parts[0] : "Root";
+      const folder = parts.length > 1 ? parts[0] : ROOT_FILES_FOLDER;
       if (!acc[folder]) acc[folder] = [];
       acc[folder].push(file);
       return acc;
     }, {} as Record<string, typeof otherFiles>);
   }, [otherFiles]);
-  const otherFileFolders = Object.keys(otherFilesByFolder);
+  const otherFileFolders = useMemo(() => {
+    const folders = Object.keys(otherFilesByFolder);
+    if (!folders.includes(ROOT_FILES_FOLDER)) return folders;
+    return [ROOT_FILES_FOLDER, ...folders.filter((f) => f !== ROOT_FILES_FOLDER)];
+  }, [otherFilesByFolder]);
 
   const toggleFolder = (folder: string) => {
     setCollapsedFolders((prev) => ({ ...prev, [folder]: !prev[folder] }));
@@ -740,9 +858,73 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
         >
           {/* Titel + stats */}
           <div className="mb-8 mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <h1 className="text-3xl font-bold text-[hsl(var(--foreground))] text-left">
-              {metadata.title || metadata.slug.replace(/-/g, " ")}
-            </h1>
+            <div className="flex flex-col items-start gap-3">
+              <h1 className="text-3xl font-bold text-[hsl(var(--foreground))] text-left">
+                {metadata.title || metadata.slug.replace(/-/g, " ")}
+              </h1>
+
+              {/* For ZIP-only / files-only downloads, keep primary download under the title. */}
+              {imageFiles.length === 0 && (
+                <>
+                  {!downloading ? (
+                    <Button
+                      onClick={handlePrimaryDownload}
+                      variant="outline"
+                      size="sm"
+                      disabled={
+                        visibleFiles.length === 0 ||
+                        (isSelectMode && selectedFiles.size === 0) ||
+                        (showFavoritesOnly && favoriteCount === 0)
+                      }
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      {isSelectMode && selectedFiles.size > 0 ? (
+                        <>
+                          <span className="hidden sm:inline">Download {selectedFiles.size}</span>
+                          <span className="sm:hidden">Download {selectedFiles.size}</span>
+                        </>
+                      ) : showFavoritesOnly ? (
+                        <>
+                          <span className="hidden sm:inline">Download favorites ({favoriteCount})</span>
+                          <span className="sm:hidden">Favorites ({favoriteCount})</span>
+                        </>
+                      ) : imageFiles.length === 0 &&
+                        otherFiles.length === 1 &&
+                        isZip(otherFiles[0].name, otherFiles[0].type) ? (
+                        <>
+                          <span className="hidden sm:inline">Download ZIP</span>
+                          <span className="sm:hidden">Download</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="hidden sm:inline">Download All</span>
+                          <span className="sm:hidden">Download</span>
+                        </>
+                      )}
+                    </Button>
+                  ) : (
+                    <div className="relative w-40 h-9 bg-foreground/5 rounded-md overflow-hidden border border-border">
+                      <div
+                        className="absolute left-0 top-0 h-full bg-foreground/12 transition-[width] duration-200 ease-out flex items-center justify-center overflow-hidden"
+                        style={{ width: `${downloadProgress}%` }}
+                      >
+                        <div className="absolute inset-y-0 left-0 w-20 animate-shimmer-bar bg-white/30 dark:bg-white/12" />
+                        {downloadProgress > 10 && (
+                          <span className="text-foreground text-xs font-semibold tabular-nums">{downloadProgress}%</span>
+                        )}
+                      </div>
+                      {downloadProgress <= 10 && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-muted-foreground text-xs font-semibold tabular-nums">
+                            {downloadProgress}%
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
 
             <div className="text-xs sm:text-sm text-gray-600 sm:text-right whitespace-nowrap">
               <span>
@@ -750,11 +932,15 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
               </span>
               <span className="mx-2 text-gray-400">|</span>
               <span>
-                {imageFiles.length} foto{imageFiles.length === 1 ? "" : "'s"}
+                {imageFiles.length} photo{imageFiles.length === 1 ? "" : "s"}
               </span>
               <span className="mx-2 text-gray-400">|</span>
               <span>
-                {folderCount} map{folderCount === 1 ? "" : "pen"}
+                {folderCount} folder{folderCount === 1 ? "" : "s"}
+              </span>
+              <span className="mx-2 text-gray-400">|</span>
+              <span>
+                {otherFiles.length} file{otherFiles.length === 1 ? "" : "s"}
               </span>
             </div>
           </div>
@@ -762,30 +948,18 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
           {/* Foto’s */}
           {imageFiles.length > 0 && (
             <div className="mb-12">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
+                {/* Primary download action aligned with toolbar */}
                 {!downloading ? (
                   <Button
-                    onClick={() => {
-                      if (isSelectMode && selectedFiles.size > 0) {
-                        downloadSelected();
-                        return;
-                      }
-
-                      if (showFavoritesOnly) {
-                        if (favoriteCount > 0) {
-                          downloadKeysAsZip(
-                            favoriteImageFiles.map((f) => f.key),
-                            `${metadata.slug}-favorites.zip`
-                          );
-                        }
-                        return;
-                      }
-
-                      downloadAll();
-                    }}
+                    onClick={handlePrimaryDownload}
                     variant="outline"
                     size="sm"
-                    disabled={(isSelectMode && selectedFiles.size === 0) || (showFavoritesOnly && favoriteCount === 0)}
+                    disabled={
+                      visibleFiles.length === 0 ||
+                      (isSelectMode && selectedFiles.size === 0) ||
+                      (showFavoritesOnly && favoriteCount === 0)
+                    }
                   >
                     <Download className="mr-2 h-4 w-4" />
                     {isSelectMode && selectedFiles.size > 0 ? (
@@ -806,24 +980,26 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                     )}
                   </Button>
                 ) : (
-                  <div className="relative w-40 h-9 bg-[hsl(var(--muted))] rounded-md overflow-hidden border border-[hsl(var(--border))]">
+                  <div className="relative w-40 h-9 bg-foreground/5 rounded-md overflow-hidden border border-border">
                     <div
-                      className="absolute left-0 top-0 h-full bg-gradient-to-r from-gray-800 to-gray-900 dark:from-gray-300 dark:to-gray-600 transition-all duration-300 ease-out flex items-center justify-center"
+                      className="absolute left-0 top-0 h-full bg-foreground/12 transition-[width] duration-200 ease-out flex items-center justify-center overflow-hidden"
                       style={{ width: `${downloadProgress}%` }}
                     >
+                      <div className="absolute inset-y-0 left-0 w-20 animate-shimmer-bar bg-white/30 dark:bg-white/12" />
                       {downloadProgress > 10 && (
-                        <span className="text-white dark:text-black text-xs font-semibold">{downloadProgress}%</span>
+                        <span className="text-foreground text-xs font-semibold tabular-nums">{downloadProgress}%</span>
                       )}
                     </div>
                     {downloadProgress <= 10 && (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-gray-600 dark:text-gray-300 text-xs font-semibold">
+                        <span className="text-muted-foreground text-xs font-semibold tabular-nums">
                           {downloadProgress}%
                         </span>
                       </div>
                     )}
                   </div>
                 )}
+
                 <div className="flex items-center gap-2">
                   <Button
                     onClick={() => setShowFavoritesOnly((v) => !v)}
@@ -940,9 +1116,10 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
 
                           {/* Thumbnail */}
                           <div
-                            className={`aspect-square bg-[hsl(var(--muted))] flex items-center justify-center overflow-hidden relative select-none ${
+                            className={`bg-[hsl(var(--muted))] flex items-center justify-center overflow-hidden relative select-none w-full ${
                               isSelectMode ? "cursor-pointer" : "cursor-zoom-in"
                             }`}
+                            style={{ aspectRatio: thumbAspectRatios[file.key] ?? 1 }}
                             onContextMenu={(e) => e.preventDefault()}
                             onDragStart={(e) => e.preventDefault()}
                             onClick={() => {
@@ -964,6 +1141,16 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                                 quality={75}
                                 draggable={false}
                                 onContextMenu={(e) => e.preventDefault()}
+                                onLoadingComplete={(img) => {
+                                  const w = img?.naturalWidth || 0;
+                                  const h = img?.naturalHeight || 0;
+                                  if (!w || !h) return;
+                                  const ratio = w / h;
+                                  setThumbAspectRatios((prev) => {
+                                    if (prev[file.key]) return prev;
+                                    return { ...prev, [file.key]: ratio };
+                                  });
+                                }}
                               />
                             ) : (
                               <ImageIcon className="h-12 w-12 text-gray-300" />
@@ -1012,45 +1199,45 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
 
               <div className="space-y-4">
                 {otherFileFolders.map((folder) => (
-                  <div
-                    key={folder}
-                    className="bg-[hsl(var(--card))] rounded-lg shadow-sm border border-[hsl(var(--border))]"
-                  >
-                    <div className="p-4 flex items-center justify-between border-b border-[hsl(var(--border))]">
-                      <button
-                        onClick={() => toggleFolder(folder)}
-                        className="flex items-center gap-3 flex-1 text-left hover:bg-gray-50 -m-2 p-2 rounded transition-colors"
-                      >
-                        {collapsedFolders[folder] ? (
-                          <ChevronRight className="h-5 w-5 text-gray-500" />
-                        ) : (
-                          <ChevronDown className="h-5 w-5 text-gray-500" />
-                        )}
-                        <div className="flex-1">
-                          <p className="font-semibold text-[hsl(var(--foreground))]">{folder}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {otherFilesByFolder[folder].length} file
-                            {otherFilesByFolder[folder].length !== 1 ? "s" : ""}
-                          </p>
-                        </div>
-                      </button>
-                      <Button size="sm" variant="outline" className="ml-4" onClick={() => downloadFolder(folder)}>
-                        <Download className="h-4 w-4 mr-2" />
-                        Download folder
-                      </Button>
-                    </div>
-
-                    {!collapsedFolders[folder] && (
+                  folder === ROOT_FILES_FOLDER ? (
+                    <div
+                      key={folder}
+                      className="bg-[hsl(var(--card))] rounded-lg shadow-sm border border-[hsl(var(--border))]"
+                    >
                       <div className="divide-y divide-gray-100 dark:divide-gray-800">
                         {otherFilesByFolder[folder].map((file, index) => {
                           const displayName = file.name.split("/").pop() || file.name;
                           const ext = displayName.split(".").pop()?.toLowerCase();
+                          const isDownloadingThis = downloadingFile === file.key && fileDownloadPhase !== "idle";
                           return (
                             <div
                               key={`${file.key}-${index}`}
-                              className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                              className={`relative p-4 flex items-center justify-between transition-colors cursor-pointer overflow-hidden ${
+                                isDownloadingThis ? "" : "hover:bg-gray-50"
+                              }`}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => downloadSingle(file.key, displayName, true)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  downloadSingle(file.key, displayName, true);
+                                }
+                              }}
                             >
-                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                              {isDownloadingThis && (
+                                <>
+                                  <div className="absolute inset-0 bg-foreground/3" />
+                                  <div
+                                    className="absolute left-0 top-0 bottom-0 bg-foreground/8 transition-[width] duration-200 ease-out overflow-hidden"
+                                    style={{ width: `${fileDownloadProgress}%` }}
+                                  >
+                                    <div className="absolute inset-y-0 left-0 w-20 animate-shimmer-bar bg-white/22 dark:bg-white/12" />
+                                  </div>
+                                </>
+                              )}
+
+                              <div className="relative z-10 flex items-center gap-3 flex-1 min-w-0">
                                 {getFileIcon(displayName)}
                                 <div className="min-w-0 flex-1">
                                   <p
@@ -1064,20 +1251,135 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                                   </p>
                                 </div>
                               </div>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => downloadSingle(file.key, displayName)}
-                                disabled={downloadingFile === file.key}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
+
+                              <div className="relative z-10 flex-shrink-0">
+                                {isDownloadingThis ? (
+                                  <span className="text-xs font-semibold text-muted-foreground tabular-nums">
+                                    {fileDownloadProgress}%
+                                  </span>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      downloadSingle(file.key, displayName, true);
+                                    }}
+                                    disabled={downloadingFile === file.key}
+                                  >
+                                    <Download className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           );
                         })}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <div
+                      key={folder}
+                      className="bg-[hsl(var(--card))] rounded-lg shadow-sm border border-[hsl(var(--border))]"
+                    >
+                      <div className="p-4 flex items-center justify-between border-b border-[hsl(var(--border))]">
+                        <button
+                          onClick={() => toggleFolder(folder)}
+                          className="flex items-center gap-3 flex-1 text-left hover:bg-gray-50 -m-2 p-2 rounded transition-colors"
+                        >
+                          {collapsedFolders[folder] ? (
+                            <ChevronRight className="h-5 w-5 text-gray-500" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5 text-gray-500" />
+                          )}
+                          <div className="flex-1">
+                            <p className="font-semibold text-[hsl(var(--foreground))]">{folder}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {otherFilesByFolder[folder].length} file
+                              {otherFilesByFolder[folder].length !== 1 ? "s" : ""}
+                            </p>
+                          </div>
+                        </button>
+                        <Button size="sm" variant="outline" className="ml-4" onClick={() => downloadFolder(folder)}>
+                          <Download className="h-4 w-4 mr-2" />
+                          Download folder
+                        </Button>
+                      </div>
+
+                      {!collapsedFolders[folder] && (
+                        <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                          {otherFilesByFolder[folder].map((file, index) => {
+                            const displayName = file.name.split("/").pop() || file.name;
+                            const ext = displayName.split(".").pop()?.toLowerCase();
+                            const isDownloadingThis = downloadingFile === file.key && fileDownloadPhase !== "idle";
+                            return (
+                              <div
+                                key={`${file.key}-${index}`}
+                                className={`relative p-4 flex items-center justify-between transition-colors cursor-pointer overflow-hidden ${
+                                  isDownloadingThis ? "" : "hover:bg-gray-50"
+                                }`}
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => downloadSingle(file.key, displayName, true)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    downloadSingle(file.key, displayName, true);
+                                  }
+                                }}
+                              >
+                                {isDownloadingThis && (
+                                  <>
+                                    <div className="absolute inset-0 bg-foreground/3" />
+                                    <div
+                                      className="absolute left-0 top-0 bottom-0 bg-foreground/8 transition-[width] duration-200 ease-out overflow-hidden"
+                                      style={{ width: `${fileDownloadProgress}%` }}
+                                    >
+                                      <div className="absolute inset-y-0 left-0 w-20 animate-shimmer-bar bg-white/22 dark:bg-white/12" />
+                                    </div>
+                                  </>
+                                )}
+
+                                <div className="relative z-10 flex items-center gap-3 flex-1 min-w-0">
+                                  {getFileIcon(displayName)}
+                                  <div className="min-w-0 flex-1">
+                                    <p
+                                      className="text-sm font-medium text-[hsl(var(--foreground))] truncate"
+                                      title={displayName}
+                                    >
+                                      {displayName}
+                                    </p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                      {formatBytes(file.size)} {ext && `• ${ext.toUpperCase()}`}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="relative z-10 flex-shrink-0">
+                                  {isDownloadingThis ? (
+                                    <span className="text-xs font-semibold text-muted-foreground tabular-nums">
+                                      {fileDownloadProgress}%
+                                    </span>
+                                  ) : (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        downloadSingle(file.key, displayName, true);
+                                      }}
+                                      disabled={downloadingFile === file.key}
+                                    >
+                                      <Download className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )
                 ))}
               </div>
             </div>

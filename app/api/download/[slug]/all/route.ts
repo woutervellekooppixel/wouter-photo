@@ -44,6 +44,43 @@ export async function GET(
     // Send notification email (async, don't wait)
     sendDownloadNotification(slug, metadata.files.length).catch(console.error);
 
+    // Special case: this download contains only a single ZIP file.
+    // In that scenario, creating a new ZIP (containing the ZIP) is wasteful and can time out.
+    // Stream the ZIP directly with a proper Content-Disposition.
+    const shouldFilterFile = (filename: string) => {
+      const name = filename.toLowerCase();
+      return [".ds_store", ".xmp", "thumbs.db", "desktop.ini"].some((p) => name.includes(p)) || name.startsWith(".");
+    };
+    const isImage = (filename: string) => {
+      const ext = filename.toLowerCase().split(".").pop();
+      return ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "heic", "heif"].includes(ext || "");
+    };
+    const isZip = (filename: string, contentType?: string) => {
+      const ext = filename.toLowerCase().split(".").pop();
+      if (ext === "zip") return true;
+      if ((contentType || "").toLowerCase().includes("zip")) return true;
+      return false;
+    };
+
+    const visibleFiles = sortFilesChronological(metadata.files).filter((f) => !shouldFilterFile(f.name));
+    const visibleImageFiles = visibleFiles.filter((f) => isImage(f.name));
+    const visibleZipFiles = visibleFiles.filter((f) => isZip(f.name, f.type));
+
+    if (visibleImageFiles.length === 0 && visibleFiles.length === 1 && visibleZipFiles.length === 1) {
+      const zipFile = visibleZipFiles[0];
+      const zipName = zipFile.name.split("/").pop() || `${slug}.zip`;
+      const zipStream = await getFileStream(zipFile.key);
+      const stream = Readable.toWeb(zipStream) as unknown as ReadableStream<Uint8Array>;
+      return new NextResponse(stream, {
+        headers: {
+          "Content-Type": zipFile.type || "application/zip",
+          "Content-Disposition": `attachment; filename="${zipName}"`,
+          ...(zipFile.size ? { "Content-Length": zipFile.size.toString() } : {}),
+          "Cache-Control": "no-cache",
+        },
+      });
+    }
+
     // If a pre-made ZIP exists and is valid, redirect to a signed R2 URL.
     // This avoids proxying large files through the server (which can truncate/time out).
     const zipIsValid = await isZipFileValid(slug);

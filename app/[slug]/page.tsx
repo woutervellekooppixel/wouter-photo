@@ -22,8 +22,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (isExpired(metadata)) {
     return {
-      title: 'Link verlopen',
-      description: 'Deze download is niet meer beschikbaar.',
+      title: 'Link expired',
+      description: 'This download is no longer available.',
       robots: {
         index: false,
         follow: false,
@@ -32,8 +32,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const title = metadata.title || slug;
-  const description = `Download ${metadata.files.length} bestanden`;
-
+  const description = `Download ${metadata.files.length} files`;
   const h = await headers();
   const host = h.get('x-forwarded-host') ?? h.get('host');
   const proto = h.get('x-forwarded-proto') ?? 'https';
@@ -83,11 +82,11 @@ export default async function DownloadPage({ params }: PageProps) {
     return (
       <ExpiredRedirect
         destination={destination}
-        title="Deze download is verlopen"
+        title="This download has expired"
         description={
           expiresAt
-            ? `Deze link is verlopen op ${expiresAt.toLocaleDateString('nl-NL')}.`
-            : 'Deze link is verlopen.'
+            ? `This link expired on ${expiresAt.toLocaleDateString('en-US')}.`
+            : 'This link has expired.'
         }
       />
     );
