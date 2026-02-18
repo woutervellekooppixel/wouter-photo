@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 export default function NotFound() {
   const [countdown, setCountdown] = useState(30);
-  const router = useRouter();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -21,7 +18,7 @@ export default function NotFound() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [router]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center p-6">
@@ -48,17 +45,17 @@ export default function NotFound() {
         {/* Main Message */}
         <div className="space-y-4">
           <h1 className="text-4xl font-bold text-gray-900">
-            Transfer verlopen
+            Transfer expired
           </h1>
           <p className="text-lg text-gray-600 max-w-lg mx-auto">
-            Deze download link is niet (meer) beschikbaar. De bestanden zijn mogelijk verlopen of verwijderd.
+            This download link is no longer available. The files may have expired or been removed.
           </p>
         </div>
 
         {/* Contact Info */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-3">
           <p className="text-sm text-gray-600">
-            Heb je hulp nodig of wil je een nieuwe link aanvragen?
+            Need help or want to request a new link?
           </p>
           <a
             href="mailto:info@woutervellekoop.nl"
@@ -84,12 +81,12 @@ export default function NotFound() {
         {/* Countdown */}
         <div className="space-y-3">
           <p className="text-sm text-gray-500">
-            Je wordt automatisch doorgestuurd naar de homepage in
+            You will be redirected to the homepage in
           </p>
           <div className="text-6xl font-bold text-gray-300">
             {countdown}
           </div>
-          <p className="text-xs text-gray-400">seconden</p>
+          <p className="text-xs text-gray-400">seconds</p>
         </div>
 
         {/* Manual Link */}
@@ -98,7 +95,7 @@ export default function NotFound() {
             href="https://wouter.photo"
             className="text-sm text-gray-500 hover:text-gray-700 underline transition-colors"
           >
-            Of klik hier om direct te gaan
+            Or click here to go now
           </a>
         </div>
 

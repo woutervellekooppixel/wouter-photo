@@ -10,6 +10,15 @@ export default function MobileFloatingContactButton() {
   const [status, setStatus] = useState<null | 'success' | 'error' | 'loading'>(null);
   const [message, setMessage] = useState('');
 
+  async function getErrorMessage(res: Response) {
+    const contentType = res.headers.get('content-type') ?? '';
+    if (contentType.includes('application/json')) {
+      const data = await res.json().catch(() => null);
+      if (data && typeof data.error === 'string') return data.error;
+    }
+    return 'Something went wrong. Please try again.';
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus('loading');
@@ -30,9 +39,8 @@ export default function MobileFloatingContactButton() {
         setMessage('Message sent! I’ll get back to you soon.');
         form.reset();
       } else {
-        const data = await res.json();
         setStatus('error');
-        setMessage(data.error || 'Something went wrong. Please try again.');
+        setMessage(await getErrorMessage(res));
       }
     } catch (err) {
       setStatus('error');

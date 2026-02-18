@@ -101,9 +101,24 @@
       transform: translateX(100%);
     }
   }
+
+  /* Solid shimmer bar (no gradient) */
+  @keyframes shimmer-bar {
+    0% {
+      transform: translateX(-200%);
+    }
+    100% {
+      transform: translateX(1200%);
+    }
+  }
   
   .animate-shimmer {
     animation: shimmer 2s infinite;
+  }
+
+  .animate-shimmer-bar {
+    animation: shimmer-bar 2.4s linear infinite;
+    will-change: transform;
   }
 }
 
