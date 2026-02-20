@@ -163,7 +163,7 @@ export default function BatchCropPluginPage() {
 
 						<div className="flex flex-col gap-3 sm:flex-row">
 							<Button asChild size="lg" className="sm:w-auto">
-								<a href={ADOBE_EXCHANGE_BATCHCROP_URL}>
+								<a href={ADOBE_EXCHANGE_BATCHCROP_URL} target="_blank" rel="noopener noreferrer">
 									Get it on Adobe Exchange
 								</a>
 							</Button>
@@ -275,7 +275,7 @@ export default function BatchCropPluginPage() {
 								</p>
 							</div>
 							<Button asChild size="lg" className="sm:w-auto">
-								<a href={ADOBE_EXCHANGE_BATCHCROP_URL}>
+								<a href={ADOBE_EXCHANGE_BATCHCROP_URL} target="_blank" rel="noopener noreferrer">
 									Open Adobe Exchange
 								</a>
 							</Button>
