@@ -4,7 +4,7 @@ import PWAHandler from '../components/PWAHandler'
 import { Toaster } from '@/components/ui/toaster'
 import FloatingContactWrapper from '../components/FloatingContactWrapper'
 import Script from 'next/script'
-import AnalyticsInit from '../components/AnalyticsInit'
+import GA4PageView from '../components/GA4PageView'
 import { ThemeProvider } from 'next-themes'
 import type { Metadata, Viewport } from 'next'
 
@@ -159,16 +159,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           `}
         </Script>
         
-        {/* Google Analytics 4 Direct */}
-        <Script 
-          src={`https://www.googletagmanager.com/gtag/js?id=G-SGRS9782NB`} 
+        {/* Google Analytics 4 (gtag) */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-SGRS9782NB"
           strategy="afterInteractive"
         />
-        {/* Google Analytics initialisatie nu client-side voor hydration fix */}
-        <AnalyticsInit />
+        <Script id="ga4-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){window.dataLayer.push(arguments);}
+            window.gtag = gtag;
+            gtag('js', new Date());
+            gtag('config', 'G-SGRS9782NB', { send_page_view: false });
+          `}
+        </Script>
       </head>
       <body suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <GA4PageView />
           <noscript>
             <iframe
               src="https://www.googletagmanager.com/ns.html?id=GTM-K55DF7SN"
