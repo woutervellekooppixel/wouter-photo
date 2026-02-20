@@ -29,6 +29,7 @@ export default function MobileMenu() {
     if (pathname.startsWith('/portfolio/concerts')) return 'CONCERTS'
     if (pathname.startsWith('/portfolio/events')) return 'EVENTS'
     if (pathname.startsWith('/portfolio/misc')) return 'MISC'
+    if (pathname === '/plugins' || pathname.startsWith('/plugins/')) return 'PLUGINS'
     if (pathname === '/about') return 'ABOUT'
     if (pathname.startsWith('/admin')) return 'DOWNLOAD'
     if (pathname === '/not-found' || /^\/[a-zA-Z0-9-]+$/.test(pathname)) return 'DOWNLOAD'

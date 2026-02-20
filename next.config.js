@@ -20,6 +20,41 @@ const nextConfig = {
   },
   // Optimize bundle
   compress: true,
+
+  async redirects() {
+    return [
+      {
+        source: '/plugins/sliceeveryx',
+        destination: '/plugins/export-every-x',
+        permanent: true,
+      },
+      {
+        source: '/plugins/crop-every-x',
+        destination: '/plugins/export-every-x',
+        permanent: true,
+      },
+      {
+        source: '/plugins/slice-every-x',
+        destination: '/plugins/export-every-x',
+        permanent: true,
+      },
+      {
+        source: '/plugins/export-slices',
+        destination: '/plugins/export-every-x',
+        permanent: true,
+      },
+      {
+        source: '/plugins/batch-crop',
+        destination: '/plugins/batchcrop',
+        permanent: true,
+      },
+      {
+        source: '/plugins/bulk-crop',
+        destination: '/plugins/batchcrop',
+        permanent: true,
+      },
+    ]
+  },
 }
 
 module.exports = nextConfig
