@@ -24,9 +24,16 @@ export function middleware(request: NextRequest) {
   // Discourage indexing of download pages.
   // Download pages appear to be root-level slugs like /some-gallery-slug.
   // Keep public pages indexable.
-  const isRootSlug = /^\/[a-z0-9-]+$/i.test(pathname)
-  const isPublicSingleSegment = pathname === '/about' || pathname === '/portfolio'
-  const isDownloadSlug = isRootSlug && !isPublicSingleSegment
+  const rootSlugMatch = pathname.match(/^\/([a-z0-9-]+)$/i)
+  const rootSegment = rootSlugMatch?.[1]?.toLowerCase()
+
+  // Public root-level pages that should remain indexable.
+  const isPublicSingleSegment =
+    rootSegment === 'about' ||
+    rootSegment === 'portfolio' ||
+    rootSegment === 'plugins'
+
+  const isDownloadSlug = Boolean(rootSegment) && !isPublicSingleSegment
 
   if (isDownloadSlug) {
     response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex')
