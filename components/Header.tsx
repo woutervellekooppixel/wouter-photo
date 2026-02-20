@@ -33,6 +33,7 @@ export default function Header() {
     if (pathname === '/portfolio/concerts') return 'CONCERTS'
     if (pathname === '/portfolio/events') return 'EVENTS'
     if (pathname === '/portfolio/misc') return 'MISC'
+    if (pathname === '/plugins' || pathname.startsWith('/plugins/')) return 'PLUGINS'
     if (pathname === '/about') return 'ABOUT'
     if (pathname.startsWith('/admin')) return 'DOWNLOAD'
     if (pathname === '/not-found' || /^\/[a-zA-Z0-9-]+$/.test(pathname)) return 'DOWNLOAD'
