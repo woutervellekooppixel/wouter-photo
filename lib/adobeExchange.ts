@@ -1,7 +1,8 @@
 export const ADOBE_EXCHANGE_HOME = "https://exchange.adobe.com/";
 
 export const ADOBE_EXCHANGE_BATCHCROP_URL =
-	process.env.NEXT_PUBLIC_ADOBE_EXCHANGE_BATCHCROP_URL || ADOBE_EXCHANGE_HOME;
+	process.env.NEXT_PUBLIC_ADOBE_EXCHANGE_BATCHCROP_URL ||
+	"https://exchange.adobe.com/apps/cc/UXP/8f25707f/versions/uxp-8f25707f-version-1723577165664/preview?userId=A715574D5DF09C830A495CC8%40AdobeID";
 
 export const ADOBE_EXCHANGE_EXPORT_EVERY_X_URL =
 	process.env.NEXT_PUBLIC_ADOBE_EXCHANGE_EXPORT_EVERY_X_URL ||
