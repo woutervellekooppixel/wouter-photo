@@ -77,8 +77,7 @@ export const metadata: Metadata = {
     images: ['/2022_NSJF-Fri_1179.jpg'],
   },
   verification: {
-    // Voeg hier je Google Search Console verificatiecode toe
-    // google: 'jouw-verificatie-code-hier',
+    google: 'QhwH8_Tc3v4WQts7AmQoujJJbRFoR6ujekVGscalyao',
   },
   alternates: {
     canonical: 'https://wouter.photo',
