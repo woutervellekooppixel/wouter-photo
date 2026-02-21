@@ -166,6 +166,11 @@ export default function BatchCropPluginPage() {
 							</p>
 						</div>
 
+						<div className="flex items-baseline gap-3">
+							<span className="text-3xl font-semibold tracking-tight text-foreground">$15</span>
+							<span className="text-sm text-muted-foreground line-through">$20</span>
+						</div>
+
 						<div className="flex flex-col gap-3 sm:flex-row">
 							<Button asChild size="lg" className="sm:w-auto">
 								<a href={ADOBE_EXCHANGE_BATCHCROP_URL} target="_blank" rel="noopener noreferrer">
