@@ -1,4 +1,9 @@
 import React from "react";
+import type { Metadata } from "next";
+
+import { metadata as pageMetadata } from "./metadata";
+
+export const metadata: Metadata = pageMetadata;
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -175,7 +180,7 @@ export default function BatchCropPluginPage() {
 						<ul className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
 							{usps.map((usp) => (
 								<li key={usp} className="flex items-start gap-2">
-									<span className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-foreground" />
+									<span className="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full bg-muted-foreground opacity-70" />
 									<span>{usp}</span>
 								</li>
 							))}

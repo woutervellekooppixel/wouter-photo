@@ -1,9 +1,14 @@
 import React from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { metadata as pageMetadata } from "./metadata";
+
+export const metadata: Metadata = pageMetadata;
 
 export default function PluginsOverview() {
   return (

@@ -1,4 +1,9 @@
 import React from "react";
+import type { Metadata } from "next";
+
+import { metadata as pageMetadata } from "./metadata";
+
+export const metadata: Metadata = pageMetadata;
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -179,7 +184,7 @@ export default function ExportEveryXPluginPage() {
 						<ul className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
 							{usps.map((usp) => (
 								<li key={usp} className="flex items-start gap-2">
-									<span className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-foreground" />
+									<span className="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full bg-muted-foreground opacity-70" />
 									<span>{usp}</span>
 								</li>
 							))}
@@ -241,23 +246,23 @@ export default function ExportEveryXPluginPage() {
 								<p className="font-medium text-foreground">What you can do</p>
 								<ul className="grid gap-2 sm:grid-cols-2">
 									<li className="flex items-start gap-2">
-										<span className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-foreground" />
+										<span className="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full bg-muted-foreground opacity-70" />
 										<span>Export a canvas every X pixels (e.g. every 1080px for Instagram carousel panels)</span>
 									</li>
 									<li className="flex items-start gap-2">
-										<span className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-foreground" />
+										<span className="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full bg-muted-foreground opacity-70" />
 										<span>Automatically generate separate image files for each segment</span>
 									</li>
 									<li className="flex items-start gap-2">
-										<span className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-foreground" />
+										<span className="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full bg-muted-foreground opacity-70" />
 										<span>Maintain perfect alignment across all exports</span>
 									</li>
 									<li className="flex items-start gap-2">
-										<span className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-foreground" />
+										<span className="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full bg-muted-foreground opacity-70" />
 										<span>Eliminate manual guides and repetitive cropping</span>
 									</li>
 									<li className="flex items-start gap-2">
-										<span className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-foreground" />
+										<span className="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full bg-muted-foreground opacity-70" />
 										<span>Prepare carousel-ready visuals in seconds</span>
 									</li>
 								</ul>
