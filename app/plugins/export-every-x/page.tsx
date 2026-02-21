@@ -186,25 +186,6 @@ export default function ExportEveryXPluginPage() {
 							</Button>
 						</div>
 
-						<Card>
-							<CardHeader className="space-y-2">
-								<CardTitle className="text-lg">Demo PSD (recommended)</CardTitle>
-								<CardDescription>
-									Free demo file to test the workflow quickly — it’s set up to work perfectly with Export Every X.
-								</CardDescription>
-							</CardHeader>
-							<CardContent className="space-y-3 pt-0">
-								<p className="text-sm text-muted-foreground">
-									Tip: if guides are not visible yet, turn on Guides and use the PSD as a template — drop/paste your own photos into it and run the export.
-								</p>
-								<Button asChild variant="outline" className="w-full sm:w-auto">
-									<a href="/crop-every-x_demo.psd" download>
-										Download demo PSD
-									</a>
-								</Button>
-							</CardContent>
-						</Card>
-
 						<ul className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
 							{usps.map((usp) => (
 								<li key={usp} className="flex items-start gap-2">
@@ -246,6 +227,27 @@ export default function ExportEveryXPluginPage() {
 								</CardHeader>
 							</Card>
 						))}
+					</div>
+
+					<div className="mt-6">
+						<Card>
+							<CardHeader className="space-y-2">
+								<CardTitle className="text-lg">Demo PSD (recommended)</CardTitle>
+								<CardDescription>
+									Free demo file to test the workflow quickly — it’s set up to work perfectly with Export Every X.
+								</CardDescription>
+							</CardHeader>
+							<CardContent className="space-y-3 pt-0">
+								<p className="text-sm text-muted-foreground">
+									Tip: if guides are not visible yet, turn on Guides and use the PSD as a template — drop/paste your own photos into it and run the export.
+								</p>
+								<Button asChild variant="outline" className="w-full sm:w-auto">
+									<a href="/crop-every-x_demo.psd" download>
+										Download demo PSD
+									</a>
+								</Button>
+							</CardContent>
+						</Card>
 					</div>
 				</section>
 
