@@ -229,25 +229,23 @@ export default function ExportEveryXPluginPage() {
 						))}
 					</div>
 
-					<div className="mt-6">
-						<Card>
-							<CardHeader className="space-y-2">
-								<CardTitle className="text-lg">Demo PSD (recommended)</CardTitle>
-								<CardDescription>
-									Free demo file to test the workflow quickly — it’s set up to work perfectly with Export Every X.
-								</CardDescription>
-							</CardHeader>
-							<CardContent className="space-y-3 pt-0">
+					<div className="mt-6 rounded-2xl border border-border bg-card p-6 sm:p-8">
+						<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+							<div className="space-y-2">
+								<p className="text-sm font-medium text-foreground">Demo file</p>
+								<p className="text-sm text-muted-foreground">
+									Free demo PSD to test the workflow quickly — it’s set up to work perfectly with Export Every X.
+								</p>
 								<p className="text-sm text-muted-foreground">
 									Tip: if guides are not visible yet, turn on Guides and use the PSD as a template — drop/paste your own photos into it and run the export.
 								</p>
-								<Button asChild variant="outline" className="w-full sm:w-auto">
-									<a href="/crop-every-x_demo.psd" download>
-										Download demo PSD
-									</a>
-								</Button>
-							</CardContent>
-						</Card>
+							</div>
+							<Button asChild variant="outline" className="w-full sm:w-auto">
+								<a href="/crop-every-x_demo.psd" download>
+									Download demo PSD
+								</a>
+							</Button>
+						</div>
 					</div>
 				</section>
 
