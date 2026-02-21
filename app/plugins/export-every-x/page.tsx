@@ -193,7 +193,7 @@ export default function ExportEveryXPluginPage() {
 									Free demo file to test the workflow quickly — it’s set up to work perfectly with Export Every X.
 								</CardDescription>
 							</CardHeader>
-							<CardContent className="pt-0">
+							<CardContent className="space-y-3 pt-0">
 								<p className="text-sm text-muted-foreground">
 									Tip: if guides are not visible yet, turn on Guides and use the PSD as a template — drop/paste your own photos into it and run the export.
 								</p>
