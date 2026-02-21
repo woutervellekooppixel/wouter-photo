@@ -172,6 +172,11 @@ export default function ExportEveryXPluginPage() {
 							</p>
 						</div>
 
+						<div className="flex items-baseline gap-3">
+							<span className="text-3xl font-semibold tracking-tight text-foreground">$10</span>
+							<span className="text-sm text-muted-foreground line-through">$15</span>
+						</div>
+
 						<div className="flex flex-col gap-3 sm:flex-row">
 							<Button asChild size="lg" className="sm:w-auto">
 								<a href={ADOBE_EXCHANGE_EXPORT_EVERY_X_URL}>Get it on Adobe Exchange</a>
