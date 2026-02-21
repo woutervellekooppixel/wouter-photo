@@ -77,6 +77,10 @@ const faqs = [
 		a: "Tested with Photoshop CC. It may work on other versions, but that’s not guaranteed.",
 	},
 	{
+		q: "Does this work on Photoshop mobile / iPad?",
+		a: "No. This plugin is made for the desktop version of Photoshop (macOS/Windows). It doesn’t run on Photoshop for iPad or other mobile/web versions.",
+	},
+	{
 		q: "Can I set the pixel interval myself?",
 		a: "Yes. You define the X value (pixels per export segment) in the plugin.",
 	},
@@ -207,7 +211,7 @@ export default function ExportEveryXPluginPage() {
 					</div>
 				</section>
 
-				<section id="how" className="mt-14 sm:mt-20">
+				<section id="how" className="mt-12 sm:mt-16">
 					<div className="space-y-2">
 						<h2 className="text-2xl font-semibold tracking-tight">How it works</h2>
 						<p className="text-sm text-muted-foreground">One operation from start to export.</p>
@@ -249,7 +253,7 @@ export default function ExportEveryXPluginPage() {
 					</div>
 				</section>
 
-				<section className="mt-14 sm:mt-20">
+				<section className="mt-12 sm:mt-16">
 					<Card>
 						<CardHeader className="space-y-2">
 							<CardTitle className="text-2xl">What it does</CardTitle>
@@ -298,7 +302,7 @@ export default function ExportEveryXPluginPage() {
 					</Card>
 				</section>
 
-				<section className="mt-14 sm:mt-20">
+				<section className="mt-12 sm:mt-16">
 					<Card>
 						<CardHeader className="space-y-2">
 							<CardTitle className="text-2xl">Why it matters</CardTitle>
@@ -314,13 +318,13 @@ export default function ExportEveryXPluginPage() {
 					</Card>
 				</section>
 
-				<section className="mt-14 sm:mt-20">
-					<div className="space-y-2">
-						<h2 className="text-2xl font-semibold tracking-tight">FAQ</h2>
-						<p className="text-sm text-muted-foreground">Short and practical.</p>
-					</div>
-
-					<div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card">
+				<section className="mt-12 sm:mt-16">
+					<div className="overflow-hidden rounded-2xl border border-border bg-card">
+						<div className="space-y-2 px-6 py-5">
+							<h2 className="text-2xl font-semibold tracking-tight">FAQ</h2>
+							<p className="text-sm text-muted-foreground">Short and practical.</p>
+						</div>
+						<div className="h-px bg-border" />
 						{faqs.map((faq, idx) => (
 							<details key={faq.q} className="group">
 								<summary className="cursor-pointer list-none px-6 py-5 text-sm font-medium outline-none transition-colors hover:bg-accent/40">
@@ -336,7 +340,7 @@ export default function ExportEveryXPluginPage() {
 					</div>
 				</section>
 
-				<section className="mt-14 sm:mt-20">
+				<section className="mt-12 sm:mt-16">
 					<div className="rounded-2xl border border-border bg-card p-8 sm:p-10">
 						<div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
 							<div className="space-y-2">
