@@ -186,6 +186,22 @@ export default function ExportEveryXPluginPage() {
 							</Button>
 						</div>
 
+						<Card>
+							<CardHeader className="space-y-2">
+								<CardTitle className="text-lg">Demo PSD (recommended)</CardTitle>
+								<CardDescription>
+									Download the demo Photoshop file to test the workflow quickly — it’s set up to work perfectly with Export Every X.
+								</CardDescription>
+							</CardHeader>
+							<CardContent className="pt-0">
+								<Button asChild variant="outline" className="w-full sm:w-auto">
+									<a href="/crop-every-x_demo.psd" download>
+										Download demo PSD
+									</a>
+								</Button>
+							</CardContent>
+						</Card>
+
 						<ul className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
 							{usps.map((usp) => (
 								<li key={usp} className="flex items-start gap-2">
