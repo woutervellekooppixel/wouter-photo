@@ -52,11 +52,11 @@ const faqs = [
 	},
 	{
 		q: "My Photoshop document is extremely wide. Export As / Save for Web struggles — can this help?",
-		a: "That’s exactly the use case. Instead of relying on a slice-heavy workflow or manually exporting sections, Export Every X exports the document in consistent pixel intervals (panels), which is often more reliable for very wide files.",
+		a: "That’s exactly the use case. With extremely wide documents, some users run into export quirks (including unexpectedly low-resolution output) with Export As / Save for Web. Instead of relying on a slice-heavy workflow or manually exporting sections, Export Every X exports your canvas in consistent pixel intervals (panels) at the document’s pixel resolution, which is often more reliable for very wide files.",
 	},
 	{
 		q: "Why not just use Photoshop slices?",
-		a: "For very wide documents, slice-based workflows can get tedious (guides, manual slice management) and some users run into reliability/performance issues when exporting many slices. Export Every X focuses on fast, consistent panel exports by pixel interval.",
+		a: "For very wide documents, slice-based workflows can get tedious (guides, manual slice management) and some users run into reliability/performance issues when exporting many slices. Also, Save for Web / Export As can be hit-or-miss on extremely wide files. Export Every X focuses on fast, consistent panel exports by pixel interval.",
 	},
 	{
 		q: "Is this the same as artboards?",
