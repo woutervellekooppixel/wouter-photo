@@ -189,6 +189,14 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
 
   const ROOT_FILES_FOLDER = "__ROOT__";
 
+  // These images are already resized/optimized (sharp -> webp) by our own API,
+  // so running them through Next/Vercel Image Optimization again just burns
+  // Image Optimization "Transformations" without improving quality.
+  const isPreOptimizedApiImage = (src?: string | null) => {
+    if (!src) return false;
+    return src.startsWith("/api/thumbnail/");
+  };
+
   // API helper voor image url
   const getFullImageUrl = (key: string) => {
     return `/api/photos/by-key?key=${encodeURIComponent(key)}`;
@@ -775,7 +783,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                   }}
                   onError={() => setPreviewLoaded(true)}
                   placeholder="empty"
-                  unoptimized={heroUrl?.startsWith("http")}
+                  unoptimized={heroUrl?.startsWith("http") || isPreOptimizedApiImage(heroUrl)}
                 />
               ) : backgroundUrl ? (
                 <Image
@@ -1139,6 +1147,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                                 sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                                 loading="lazy"
                                 quality={75}
+                                unoptimized={isPreOptimizedApiImage(thumbnailUrls[file.key])}
                                 draggable={false}
                                 onContextMenu={(e) => e.preventDefault()}
                                 onLoadingComplete={(img) => {

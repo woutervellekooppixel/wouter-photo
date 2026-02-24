@@ -14,7 +14,7 @@ const usps = [
 	"Batch crop (bulk crop) large photo sets",
 	"Crop multiple images consistently",
 	"Fast, simple install",
-	"Works with Photoshop CC",
+	"Works with the desktop version of Adobe Photoshop",
 	"No technical knowledge needed",
 	"Paid plugin ($15)",
 ];
@@ -53,16 +53,16 @@ const faqs = [
 	{
 		q: "How do I install the plugin?",
 		a:
-			"Install it via Adobe Exchange / Creative Cloud. In general: open the Adobe Exchange listing, click to install (you may be prompted to sign in), then complete the install in the Creative Cloud desktop app. Restart Photoshop after installation. The exact menu/location can vary by Photoshop version.",
+			"Install it via Adobe Exchange. In general: open the Adobe Exchange listing, click to install (you may be prompted to sign in), then complete the install in the Creative Cloud desktop app. Restart Photoshop after installation. The exact menu/location can vary by Photoshop version.",
 	},
 	{
 		q: "I installed it from Adobe Exchange — where do I find it in Photoshop?",
 		a:
-			"After installing, restart Photoshop. The plugin usually appears under the Plugins menu or under Extensions (the exact place depends on your Photoshop version). If you don’t see it, check that Creative Cloud shows it as installed and try restarting again.",
+			"After installing, restart Photoshop. The plugin usually appears under the Plugins menu or under Extensions (the exact place depends on your Photoshop version). If you don’t see it, check that the Creative Cloud desktop app shows it as installed and try restarting again.",
 	},
 	{
 		q: "Which Photoshop versions are supported?",
-		a: "Tested with Photoshop CC. It may work on other versions, but that’s not guaranteed.",
+		a: "Tested with the desktop version of Adobe Photoshop. It may work on other versions, but that’s not guaranteed.",
 	},
 	{
 		q: "Does this work on Photoshop mobile / iPad?",
@@ -280,7 +280,7 @@ export default function BatchCropPluginPage() {
 						<div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
 							<div className="space-y-2">
 								<h2 className="text-2xl font-semibold tracking-tight">Get it</h2>
-								<p className="text-sm text-muted-foreground">Works with Photoshop CC. Install via Adobe Exchange / Creative Cloud.</p>
+								<p className="text-sm text-muted-foreground">Works with the desktop version of Adobe Photoshop. Install via Adobe Exchange and the Creative Cloud desktop app.</p>
 								<p className="text-sm text-muted-foreground">
 									Questions? Email{" "}
 									<a href="mailto:hello@wouter.photo" className="underline underline-offset-4">
