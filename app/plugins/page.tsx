@@ -88,7 +88,7 @@ export default function PluginsOverview() {
         </div>
 
         <p className="mt-10 text-sm text-muted-foreground">
-          Tested with Photoshop CC. Installation is handled via Adobe Exchange / Creative Cloud.
+          Tested with the desktop version of Adobe Photoshop. Installation is handled via Adobe Exchange and the Creative Cloud desktop app.
         </p>
       </div>
     </main>
