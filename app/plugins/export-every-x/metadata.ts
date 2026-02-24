@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Export Every X – Photoshop Slices & Carousel Export – Wouter.Photo",
+	title: "Export Every X — Slice export plugin for Photoshop",
 	description:
 		"Export (slice) huge wide Photoshop documents into panels every X pixels (e.g. 1080px). Perfect for Instagram carousel exports, banners, and panoramic layouts.",
 	keywords: [
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 		"WouterPhoto",
 	],
 	openGraph: {
-		title: "Export Every X – Photoshop Slices & Carousel Export",
+		title: "Export Every X — Slice export plugin for Photoshop",
 		description:
 			"Export (slice) huge wide Photoshop documents into panels every X pixels (e.g. 1080px) for Instagram carousels, banners, and panoramic layouts.",
 		url: "https://wouter.photo/plugins/export-every-x",
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "Export Every X – Photoshop Slices & Carousel Export",
+		title: "Export Every X — Slice export plugin for Photoshop",
 		description:
 			"Export (slice) huge wide Photoshop documents into panels every X pixels (e.g. 1080px) for Instagram carousels, banners, and panoramic layouts.",
 		images: ["https://wouter.photo/cropevery.png"],
