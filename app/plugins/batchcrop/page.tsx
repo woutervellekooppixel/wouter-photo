@@ -8,6 +8,7 @@ export const metadata: Metadata = pageMetadata;
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PluginPreviewLightbox } from "@/components/PluginPreviewLightbox";
+import { TestimonialsCarousel } from "@/components/TestimonialsCarousel";
 import { ADOBE_EXCHANGE_BATCHCROP_URL } from "@/lib/adobeExchange";
 
 const usps = [
@@ -83,6 +84,33 @@ const faqs = [
 	{
 		q: "How much does it cost?",
 		a: "BatchCrop costs $15 (USD) on Adobe Exchange.",
+	},
+];
+
+const testimonials = [
+	{
+		quote:
+			"I had hundreds of photos to crop for a gallery. Setting it once and running the batch saved me hours.",
+		name: "Lotte de Groot",
+		role: "Event photographer",
+	},
+	{
+		quote:
+			"The consistency is the killer feature. No more tiny crop differences between images — and way faster than doing it manually.",
+		name: "Thomas Bakker",
+		role: "Studio assistant",
+	},
+	{
+		quote:
+			"For product photos this is a game changer. One crop setup, same result across the whole set.",
+		name: "Nina Smit",
+		role: "E-commerce",
+	},
+	{
+		quote:
+			"Actions were too brittle for my inputs. This is a simpler workflow and saves a lot of repetitive clicking.",
+		name: "Jasper Meijer",
+		role: "Designer",
 	},
 ];
 
@@ -245,6 +273,17 @@ export default function BatchCropPluginPage() {
 								BatchCrop helps you process large photo sets fast and consistently. If you’re searching for “crop multiple images in Photoshop” or “bulk crop a
 								folder of photos”, this is the workflow: define the crop once, then let the plugin apply it across your set.
 							</p>
+						</CardContent>
+					</Card>
+				</section>
+
+				<section className="mt-12 sm:mt-16">
+					<Card>
+						<CardHeader className="space-y-2">
+							<CardTitle className="text-2xl">Testimonials</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<TestimonialsCarousel items={testimonials} />
 						</CardContent>
 					</Card>
 				</section>

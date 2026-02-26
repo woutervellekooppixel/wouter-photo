@@ -8,6 +8,7 @@ export const metadata: Metadata = pageMetadata;
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PluginPreviewLightbox } from "@/components/PluginPreviewLightbox";
+import { TestimonialsCarousel } from "@/components/TestimonialsCarousel";
 import { ADOBE_EXCHANGE_EXPORT_EVERY_X_URL } from "@/lib/adobeExchange";
 
 const usps = [
@@ -91,6 +92,33 @@ const faqs = [
 	{
 		q: "How much does it cost?",
 		a: "Export Every X costs $10 (USD) on Adobe Exchange.",
+	},
+];
+
+const testimonials = [
+	{
+		quote:
+			"I used this for a long Instagram carousel. It turned a repetitive export job into a one-click routine — huge time saver.",
+		name: "Sophie van Dijk",
+		role: "Content creator",
+	},
+	{
+		quote:
+			"Perfect 1080px panels without guides. The alignment staying consistent across exports is what saves me the most time.",
+		name: "Milan Koster",
+		role: "Graphic designer",
+	},
+	{
+		quote:
+			"Splitting ultra-wide banners into 1920px segments used to be a pain. Now it’s predictable and fast.",
+		name: "Eva Janssen",
+		role: "Web marketer",
+	},
+	{
+		quote:
+			"Export As kept acting weird on very wide docs. This workflow is more reliable for my biggest files.",
+		name: "Noah Vermeer",
+		role: "Photographer",
 	},
 ];
 
@@ -314,6 +342,17 @@ export default function ExportEveryXPluginPage() {
 								lets you take one long design and export it into consistent panels (e.g. 1080px slices) without guides or manual slice management.
 							</p>
 							<p className="mt-4">Built for creators who value efficiency and clean execution.</p>
+						</CardContent>
+					</Card>
+				</section>
+
+				<section className="mt-12 sm:mt-16">
+					<Card>
+						<CardHeader className="space-y-2">
+							<CardTitle className="text-2xl">Testimonials</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<TestimonialsCarousel items={testimonials} />
 						</CardContent>
 					</Card>
 				</section>
