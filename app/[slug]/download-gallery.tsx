@@ -493,8 +493,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
     }
   };
 
-  const toggleRating = async (fileKey: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const toggleRatingByKey = async (fileKey: string) => {
     const newRating = !ratings[fileKey];
     setRatings((prev) => ({ ...prev, [fileKey]: newRating }));
     try {
@@ -507,6 +506,11 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
       console.error("Failed to save rating:", error);
       setRatings((prev) => ({ ...prev, [fileKey]: !newRating }));
     }
+  };
+
+  const toggleRating = async (fileKey: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await toggleRatingByKey(fileKey);
   };
 
   const downloadAll = async () => {
@@ -1407,6 +1411,17 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
               images={lightboxImages}
               index={currentIndex}
               onIndexChange={setCurrentIndex}
+              enableFavorite
+              isFavorite={(_, idx) => {
+                const file = displayedImageFiles[idx];
+                if (!file) return false;
+                return !!ratings[file.key];
+              }}
+              onToggleFavorite={(_, idx) => {
+                const file = displayedImageFiles[idx];
+                if (!file) return;
+                toggleRatingByKey(file.key);
+              }}
               enableDownload
               onDownload={(current, idx) => {
                 // Download via jouw download API (tracking + correcte filename)
