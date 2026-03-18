@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { X, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Download, Heart } from "lucide-react";
 
 export type LightboxImage = {
   src: string;
@@ -28,6 +28,13 @@ type LightboxProps = {
   /** Eigen download handler (anders standaard link met download attribuut) */
   onDownload?: (current: LightboxImage, index: number) => void;
 
+  /** Favorite/hartje tonen */
+  enableFavorite?: boolean;
+  /** Of de huidige foto gefavoriet is (bepaalt styling) */
+  isFavorite?: (current: LightboxImage, index: number) => boolean;
+  /** Toggle handler voor favorite */
+  onToggleFavorite?: (current: LightboxImage, index: number) => void;
+
   /** Extra className op outer container */
   className?: string;
 };
@@ -40,6 +47,9 @@ export function Lightbox({
   onIndexChange,
   enableDownload = true,
   onDownload,
+  enableFavorite = false,
+  isFavorite,
+  onToggleFavorite,
   className = "",
 }: LightboxProps) {
   const [mounted, setMounted] = useState(false);
@@ -117,6 +127,16 @@ export function Lightbox({
     }
   }, [open, index, images]);
 
+  // Als de images-lijst verandert (bv. door favorites-only filters), zorg dat index geldig blijft.
+  useEffect(() => {
+    if (!open) return;
+    if (images.length === 0) return;
+    if (index < 0 || index >= images.length) {
+      const clamped = Math.max(0, Math.min(index, images.length - 1));
+      onIndexChange(clamped);
+    }
+  }, [open, images.length, index, onIndexChange]);
+
   const onBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === overlayRef.current) {
       onOpenChange(false);
@@ -146,7 +166,9 @@ export function Lightbox({
 
   if (!mounted || !open || images.length === 0) return null;
 
-  const current = images[index];
+  const safeIndex = Math.max(0, Math.min(index, images.length - 1));
+  const current = images[safeIndex];
+  const favoriteActive = enableFavorite ? (isFavorite ? isFavorite(current, safeIndex) : false) : false;
 
   const content = (
     <div
@@ -198,28 +220,46 @@ export function Lightbox({
         </>
       )}
 
-      {/* Download */}
-      {enableDownload && (
-        <button
-          aria-label="Download"
-          className="absolute bottom-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white focus:outline-none focus-visible:ring focus-visible:ring-white/40"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (onDownload) {
-              onDownload(current, index);
-            } else {
-              // Standaard: forceer download
-              const a = document.createElement("a");
-              a.href = current.src;
-              a.download = current.alt || `image-${index + 1}`;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-            }
-          }}
-        >
-          <Download className="h-6 w-6" />
-        </button>
+      {/* Actions (Favorite + Download) */}
+      {(enableFavorite || enableDownload) && (
+        <div className="absolute bottom-4 right-4 flex items-center gap-2">
+          {enableFavorite && (
+            <button
+              aria-label={favoriteActive ? "Unfavorite" : "Favorite"}
+              aria-pressed={favoriteActive}
+              className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white focus:outline-none focus-visible:ring focus-visible:ring-white/40"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite?.(current, safeIndex);
+              }}
+            >
+              <Heart className={`h-6 w-6 ${favoriteActive ? "fill-red-500 text-red-500" : ""}`} />
+            </button>
+          )}
+
+          {enableDownload && (
+            <button
+              aria-label="Download"
+              className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white focus:outline-none focus-visible:ring focus-visible:ring-white/40"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onDownload) {
+                  onDownload(current, safeIndex);
+                } else {
+                  // Standaard: forceer download
+                  const a = document.createElement("a");
+                  a.href = current.src;
+                  a.download = current.alt || `image-${safeIndex + 1}`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                }
+              }}
+            >
+              <Download className="h-6 w-6" />
+            </button>
+          )}
+        </div>
       )}
 
       {/* Image area */}
