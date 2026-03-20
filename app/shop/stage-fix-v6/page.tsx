@@ -389,17 +389,9 @@ export default function StageFixV6Page() {
 									</a>
 								</p>
 							</div>
-							{BUY_URL ? (
-								<Button asChild size="lg" className="sm:w-auto">
-									<a href={BUY_URL} target="_blank" rel="noopener noreferrer">
-										Buy Stage Fix v6
-									</a>
-								</Button>
-							) : (
-								<Button size="lg" className="sm:w-auto" disabled>
-									Buy Stage Fix v6
-								</Button>
-							)}
+							<Button size="lg" className="sm:w-auto" disabled>
+								Buy Stage Fix v6
+							</Button>
 						</div>
 					</div>
 				</section>
