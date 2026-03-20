@@ -3,6 +3,7 @@ import Header from '../components/Header'
 import PWAHandler from '../components/PWAHandler'
 import { Toaster } from '@/components/ui/toaster'
 import FloatingContactWrapper from '../components/FloatingContactWrapper'
+import Footer from '../components/Footer'
 import Script from 'next/script'
 import GA4PageView from '../components/GA4PageView'
 import { ThemeProvider } from 'next-themes'
@@ -169,6 +170,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Header />
           <Toaster />
           {children}
+          <Footer />
           <FloatingContactWrapper />
         </ThemeProvider>
       </body>
