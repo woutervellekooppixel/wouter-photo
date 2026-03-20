@@ -6,64 +6,64 @@ export default function RefundPolicyPage() {
 
         <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1 mb-10">
           <p>wouter.photo (Wouter Vellekoop)</p>
-          <p>KvK: 27379554</p>
-          <p>BTW: NL002024910B49</p>
-          <p>Laatst bijgewerkt op: 20 maart 2026</p>
+          <p>Chamber of Commerce (KvK): 27379554</p>
+          <p>VAT (BTW): NL002024910B49</p>
+          <p>Last updated: 20 March 2026</p>
         </div>
 
         <div className="space-y-10 text-base leading-relaxed">
           <section className="space-y-3">
-            <h2 className="text-xl font-semibold">1. Toepassing</h2>
+            <h2 className="text-xl font-semibold">1. Scope</h2>
             <p>
-              Dit refund policy is van toepassing op digitale producten die via wouter.photo worden aangeboden, zoals downloads.
+              This refund policy applies to digital products offered via wouter.photo, such as downloads.
             </p>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-semibold">2. Digitale producten (downloads)</h2>
+            <h2 className="text-xl font-semibold">2. Digital products (downloads)</h2>
             <p>
-              Omdat het om digitale content gaat die direct geleverd kan worden, beoordelen we refund-verzoeken per geval. Als je tegen technische
-              problemen aanloopt, lossen we dat in de meeste gevallen eerst met je op.
+              Because digital content can be delivered immediately, refund requests are assessed on a case-by-case basis. If you run into technical
+              problems, we will usually try to resolve them with you first.
             </p>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-semibold">3. Wanneer je in aanmerking kunt komen voor refund</h2>
+            <h2 className="text-xl font-semibold">3. When you may be eligible for a refund</h2>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Je hebt aantoonbaar een technisch probleem waardoor het product niet bruikbaar is, en we kunnen dit niet oplossen.</li>
-              <li>Er is sprake van een dubbele betaling voor dezelfde bestelling.</li>
-              <li>Er is sprake van een duidelijke fout in de levering (bijv. je hebt een ander product ontvangen dan gekocht).</li>
+              <li>You have a demonstrable technical issue that makes the product unusable, and we cannot resolve it.</li>
+              <li>There was a duplicate payment for the same order.</li>
+              <li>There was a clear delivery error (e.g. you received a different product than purchased).</li>
             </ul>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-semibold">4. Hoe vraag je een refund aan?</h2>
+            <h2 className="text-xl font-semibold">4. How to request a refund</h2>
             <p>
-              Mail naar{' '}
+              Email{' '}
               <a className="underline underline-offset-4" href="mailto:hello@wouter.photo">
                 hello@wouter.photo
               </a>{' '}
-              met:
+              with:
             </p>
             <ul className="list-disc pl-5 space-y-2">
-              <li>het e-mailadres waarmee je hebt afgerekend</li>
-              <li>je order/receipt informatie (indien beschikbaar)</li>
-              <li>een korte omschrijving van het probleem</li>
+              <li>the email address used at checkout</li>
+              <li>your order/receipt information (if available)</li>
+              <li>a short description of the issue</li>
             </ul>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-semibold">5. Afhandeling</h2>
+            <h2 className="text-xl font-semibold">5. Processing</h2>
             <p>
-              We streven ernaar om binnen enkele werkdagen te reageren. Bij goedkeuring wordt de refund verwerkt via de betaalmethode waarmee je
-              betaald hebt. De verwerkingstijd kan per betalingsprovider variëren.
+              We aim to respond within a few business days. If approved, the refund will be processed to the payment method used. Processing time
+              can vary per payment provider.
             </p>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-xl font-semibold">6. Contact</h2>
             <p>
-              E-mail:{' '}
+              Email:{' '}
               <a className="underline underline-offset-4" href="mailto:hello@wouter.photo">
                 hello@wouter.photo
               </a>
@@ -71,10 +71,10 @@ export default function RefundPolicyPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-semibold">Belangrijk</h2>
+            <h2 className="text-xl font-semibold">Important</h2>
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              Dit is een algemene uitleg van het refund proces. Als je via een externe checkout-provider afrekent, kunnen de voorwaarden en
-              verwerking van refunds (deels) via die provider verlopen.
+              This is a general explanation of the refund process. If you check out via an external provider, their terms may apply and the refund
+              processing may (in part) be handled by that provider.
             </p>
           </section>
         </div>
