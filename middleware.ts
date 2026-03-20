@@ -31,7 +31,11 @@ export function middleware(request: NextRequest) {
   const isPublicSingleSegment =
     rootSegment === 'about' ||
     rootSegment === 'portfolio' ||
-    rootSegment === 'plugins'
+    rootSegment === 'plugins' ||
+    rootSegment === 'algemene-voorwaarden' ||
+    rootSegment === 'privacy-policy' ||
+    rootSegment === 'refund-policy' ||
+    rootSegment === 'terms-of-service'
 
   const isDownloadSlug = Boolean(rootSegment) && !isPublicSingleSegment
 
