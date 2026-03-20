@@ -33,6 +33,7 @@ export default function MobileMenu() {
     if (pathname === '/plugins' || pathname.startsWith('/plugins/')) return 'SHOP'
     if (pathname === '/about') return 'ABOUT'
     if (pathname === '/algemene-voorwaarden') return 'ABOUT'
+    if (pathname === '/terms-of-service') return 'ABOUT'
     if (pathname === '/privacy-policy') return 'ABOUT'
     if (pathname === '/refund-policy') return 'ABOUT'
     if (pathname.startsWith('/admin')) return 'DOWNLOAD'

@@ -210,7 +210,7 @@ export default function StageFixV6Page() {
 
 						<div className="text-xs text-muted-foreground">
 							<span className="font-medium text-foreground">Policies:</span>{" "}
-							<a className="underline underline-offset-4" href="/algemene-voorwaarden">
+							<a className="underline underline-offset-4" href="/terms-of-service">
 								Terms
 							</a>
 							<span> · </span>
