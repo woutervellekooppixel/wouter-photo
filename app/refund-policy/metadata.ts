@@ -2,27 +2,27 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Refund policy – wouter.photo',
-  description: 'Refund policy van wouter.photo voor digitale producten (downloads).',
+  description: 'Refund policy for wouter.photo digital products (downloads).',
   keywords: [
     'refund policy',
-    'restitutiebeleid',
-    'terugbetaling',
     'wouter.photo',
     'digitale producten',
+    'digital products',
+    'downloads',
   ],
   openGraph: {
     title: 'Refund policy – wouter.photo',
-    description: 'Refund policy van wouter.photo voor digitale producten (downloads).',
+    description: 'Refund policy for wouter.photo digital products (downloads).',
     url: 'https://wouter.photo/refund-policy',
     siteName: 'Wouter.Photo',
-    locale: 'nl_NL',
-    alternateLocale: ['en_US'],
+    locale: 'en_US',
+    alternateLocale: ['nl_NL'],
     type: 'website',
   },
   twitter: {
     card: 'summary',
     title: 'Refund policy – wouter.photo',
-    description: 'Refund policy van wouter.photo voor digitale producten (downloads).',
+    description: 'Refund policy for wouter.photo digital products (downloads).',
   },
   alternates: {
     canonical: 'https://wouter.photo/refund-policy',
