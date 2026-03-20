@@ -1,111 +1,17 @@
-"use client";
+import { headers } from "next/headers";
+import NotFoundClient from "@/components/NotFoundClient";
 
-import { useEffect, useState } from "react";
+export default async function NotFound() {
+  const h = await headers();
+  const host = (h.get("x-forwarded-host") ?? h.get("host") ?? "").toLowerCase();
 
-export default function NotFound() {
-  const [countdown, setCountdown] = useState(30);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          window.location.href = "https://wouter.photo";
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
+  const isDownloadHost = host.includes("wouter.download");
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center p-6">
-      <div className="max-w-2xl w-full text-center space-y-8">
-        {/* Icon */}
-        <div className="flex justify-center">
-          <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
-            <svg
-              className="w-12 h-12 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </div>
-        </div>
-
-        {/* Main Message */}
-        <div className="space-y-4">
-          <h1 className="text-4xl font-bold text-gray-900">
-            Transfer expired
-          </h1>
-          <p className="text-lg text-gray-600 max-w-lg mx-auto">
-            This download link is no longer available. The files may have expired or been removed.
-          </p>
-        </div>
-
-        {/* Contact Info */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-3">
-          <p className="text-sm text-gray-600">
-            Need help or want to request a new link?
-          </p>
-          <a
-            href="mailto:info@woutervellekoop.nl"
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              />
-            </svg>
-            info@woutervellekoop.nl
-          </a>
-        </div>
-
-        {/* Countdown */}
-        <div className="space-y-3">
-          <p className="text-sm text-gray-500">
-            You will be redirected to the homepage in
-          </p>
-          <div className="text-6xl font-bold text-gray-300">
-            {countdown}
-          </div>
-          <p className="text-xs text-gray-400">seconds</p>
-        </div>
-
-        {/* Manual Link */}
-        <div>
-          <a
-            href="https://wouter.photo"
-            className="text-sm text-gray-500 hover:text-gray-700 underline transition-colors"
-          >
-            Or click here to go now
-          </a>
-        </div>
-
-        {/* Footer */}
-        <div className="pt-8 border-t border-gray-200">
-          <p className="text-sm text-gray-400">
-            © Wouter.Photo
-          </p>
-        </div>
-      </div>
-    </div>
+    <NotFoundClient
+      variant={isDownloadHost ? "download" : "site"}
+      redirectTo="https://wouter.photo"
+      redirectDelaySeconds={30}
+    />
   );
 }
