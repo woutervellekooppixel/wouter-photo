@@ -91,6 +91,14 @@ export default function Header() {
           <div className="absolute left-0 top-full pt-1 z-50">
             <div
               className={
+
+            <Link
+              href="/plugins"
+              className={isHome ? 'hover:text-white/80' : 'hover:text-gray-600 dark:hover:text-gray-300'}
+            >
+              Plugins
+            </Link>
+
                 isHome
                   ? 'invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-200 bg-black/60 text-white shadow-2xl rounded border border-white/20 min-w-[140px] space-y-1 py-1 px-2 backdrop-blur-md'
                   : 'invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-200 bg-white dark:bg-black shadow-md rounded border border-gray-200 dark:border-gray-600 min-w-[140px] space-y-1 py-1 px-2'

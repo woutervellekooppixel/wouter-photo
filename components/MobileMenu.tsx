@@ -104,6 +104,8 @@ export default function MobileMenu() {
 </div>
           <Link href="/about" onClick={() => setOpen(false)}>About</Link>
 
+          <Link href="/plugins" onClick={() => setOpen(false)}>Plugins</Link>
+
           {/* Contact button/modal for mobile */}
           <div className="flex w-full justify-center items-center mt-4 mb-2 px-4">
             <FloatingContactButton mobile />
