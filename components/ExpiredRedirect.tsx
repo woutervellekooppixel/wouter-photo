@@ -6,8 +6,8 @@ import Link from "next/link";
 export default function ExpiredRedirect({
   destination = "https://wouter.photo",
   delayMs = 2500,
-  title = "Deze link is verlopen",
-  description = "De download is niet meer beschikbaar.",
+  title = "This link has expired",
+  description = "This download is no longer available.",
 }: {
   destination?: string;
   delayMs?: number;
@@ -55,19 +55,19 @@ export default function ExpiredRedirect({
             href={destination}
             className="inline-flex items-center justify-center rounded-md bg-white text-black px-4 py-2 font-medium hover:bg-white/90 transition"
           >
-            Ga naar {destText}
+            Go to {destText}
           </a>
 
           <Link
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-white/20 text-white px-4 py-2 font-medium hover:bg-white/5 transition"
           >
-            Terug naar home
+            Back to home
           </Link>
 
           {secondsTotal > 0 ? (
             <p className="text-sm text-white/60">
-              Je wordt automatisch doorgestuurd over {secondsLeft}s…
+              You will be redirected in {secondsLeft}s…
             </p>
           ) : null}
         </div>
