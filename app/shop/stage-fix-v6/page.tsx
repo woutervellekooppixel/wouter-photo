@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import PaddleCheckoutButton from "@/components/PaddleCheckoutButton";
 
 import { metadata as pageMetadata } from "./metadata";
 
@@ -140,6 +141,8 @@ const faqs = [
 ];
 
 export default function StageFixV6Page() {
+	const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.BASE_URL || "https://wouter.photo";
+	const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID_STAGE_FIX_V6 || "pri_01km5eyggrxx4bvzbgc7gj7jem";
 	const faqSchema = {
 		"@context": "https://schema.org",
 		"@type": "FAQPage",
@@ -200,9 +203,12 @@ export default function StageFixV6Page() {
 						</div>
 
 						<div className="flex flex-col gap-3 sm:flex-row">
-							<Button size="lg" className="sm:w-auto" disabled>
-								Buy Stage Fix v6
-							</Button>
+							<PaddleCheckoutButton
+								label="Buy Stage Fix v6"
+								priceId={priceId}
+								successUrl={`${baseUrl}/shop/stage-fix-v6/thank-you`}
+								className="sm:w-auto"
+							/>
 							<Button asChild size="lg" variant="outline" className="sm:w-auto">
 								<a href="#how">How it works</a>
 							</Button>

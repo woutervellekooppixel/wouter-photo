@@ -167,6 +167,21 @@ export async function getSignedDownloadUrl(
   return getSignedUrl(r2Client, command, { expiresIn });
 }
 
+export async function getSignedDownloadUrlWithFilename(
+  key: string,
+  filename: string,
+  expiresIn: number = 3600
+): Promise<string> {
+  const safeName = filename.replace(/"/g, "");
+  const command = new GetObjectCommand({
+    Bucket: R2_BUCKET_NAME,
+    Key: key,
+    ResponseContentDisposition: `attachment; filename="${safeName}"`,
+  });
+
+  return getSignedUrl(r2Client, command, { expiresIn });
+}
+
 export async function headObject(key: string): Promise<{ contentLength: number } | null> {
   try {
     const command = new HeadObjectCommand({
