@@ -51,14 +51,24 @@ function verifyPaddleWebhookSignature({
 export async function POST(request: Request) {
 	const secret = process.env.PADDLE_WEBHOOK_SECRET;
 	if (!secret) {
+		console.error("[Paddle webhook] Missing PADDLE_WEBHOOK_SECRET");
 		return NextResponse.json({ error: "PADDLE_WEBHOOK_SECRET is not set" }, { status: 500 });
 	}
 
 	const rawBody = await request.text();
 	const signatureHeader = request.headers.get("paddle-signature");
+	const requestId = request.headers.get("x-vercel-id") || request.headers.get("x-request-id") || undefined;
+	const nowIso = new Date().toISOString();
+	console.log("[Paddle webhook] Incoming", {
+		at: nowIso,
+		requestId,
+		hasSignature: Boolean(signatureHeader),
+		rawBodyLength: rawBody.length,
+	});
 
 	const ok = verifyPaddleWebhookSignature({ rawBody, signatureHeader, secret });
 	if (!ok) {
+		console.warn("[Paddle webhook] Invalid signature", { at: nowIso, requestId });
 		return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
 	}
 
@@ -66,15 +76,31 @@ export async function POST(request: Request) {
 	try {
 		event = JSON.parse(rawBody);
 	} catch {
+		console.warn("[Paddle webhook] Invalid JSON", { at: nowIso, requestId });
 		return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
 	}
 
 	// Typical shape: { event_id, event_type, data, occurred_at }
 	const eventType = event?.event_type;
+	const eventId = event?.event_id;
+	const occurredAt = event?.occurred_at;
+	console.log("[Paddle webhook] Verified event", {
+		at: nowIso,
+		requestId,
+		eventType,
+		eventId,
+		occurredAt,
+	});
 
 	if (eventType === "transaction.completed") {
 		const customerEmail = event?.data?.customer?.email;
 		const transactionId = event?.data?.id;
+		console.log("[Paddle webhook] transaction.completed", {
+			at: nowIso,
+			requestId,
+			hasCustomerEmail: typeof customerEmail === "string" && customerEmail.length > 3,
+			hasTransactionId: typeof transactionId === "string" && transactionId.length > 0,
+		});
 
 		if (customerEmail && typeof customerEmail === "string") {
 			const baseUrl = process.env.BASE_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://wouter.photo";
@@ -96,16 +122,38 @@ export async function POST(request: Request) {
 			if (downloadUrl) {
 				const safeTtlSeconds = Number.isFinite(ttlSeconds) && ttlSeconds > 0 ? ttlSeconds : 900;
 				const linkValidDays = safeTtlSeconds / (60 * 60 * 24);
-				await sendPresetPurchaseEmail({
-					to: customerEmail,
+				console.log("[Paddle webhook] Sending purchase email", {
+					at: nowIso,
+					requestId,
+					toDomain: customerEmail.split("@")[1] || null,
+					linkValidDays,
+					maxUses,
+				});
+				try {
+					await sendPresetPurchaseEmail({
+						to: customerEmail,
 					productName: "Stage Fix v6",
 					downloadUrl,
 					transactionId: typeof transactionId === "string" ? transactionId : undefined,
 					linkValidDays,
 					maxUses: Number.isFinite(maxUses) && maxUses > 0 ? Math.floor(maxUses) : undefined,
-				});
+					});
+					console.log("[Paddle webhook] Purchase email sent", { at: nowIso, requestId });
+				} catch (error) {
+					console.error("[Paddle webhook] Failed to send purchase email", { at: nowIso, requestId, error });
+				}
 			}
+		} else {
+			console.warn("[Paddle webhook] Missing customer email; not sending", {
+				at: nowIso,
+				requestId,
+				eventType,
+				eventId,
+			});
 		}
+	} else {
+		// Helpful when Paddle sends different event_types than expected.
+		console.log("[Paddle webhook] Ignored event type", { at: nowIso, requestId, eventType, eventId });
 	}
 
 	return NextResponse.json({ received: true });
