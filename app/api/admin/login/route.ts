@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, verifyPassword } from "@/lib/auth";
+import { loginRateLimit } from "@/lib/rateLimit";
 
 export async function POST(request: NextRequest) {
+  const limited = await loginRateLimit(request);
+  if (limited) return limited;
+
   const { password } = await request.json();
 
   if (!password) {

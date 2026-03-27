@@ -6,48 +6,40 @@ interface RateLimitEntry {
   resetAt: number;
 }
 
-// In-memory fallback store if KV is not configured or temporarily unavailable
+// In-memory fallback — works locally and within a single serverless instance.
+// In production on Vercel, configure KV_REST_API_URL so limits are shared across instances.
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
-// Cleanup oude entries elke 10 minuten
+if (!process.env.KV_REST_API_URL && process.env.NODE_ENV === 'production') {
+  console.warn('[RateLimit] KV_REST_API_URL is not set — rate limiting falls back to in-memory, which is not shared across serverless instances.');
+}
+
 setInterval(() => {
   const now = Date.now();
   for (const [key, entry] of rateLimitStore.entries()) {
-    if (entry.resetAt < now) {
-      rateLimitStore.delete(key);
-    }
+    if (entry.resetAt < now) rateLimitStore.delete(key);
   }
 }, 10 * 60 * 1000);
 
 const kvEnabled = Boolean(process.env.KV_REST_API_URL);
 
 export interface RateLimitConfig {
-  windowMs: number; // Time window in milliseconds
-  maxRequests: number; // Max requests per window
+  name: string;       // Used as part of the KV key — must be unique per limiter
+  windowMs: number;
+  maxRequests: number;
 }
-
-const defaultConfig: RateLimitConfig = {
-  windowMs: 60 * 1000, // 1 minuut
-  maxRequests: 60, // 60 requests per minuut
-};
 
 async function incrementKvCounter(key: string, windowMs: number) {
   if (!kvEnabled) return null;
-
   try {
     const ttlSeconds = Math.ceil(windowMs / 1000);
     const count = await kv.incr(key);
-
-    if (count === 1) {
-      await kv.expire(key, ttlSeconds);
-    }
-
+    if (count === 1) await kv.expire(key, ttlSeconds);
     const remainingTtlSeconds = await kv.ttl(key);
     const resetAt = Date.now() + ((remainingTtlSeconds && remainingTtlSeconds > 0) ? remainingTtlSeconds * 1000 : windowMs);
-
     return { count, resetAt } satisfies RateLimitEntry;
   } catch (error) {
-    console.error('[RateLimit] KV fallback to memory:', error);
+    console.error('[RateLimit] KV error, falling back to memory:', error);
     return null;
   }
 }
@@ -55,35 +47,30 @@ async function incrementKvCounter(key: string, windowMs: number) {
 function incrementMemoryCounter(key: string, windowMs: number): RateLimitEntry {
   const now = Date.now();
   const existing = rateLimitStore.get(key);
-
   if (!existing || existing.resetAt < now) {
     const next: RateLimitEntry = { count: 1, resetAt: now + windowMs };
     rateLimitStore.set(key, next);
     return next;
   }
-
   existing.count += 1;
   rateLimitStore.set(key, existing);
   return existing;
 }
 
-export function rateLimit(config: RateLimitConfig = defaultConfig) {
+export function rateLimit(config: RateLimitConfig) {
   return async (request: NextRequest): Promise<NextResponse | null> => {
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     const now = Date.now();
-    const key = `rl:${ip}`;
+    // Include limiter name in the key so different limiters don't share counters
+    const key = `rl:${config.name}:${ip}`;
 
     const kvResult = await incrementKvCounter(key, config.windowMs);
     const entry = kvResult ?? incrementMemoryCounter(key, config.windowMs);
 
     if (entry.count > config.maxRequests) {
       const retryAfter = Math.max(Math.ceil((entry.resetAt - now) / 1000), 1);
-
       return NextResponse.json(
-        {
-          error: 'Te veel requests. Probeer het later opnieuw.',
-          retryAfter,
-        },
+        { error: 'Too many requests. Please try again later.', retryAfter },
         {
           status: 429,
           headers: {
@@ -95,23 +82,38 @@ export function rateLimit(config: RateLimitConfig = defaultConfig) {
         }
       );
     }
-
-    return null; // Allow request
+    return null;
   };
 }
 
-// Verschillende rate limit configs voor verschillende endpoints
 export const downloadRateLimit = rateLimit({
-  windowMs: 60 * 1000, // 1 minuut
-  maxRequests: 10, // 10 downloads per minuut
+  name: 'download',
+  windowMs: 60 * 1000,
+  maxRequests: 10,
 });
 
 export const apiRateLimit = rateLimit({
-  windowMs: 60 * 1000, // 1 minuut  
-  maxRequests: 60, // 60 API calls per minuut
+  name: 'api',
+  windowMs: 60 * 1000,
+  maxRequests: 60,
 });
 
 export const uploadRateLimit = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 uur
-  maxRequests: 5, // 5 uploads per uur (voor anonymous users)
+  name: 'upload',
+  windowMs: 60 * 60 * 1000,
+  maxRequests: 5,
+});
+
+// Brute force protection for the admin login
+export const loginRateLimit = rateLimit({
+  name: 'login',
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  maxRequests: 5,
+});
+
+// Resend download link — tight to prevent email enumeration
+export const resendRateLimit = rateLimit({
+  name: 'resend',
+  windowMs: 60 * 60 * 1000, // 1 hour
+  maxRequests: 5,
 });

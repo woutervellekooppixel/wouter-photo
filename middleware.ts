@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// Multi-segment paths that should not be indexed
+const NOINDEX_PATHS = [
+  '/shop/stage-fix-v6/download',
+  '/shop/resend',
+]
+
 export function middleware(request: NextRequest) {
   const host = request.headers.get('host')
   const pathname = request.nextUrl.pathname
 
-  // Skip redirects for local development
+  // Skip for local development
   if (!host || host.includes('localhost') || host.startsWith('127.0.0.1')) {
     return NextResponse.next()
   }
 
-  // Avoid touching API routes or internal endpoints.
+  // Leave API routes alone
   if (pathname.startsWith('/api/')) {
     return NextResponse.next()
   }
@@ -21,17 +27,23 @@ export function middleware(request: NextRequest) {
 
   const response = NextResponse.next()
 
-  // Discourage indexing of download pages.
-  // Download pages appear to be root-level slugs like /some-gallery-slug.
-  // Keep public pages indexable.
+  // Explicit noindex for private multi-segment pages
+  if (NOINDEX_PATHS.some((p) => pathname.startsWith(p))) {
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex')
+    return response
+  }
+
+  // Noindex for root-level download slugs (e.g. /some-gallery-slug)
+  // Keep known public single-segment pages indexable.
   const rootSlugMatch = pathname.match(/^\/([a-z0-9-]+)$/i)
   const rootSegment = rootSlugMatch?.[1]?.toLowerCase()
 
-  // Public root-level pages that should remain indexable.
   const isPublicSingleSegment =
     rootSegment === 'about' ||
     rootSegment === 'portfolio' ||
     rootSegment === 'plugins' ||
+    rootSegment === 'shop' ||
+    rootSegment === 'contact' ||
     rootSegment === 'algemene-voorwaarden'
 
   const isDownloadSlug = Boolean(rootSegment) && !isPublicSingleSegment
@@ -40,13 +52,11 @@ export function middleware(request: NextRequest) {
     response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex')
   }
 
-
   return response
 }
 
 export const config = {
   matcher: [
-    // Match all paths except static files and Next.js internals
     '/((?!_next|api|.*\\..*|favicon.ico).*)',
   ],
 }

@@ -3,7 +3,14 @@ import { kv } from "@vercel/kv";
 
 const kvEnabled = Boolean(process.env.KV_REST_API_URL);
 
-// In-memory fallback (works locally / without KV, but not shared across instances)
+if (!kvEnabled && process.env.NODE_ENV === "production") {
+	console.warn(
+		"[PresetDL] KV_REST_API_URL is not set — token usage tracking uses in-memory fallback, " +
+		"which is not reliable across serverless instances. The resend flow will also not work."
+	);
+}
+
+// In-memory fallback (works locally / within a single instance, not across instances)
 const usedTokenStore = new Map<string, number>();
 
 function base64UrlEncode(input: Buffer | string): string {
@@ -38,8 +45,15 @@ export type PresetProduct = "stage-fix-v6";
 export interface PresetDownloadTokenPayload {
 	p: PresetProduct;
 	exp: number; // unix seconds
-	n: string; // nonce
-	t?: string; // transaction id (optional)
+	n: string;   // nonce
+	t?: string;  // transaction id (optional)
+}
+
+export interface EmailDownloadMapping {
+	downloadUrl: string;
+	productName: string;
+	linkValidDays: number;
+	maxUses?: number;
 }
 
 export function createPresetDownloadToken({
@@ -52,9 +66,7 @@ export function createPresetDownloadToken({
 	ttlSeconds: number;
 }): string {
 	const secret = process.env.PRESETS_DOWNLOAD_SIGNING_SECRET;
-	if (!secret) {
-		throw new Error("PRESETS_DOWNLOAD_SIGNING_SECRET is not set");
-	}
+	if (!secret) throw new Error("PRESETS_DOWNLOAD_SIGNING_SECRET is not set");
 
 	const now = Math.floor(Date.now() / 1000);
 	const payload: PresetDownloadTokenPayload = {
@@ -108,27 +120,21 @@ export async function markPresetDownloadTokenUsedUpTo(
 ): Promise<boolean> {
 	const key = `presetdl:${nonce}`;
 	const allowedUses = Math.max(1, Math.floor(maxUses));
-	// Keep the usage-counter around for as long as the token is valid.
-	// Cap to 1 year to avoid unbounded TTL in KV.
 	const ttl = Math.max(1, Math.min(Math.floor(ttlSeconds), 60 * 60 * 24 * 365));
 
 	if (kvEnabled) {
 		try {
 			const count = await kv.incr(key);
-			if (count === 1) {
-				await kv.expire(key, ttl);
-			}
+			if (count === 1) await kv.expire(key, ttl);
 			return count <= allowedUses;
 		} catch (error) {
 			console.error("[PresetDL] KV error, fallback to memory:", error);
-			// fall through
 		}
 	}
 
 	const now = Date.now();
 	const expiresAt = now + ttl * 1000;
-	const recordKey = `${key}:count`;
-	const countKey = `${recordKey}`;
+	const countKey = `${key}:count`;
 	const expiryKey = `${key}:exp`;
 
 	const storedExpiry = usedTokenStore.get(expiryKey);
@@ -142,4 +148,40 @@ export async function markPresetDownloadTokenUsedUpTo(
 	const nextCount = currentCount + 1;
 	usedTokenStore.set(countKey, nextCount);
 	return nextCount <= allowedUses;
+}
+
+// ── Email → download mapping (for the resend flow) ────────────────────────────
+// Stored in KV when a purchase is processed. Key: purchase:{product}:{email}
+
+export async function storeEmailDownloadMapping(
+	email: string,
+	product: string,
+	data: EmailDownloadMapping,
+	ttlSeconds: number
+): Promise<void> {
+	if (!kvEnabled) {
+		console.warn("[PresetDL] KV not available — resend flow will not work for this purchase");
+		return;
+	}
+	const key = `purchase:${product}:${email.toLowerCase().trim()}`;
+	const ttl = Math.max(1, Math.min(Math.floor(ttlSeconds), 60 * 60 * 24 * 365));
+	try {
+		await kv.set(key, data, { ex: ttl });
+	} catch (err) {
+		console.error("[PresetDL] Failed to store email mapping:", err);
+	}
+}
+
+export async function getEmailDownloadMapping(
+	email: string,
+	product: string
+): Promise<EmailDownloadMapping | null> {
+	if (!kvEnabled) return null;
+	const key = `purchase:${product}:${email.toLowerCase().trim()}`;
+	try {
+		return await kv.get<EmailDownloadMapping>(key);
+	} catch (err) {
+		console.error("[PresetDL] Failed to get email mapping:", err);
+		return null;
+	}
 }
