@@ -111,9 +111,3 @@ export const loginRateLimit = rateLimit({
   maxRequests: 5,
 });
 
-// Resend download link — tight to prevent email enumeration
-export const resendRateLimit = rateLimit({
-  name: 'resend',
-  windowMs: 60 * 60 * 1000, // 1 hour
-  maxRequests: 5,
-});

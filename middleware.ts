@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 // Multi-segment paths that should not be indexed
-const NOINDEX_PATHS = [
-  '/shop/stage-fix-v6/download',
-  '/shop/resend',
-]
+const NOINDEX_PATHS: string[] = []
 
 export function middleware(request: NextRequest) {
   const host = request.headers.get('host')
