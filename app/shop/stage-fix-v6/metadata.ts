@@ -1,32 +1,37 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Stage Fix v6 – Preset workflow system for Lightroom & ACR – Wouter.Photo",
+	title: "Stage Fix v6 – Lightroom Presets For Concert, Event & Bad Stage Light – Wouter.Photo",
 	description:
-		"Stage Fix v6 isn’t a one-click look preset. It’s a modular workflow system for Lightroom Classic and Adobe Camera Raw: White Balance → Base → Color Fix → Noise/Detail → Highlights → Finish.",
+		"90 modular presets + 15 resets for Lightroom Classic and Adobe Camera Raw. Built to fix LED green, magenta spill, UV wash, clipped spots and high ISO concert files fast.",
 	keywords: [
 		"Stage Fix",
 		"Lightroom presets",
 		"Lightroom Classic",
 		"Adobe Camera Raw",
 		"concert photography",
+		"concert presets",
+		"event photography presets",
+		"stage lighting presets",
+		"high ISO presets",
 		"LED green cast",
 		"magenta spill",
 		"workflow presets",
+		"concert photography editing",
 		"Wouter Vellekoop",
 	],
 	openGraph: {
-		title: "Stage Fix v6 – Preset workflow system for Lightroom & ACR",
+		title: "Stage Fix v6 – Fix brutal stage light fast",
 		description:
-			"A modular preset system for Lightroom Classic and Adobe Camera Raw that treats editing as a workflow — not a gamble with a look.",
+			"90 modular presets + 15 resets for Lightroom Classic and Adobe Camera Raw. Fix LED green, UV wash, clipped spots and noisy concert files without one-click nonsense.",
 		url: "https://wouter.photo/shop/stage-fix-v6",
 		siteName: "Wouter.Photo",
 		images: [
 			{
-				url: "https://wouter.photo/manifest.json",
-				width: 1200,
-				height: 630,
-				alt: "Stage Fix v6",
+				url: "https://wouter.photo/20251017-2025-10-17_Kane-Ahoy_Wouter-Vellekoop__V1_8693_3x2.jpg",
+				width: 2048,
+				height: 1366,
+				alt: "Kane live at Ahoy photographed by Wouter Vellekoop",
 			},
 		],
 		locale: "en_US",
@@ -35,9 +40,10 @@ export const metadata: Metadata = {
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "Stage Fix v6 – Preset workflow system for Lightroom & ACR",
+		title: "Stage Fix v6 – Fix brutal stage light fast",
 		description:
-			"A modular preset system for Lightroom Classic and Adobe Camera Raw that treats editing as a workflow — not a gamble with a look.",
+			"90 modular presets + 15 resets for Lightroom Classic and Adobe Camera Raw. Built for ugly stage light and fast, consistent edits.",
+		images: ["https://wouter.photo/20251017-2025-10-17_Kane-Ahoy_Wouter-Vellekoop__V1_8693_3x2.jpg"],
 	},
 	alternates: {
 		canonical: "https://wouter.photo/shop/stage-fix-v6",

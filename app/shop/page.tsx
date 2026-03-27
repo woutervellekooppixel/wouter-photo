@@ -20,11 +20,40 @@ export default function ShopOverview() {
 					</div>
 					<h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Shop</h1>
 					<p className="max-w-2xl text-base text-muted-foreground sm:text-lg">
-						Tools om sneller én consistenter te werken.
+						Plugins en presets om sneller én consistenter te werken.
 					</p>
 				</div>
 
 				<div className="mt-10 grid gap-4 lg:grid-cols-2">
+					<Card className="lg:col-span-2">
+						<CardHeader className="space-y-4">
+							<div className="overflow-hidden rounded-xl border border-border bg-background">
+								<Link href="/shop/stage-fix-v6" className="block">
+									<Image
+										src="/20251017-2025-10-17_Kane-Ahoy_Wouter-Vellekoop__V1_8693_3x2.jpg"
+										alt="Stage Fix v6 concert preset system"
+										width={2048}
+										height={1366}
+										className="h-auto w-full"
+									/>
+								</Link>
+							</div>
+							<div className="space-y-1">
+								<CardTitle className="text-xl">Stage Fix v6</CardTitle>
+								<CardDescription>
+									A modular Lightroom Classic and Adobe Camera Raw preset system built for brutal stage light, ugly color casts, clipped spots and fast, consistent delivery.
+								</CardDescription>
+							</div>
+							<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+								<p className="text-sm text-muted-foreground">
+									90 working presets, 15 resets, one install zip.
+								</p>
+								<Button asChild>
+									<Link href="/shop/stage-fix-v6">View details</Link>
+								</Button>
+							</div>
+						</CardHeader>
+					</Card>
 
 					<Card>
 						<CardHeader className="space-y-3">
@@ -75,20 +104,10 @@ export default function ShopOverview() {
 							</Button>
 						</CardHeader>
 					</Card>
-
-					<Card className="lg:col-span-2">
-						<CardHeader className="space-y-3">
-							<div className="space-y-1">
-								<CardTitle className="text-xl">Coming soon</CardTitle>
-								<CardDescription>More presets and tools are in the works.</CardDescription>
-							</div>
-							<Button disabled>Coming soon</Button>
-						</CardHeader>
-					</Card>
 				</div>
 
 				<p className="mt-10 text-sm text-muted-foreground">
-					Photoshop plugin installation is handled via Adobe Exchange and the Creative Cloud desktop app.
+					Photoshop plugins are installed via Adobe Exchange and Creative Cloud. Presets are delivered as a direct download.
 				</p>
 			</div>
 		</main>
