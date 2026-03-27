@@ -4,6 +4,7 @@ import GalleryScroller from '../../../components/GalleryScroller';
 import { getGalleryData } from './gallery-data';
 
 export { generateMetadata };
+export const dynamic = 'force-dynamic';
 
 
 

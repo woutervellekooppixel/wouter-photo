@@ -5,7 +5,7 @@ import { getPortfolioGalleryData } from '@/lib/portfolioGallery'
 import DisableBodyScroll from '@/components/DisableBodyScroll'
 import HeroWordmark from '@/components/HeroWordmark'
 
-export const revalidate = 3600
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Wouter.Photo',

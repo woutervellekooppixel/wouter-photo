@@ -4,6 +4,7 @@ import Link from 'next/link'
 import DisableBodyScroll from '@/components/DisableBodyScroll'
 import SetHeaderHeightVar from '@/components/SetHeaderHeightVar'
 
+export const dynamic = 'force-dynamic'
 
 export default async function PortfolioPage() {
   const data = await getGalleryData()

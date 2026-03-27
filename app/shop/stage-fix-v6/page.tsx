@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import PaddleCheckoutButton from "@/components/PaddleCheckoutButton";
 
 import { metadata as pageMetadata } from "./metadata";
 
@@ -120,7 +119,7 @@ const faqs = [
 	},
 	{
 		q: "How do I get the download?",
-		a: "After purchase, you’ll receive an email with your receipt, download link, and instructions.",
+		a: "After purchase through Payhip, you’ll receive your receipt, download link, and installation instructions by email.",
 	},
 	{
 		q: "I didn’t receive the email — what should I do?",
@@ -141,8 +140,8 @@ const faqs = [
 ];
 
 export default function StageFixV6Page() {
-	const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.BASE_URL || "https://wouter.photo";
-	const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID_STAGE_FIX_V6 || "pri_01km5eyggrxx4bvzbgc7gj7jem";
+	const payhipUrl = process.env.NEXT_PUBLIC_PAYHIP_STAGE_FIX_URL || "https://payhip.com/";
+	const hasPayhipUrl = payhipUrl !== "https://payhip.com/";
 	const faqSchema = {
 		"@context": "https://schema.org",
 		"@type": "FAQPage",
@@ -203,16 +202,19 @@ export default function StageFixV6Page() {
 						</div>
 
 						<div className="flex flex-col gap-3 sm:flex-row">
-							<PaddleCheckoutButton
-								label="Buy Stage Fix v6"
-								priceId={priceId}
-								successUrl={`${baseUrl}/shop/stage-fix-v6/thank-you`}
-								className="sm:w-auto"
-							/>
+							<Button asChild size="lg" className="sm:w-auto" disabled={!hasPayhipUrl}>
+								<a href={payhipUrl} target="_blank" rel="noreferrer">
+									Buy Stage Fix v6
+								</a>
+							</Button>
 							<Button asChild size="lg" variant="outline" className="sm:w-auto">
 								<a href="#how">How it works</a>
 							</Button>
 						</div>
+
+						{!hasPayhipUrl ? (
+							<p className="text-sm text-destructive">Set `NEXT_PUBLIC_PAYHIP_STAGE_FIX_URL` to enable the buy button.</p>
+						) : null}
 
 						<div className="text-xs text-muted-foreground">
 							<span className="font-medium text-foreground">Policies:</span>{" "}
