@@ -5,83 +5,101 @@ import { metadata as pageMetadata } from "./metadata";
 
 export const metadata: Metadata = pageMetadata;
 
+import Image from "next/image";
+
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PluginPreviewLightbox } from "@/components/PluginPreviewLightbox";
 import { TestimonialsCarousel } from "@/components/TestimonialsCarousel";
 import { ADOBE_EXCHANGE_BATCHCROP_URL } from "@/lib/adobeExchange";
 
-const usps = [
-	"Batch crop (bulk crop) large photo sets",
-	"Crop multiple images consistently",
-	"Fast, simple install",
-	"Works with the desktop version of Adobe Photoshop",
-	"No technical knowledge needed",
-	"Paid plugin ($15)",
-];
+// ─── Update this when the price changes ───────────────────────────────────────
+const PRICE = "$15";
+const PRICE_ORIGINAL = "$20";
 
 const steps = [
 	{
-		title: "Install the plugin",
-		description: "Get it from Adobe Exchange and install it in Photoshop. (Details depend on your Photoshop version.)",
+		step: "01",
+		title: "Install",
+		description: "Get it from Adobe Exchange and install in Photoshop via Creative Cloud. One restart and it's ready.",
 	},
 	{
-		title: "Pick your input",
-		description:
-			"Select the folder or set you want to process. The plugin runs through your selection as a batch (great for hundreds of photos).",
-	},
-	{
+		step: "02",
 		title: "Set your crop",
-		description: "Define your crop once, then apply it consistently across your entire set.",
+		description:
+			"Define the crop once — dimensions, position, whatever the job needs. BatchCrop applies it consistently to every file in the set.",
+	},
+	{
+		step: "03",
+		title: "Run the batch",
+		description:
+			"Select your folder or set and run. Every image gets the same crop. No clicking through files one by one.",
+	},
+];
+
+const features = [
+	{
+		title: "Set once, apply everywhere",
+		body: "Define your crop parameters once. BatchCrop applies them consistently across the entire set — no per-file adjustments, no drift.",
+	},
+	{
+		title: "Works on large sets",
+		body: "Built for hundreds of files. Event coverage, product catalogs, headshot sessions — anything where manual cropping is too slow.",
+	},
+	{
+		title: "Consistent output",
+		body: "Every image in the set gets the same crop. No tiny differences between frames, no manual checks after the fact.",
+	},
+	{
+		title: "Simpler than Actions",
+		body: "Photoshop Actions can work, but they're brittle when inputs vary. BatchCrop focuses specifically on repeatable cropping with a straightforward workflow.",
+	},
+	{
+		title: "Works on desktop Photoshop",
+		body: "macOS and Windows. Install once via Adobe Exchange and Creative Cloud.",
+	},
+	{
+		title: "One-time purchase",
+		body: `${PRICE} on Adobe Exchange. No subscription, no license key, no expiry. Buy it once, use it.`,
 	},
 ];
 
 const faqs = [
 	{
 		q: "Can I crop multiple images at once in Photoshop?",
-		a: "Yes. BatchCrop is made for bulk/batch cropping: you set your crop once and apply it across a set so you don’t have to repeat the same steps per file.",
+		a: "Yes. BatchCrop is built for bulk/batch cropping: you set your crop once and apply it across a set so you don't have to repeat the same steps per file.",
 	},
 	{
 		q: "Is this useful for a whole folder of photos?",
-		a: "That’s the idea: pick an input set (often a folder/selection) and run the batch. It’s designed for large sets where manual cropping would be too slow.",
-	},
-	{
-		q: "How do I apply the same crop to hundreds of photos?",
-		a: "That’s what BatchCrop is for. You configure the crop once and run the batch so every image gets the same consistent crop without doing it manually per file.",
-	},
-	{
-		q: "How do I install the plugin?",
-		a:
-			"Install it via Adobe Exchange. In general: open the Adobe Exchange listing, click to install (you may be prompted to sign in), then complete the install in the Creative Cloud desktop app. Restart Photoshop after installation. The exact menu/location can vary by Photoshop version.",
-	},
-	{
-		q: "I installed it from Adobe Exchange — where do I find it in Photoshop?",
-		a:
-			"After installing, restart Photoshop. The plugin usually appears under the Plugins menu or under Extensions (the exact place depends on your Photoshop version). If you don’t see it, check that the Creative Cloud desktop app shows it as installed and try restarting again.",
-	},
-	{
-		q: "Which Photoshop versions are supported?",
-		a: "Tested with the desktop version of Adobe Photoshop. It may work on other versions, but that’s not guaranteed.",
-	},
-	{
-		q: "Does this work on Photoshop mobile / iPad?",
-		a: "No. This plugin is made for the desktop version of Photoshop (macOS/Windows). It doesn’t run on Photoshop for iPad or other mobile/web versions.",
-	},
-	{
-		q: "Can I control the crop settings?",
-		a: "Yes. You set the crop parameters in the plugin, then it applies them in batch.",
+		a: "That's the core use case. Pick your input set, configure the crop once, run the batch. Designed for large sets where manual cropping would take too long.",
 	},
 	{
 		q: "Is this a good workflow for headshots, products, or event photos?",
-		a: "Yes — anywhere you need a consistent crop across a set (for example: headshots, product catalog images, or a full event/gallery edit).",
+		a: "Yes — anywhere you need a consistent crop across a set. Headshots, product catalog images, event galleries, real estate photography. Same crop, every file.",
 	},
 	{
-		q: "Is this the same as Actions / Batch in Photoshop?",
+		q: "Is this the same as Photoshop Actions?",
 		a: "Actions can work, but they often take more setup and can be brittle when your inputs vary. BatchCrop focuses specifically on repeatable cropping for large sets with a simple workflow.",
 	},
 	{
+		q: "How do I install it?",
+		a: "Open the Adobe Exchange listing, click install (you may be prompted to sign in), then complete the install in the Creative Cloud desktop app. Restart Photoshop after installation.",
+	},
+	{
+		q: "Where do I find it in Photoshop after installing?",
+		a: "After restarting Photoshop, look under the Plugins menu or Extensions — the exact location depends on your version. If it's not there, check that Creative Cloud shows it as installed.",
+	},
+	{
+		q: "Which Photoshop versions are supported?",
+		a: "Tested with the desktop version of Adobe Photoshop on macOS and Windows. It may work on other versions, but that's not guaranteed. Not available for Photoshop on iPad.",
+	},
+	{
+		q: "Can I control the crop settings?",
+		a: "Yes. You define the crop parameters in the plugin, then it applies them in batch.",
+	},
+	{
 		q: "How much does it cost?",
-		a: "BatchCrop costs $15 (USD) on Adobe Exchange.",
+		a: `BatchCrop is ${PRICE} (USD) on Adobe Exchange. One-time purchase.`,
 	},
 ];
 
@@ -92,8 +110,7 @@ const testimonials = [
 		role: "Event photographer",
 	},
 	{
-		quote:
-			"The consistency is the killer feature. No more tiny crop differences between images — and way faster than doing it manually.",
+		quote: "The consistency is the killer feature. No more tiny crop differences between images — and way faster than doing it manually.",
 		name: "Thomas Bakker",
 		role: "Studio assistant",
 	},
@@ -116,10 +133,7 @@ export default function BatchCropShopPage() {
 		mainEntity: faqs.map((faq) => ({
 			"@type": "Question",
 			name: faq.q,
-			acceptedAnswer: {
-				"@type": "Answer",
-				text: faq.a,
-			},
+			acceptedAnswer: { "@type": "Answer", text: faq.a },
 		})),
 	};
 
@@ -143,26 +157,19 @@ export default function BatchCropShopPage() {
 		"@context": "https://schema.org",
 		"@type": "BreadcrumbList",
 		itemListElement: [
-			{
-				"@type": "ListItem",
-				position: 1,
-				name: "Home",
-				item: "https://wouter.photo/",
-			},
-			{
-				"@type": "ListItem",
-				position: 2,
-				name: "Shop",
-				item: "https://wouter.photo/shop",
-			},
-			{
-				"@type": "ListItem",
-				position: 3,
-				name: "BatchCrop",
-				item: "https://wouter.photo/shop/batchcrop",
-			},
+			{ "@type": "ListItem", position: 1, name: "Home", item: "https://wouter.photo/" },
+			{ "@type": "ListItem", position: 2, name: "Shop", item: "https://wouter.photo/shop" },
+			{ "@type": "ListItem", position: 3, name: "BatchCrop", item: "https://wouter.photo/shop/batchcrop" },
 		],
 	};
+
+	const BuyButton = ({ label = `Get it on Adobe Exchange — ${PRICE}`, className = "" }: { label?: string; className?: string }) => (
+		<Button asChild size="lg" className={className}>
+			<a href={ADOBE_EXCHANGE_BATCHCROP_URL} target="_blank" rel="noopener noreferrer">
+				{label}
+			</a>
+		</Button>
+	);
 
 	return (
 		<main className="min-h-screen bg-background text-foreground">
@@ -171,82 +178,133 @@ export default function BatchCropShopPage() {
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
 			<div className="mx-auto w-full max-w-6xl px-6 py-14 sm:py-20">
-				<section className="grid gap-10 lg:grid-cols-2 lg:items-center">
-					<div className="space-y-6">
-						<div className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground">
-							Photoshop plugin • Batch workflow
-						</div>
-						<div className="space-y-3">
-							<h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">BatchCrop — batch crop photos in Photoshop</h1>
-							<p className="text-base text-muted-foreground sm:text-lg">
-								Bulk/batch crop a whole photo set consistently — set your crop once, run the batch, and stop repeating the same manual steps.
+
+				{/* ── Hero ─────────────────────────────────────────────────────────── */}
+				<section className="overflow-hidden rounded-3xl border border-border bg-card">
+					<div className="grid gap-8 px-6 pt-8 sm:px-8 sm:pt-10 lg:grid-cols-2 lg:items-center">
+						<div className="space-y-5">
+							<p className="text-sm font-medium uppercase tracking-[0.22em] text-muted-foreground">
+								BatchCrop — Photoshop Plugin
 							</p>
+							<div className="space-y-3">
+								<h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+									Set your crop once. Run the batch.
+								</h1>
+								<p className="text-base text-muted-foreground sm:text-lg">
+									Batch crop a whole photo set in Photoshop with consistent results — without clicking
+									through files one by one.
+								</p>
+								<p className="text-sm text-muted-foreground">
+									Built for event photographers, product sets, headshots and anything else where
+									manually cropping hundreds of images is not a real option.
+								</p>
+							</div>
+
+							<div className="flex items-baseline gap-3">
+								<span className="text-3xl font-semibold tracking-tight">{PRICE}</span>
+								<span className="text-sm text-muted-foreground line-through">{PRICE_ORIGINAL}</span>
+								<span className="text-sm text-muted-foreground">· One-time on Adobe Exchange</span>
+							</div>
+
+							<div className="flex flex-col gap-3 sm:flex-row">
+								<BuyButton label={`Get it on Adobe Exchange — ${PRICE}`} />
+								<Button asChild size="lg" variant="outline">
+									<a href="#how">How it works</a>
+								</Button>
+							</div>
 						</div>
 
-						<div className="flex items-baseline gap-3">
-							<span className="text-3xl font-semibold tracking-tight text-foreground">$15</span>
-							<span className="text-sm text-muted-foreground line-through">$20</span>
+						<div className="lg:py-6 lg:pr-2">
+							<PluginPreviewLightbox
+								src="/batchcrop.png"
+								alt="BatchCrop Photoshop plugin — batch crop interface"
+								width={1360}
+								height={800}
+								priority
+							/>
 						</div>
-
-						<div className="flex flex-col gap-3 sm:flex-row">
-							<Button asChild size="lg" className="sm:w-auto">
-								<a href={ADOBE_EXCHANGE_BATCHCROP_URL} target="_blank" rel="noopener noreferrer">
-									Get it on Adobe Exchange
-								</a>
-							</Button>
-							<Button asChild size="lg" variant="outline" className="sm:w-auto">
-								<a href="#how">How it works</a>
-							</Button>
-						</div>
-
-						<ul className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-							{usps.map((usp) => (
-								<li key={usp} className="flex items-start gap-2">
-									<span className="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full bg-muted-foreground opacity-70" />
-									<span>{usp}</span>
-								</li>
-							))}
-						</ul>
 					</div>
 
-					<div>
-						<PluginPreviewLightbox
-							src="/batchcrop.png"
-							alt="BatchCrop Photoshop plugin preview (batch crop multiple photos)"
-							width={1360}
-							height={800}
-							priority
-						/>
-					</div>
-				</section>
-
-				<section id="how" className="mt-12 sm:mt-16">
-					<div className="space-y-2">
-						<h2 className="text-2xl font-semibold tracking-tight">In 3 steps</h2>
-						<p className="text-sm text-muted-foreground">Keep it simple: install, configure, run.</p>
-					</div>
-
-					<div className="mt-6 grid gap-4 lg:grid-cols-3">
-						{steps.map((step, idx) => (
-							<Card key={step.title} className="bg-card">
-								<CardHeader className="space-y-2">
-									<div className="flex items-center gap-3">
-										<div className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-sm font-medium">
-											{idx + 1}
-										</div>
-										<CardTitle className="text-lg">{step.title}</CardTitle>
-									</div>
-									<CardDescription className="text-sm">{step.description}</CardDescription>
-								</CardHeader>
-							</Card>
+					{/* Steps */}
+					<div id="how" className="grid gap-3 px-6 pb-8 pt-6 sm:grid-cols-3 sm:px-8 sm:pb-10">
+						{steps.map((s) => (
+							<div key={s.step} className="rounded-2xl border border-border bg-background/70 px-4 py-4">
+								<p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">{s.step}</p>
+								<p className="mt-2 text-base font-semibold tracking-tight">{s.title}</p>
+								<p className="mt-1 text-sm leading-relaxed text-muted-foreground">{s.description}</p>
+							</div>
 						))}
 					</div>
 				</section>
 
-				<section className="mt-12 sm:mt-16">
+				{/* ── What you get ─────────────────────────────────────────────────── */}
+				<section className="mt-10 sm:mt-14">
+					<div className="rounded-3xl border border-border bg-card px-6 py-8 sm:px-8 sm:py-10">
+						<h2 className="text-2xl font-semibold tracking-tight">What you get</h2>
+						<p className="mt-1 text-sm text-muted-foreground">
+							One plugin. Consistent crops across the whole set.
+						</p>
+						<div className="mt-6 grid gap-3 sm:grid-cols-2">
+							{features.map((f) => (
+								<div key={f.title} className="rounded-2xl border border-border bg-background/70 px-5 py-4">
+									<p className="text-sm font-semibold tracking-tight">{f.title}</p>
+									<p className="mt-1 text-sm leading-relaxed text-muted-foreground">{f.body}</p>
+								</div>
+							))}
+						</div>
+					</div>
+				</section>
+
+				{/* ── Why I built this ─────────────────────────────────────────────── */}
+				<section className="mt-10 sm:mt-14">
+					<Card className="overflow-hidden border-border bg-card">
+						<CardContent className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[160px_1fr] lg:items-start">
+							<div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-border bg-muted/20 lg:mt-1">
+								<Image
+									src="/2022_NSJF-Fri_1179.jpg"
+									alt="Wouter Vellekoop"
+									fill
+									sizes="(max-width: 1024px) 160px, 160px"
+									className="object-cover"
+								/>
+							</div>
+							<div className="space-y-4">
+								<div>
+									<p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+										Why I built this
+									</p>
+									<h2 className="mt-1 text-xl font-semibold tracking-tight">
+										Built because 300 photos don't crop themselves.
+									</h2>
+								</div>
+								<p className="text-sm leading-relaxed text-muted-foreground">
+									I am Wouter Vellekoop, a concert and event photographer. After a busy shoot you
+									can easily end up with several hundred photos that all need the same crop before
+									delivery — headshots for a client, product images for a catalog, gallery selects
+									for a venue.
+								</p>
+								<p className="text-sm leading-relaxed text-muted-foreground">
+									Doing that manually in Photoshop, one file at a time, is slow and inconsistent.
+									Actions work but they're brittle — one file with slightly different dimensions and
+									the whole batch breaks. I built BatchCrop to handle this cleanly: set the crop
+									once, run it across the set, get consistent output without babysitting the process.
+								</p>
+								<p className="text-sm leading-relaxed text-muted-foreground">
+									It's not glamorous, but it saves real time on every job where consistency matters.
+								</p>
+								<div className="pt-2">
+									<BuyButton />
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+				</section>
+
+				{/* ── Testimonials ─────────────────────────────────────────────────── */}
+				<section className="mt-10 sm:mt-14">
 					<Card>
-						<CardHeader className="space-y-2">
-							<CardTitle className="text-2xl">Testimonials</CardTitle>
+						<CardHeader className="space-y-1">
+							<CardTitle className="text-2xl">What people say</CardTitle>
 						</CardHeader>
 						<CardContent>
 							<TestimonialsCarousel items={testimonials} />
@@ -254,11 +312,12 @@ export default function BatchCropShopPage() {
 					</Card>
 				</section>
 
-				<section className="mt-12 sm:mt-16">
+				{/* ── FAQ ──────────────────────────────────────────────────────────── */}
+				<section className="mt-10 sm:mt-14">
 					<div className="overflow-hidden rounded-2xl border border-border bg-card">
-						<div className="space-y-2 px-6 py-5">
+						<div className="space-y-1 px-6 py-5">
 							<h2 className="text-2xl font-semibold tracking-tight">FAQ</h2>
-							<p className="text-sm text-muted-foreground">Short and practical.</p>
+							<p className="text-sm text-muted-foreground">Short answers before you buy.</p>
 						</div>
 						<div className="h-px bg-border" />
 						{faqs.map((faq, idx) => (
@@ -266,39 +325,47 @@ export default function BatchCropShopPage() {
 								<summary className="cursor-pointer list-none px-6 py-5 text-sm font-medium outline-none transition-colors hover:bg-accent/40">
 									<div className="flex items-center justify-between gap-4">
 										<span>{faq.q}</span>
-										<span className="text-muted-foreground transition-transform group-open:rotate-45">+</span>
+										<span className="shrink-0 text-muted-foreground transition-transform group-open:rotate-45">+</span>
 									</div>
 								</summary>
-								<div className="px-6 pb-6 text-sm text-muted-foreground">{faq.a}</div>
-								{idx !== faqs.length - 1 ? <div className="h-px bg-border" /> : null}
+								<div className="px-6 pb-6 text-sm leading-relaxed text-muted-foreground">{faq.a}</div>
+								{idx !== faqs.length - 1 && <div className="h-px bg-border" />}
 							</details>
 						))}
 					</div>
 				</section>
 
-				<section className="mt-12 sm:mt-16">
-					<div className="rounded-2xl border border-border bg-card p-8 sm:p-10">
-						<div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-							<div className="space-y-2">
-								<h2 className="text-2xl font-semibold tracking-tight">Get it</h2>
-								<p className="text-sm text-muted-foreground">
-									Tested with the desktop version of Adobe Photoshop. Install via Adobe Exchange and the Creative Cloud desktop app.
+				{/* ── Final CTA ────────────────────────────────────────────────────── */}
+				<section className="mt-10 sm:mt-14">
+					<div className="rounded-3xl border border-border bg-card p-8 sm:p-10">
+						<div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+							<div className="max-w-2xl space-y-3">
+								<h2 className="text-3xl font-semibold tracking-tight">
+									Stop cropping one by one.
+								</h2>
+								<p className="text-sm text-muted-foreground sm:text-base">
+									Set your crop once. Run the batch. Get consistent results across the whole set —
+									whether that's 20 or 2000 images.
 								</p>
 								<p className="text-sm text-muted-foreground">
-									Questions? Email{" "}
+									Questions before buying?{" "}
 									<a href="mailto:hello@wouter.photo" className="underline underline-offset-4">
 										hello@wouter.photo
 									</a>
 								</p>
 							</div>
-							<Button asChild size="lg" className="sm:w-auto">
-								<a href={ADOBE_EXCHANGE_BATCHCROP_URL} target="_blank" rel="noopener noreferrer">
-									Open Adobe Exchange
-								</a>
-							</Button>
+							<div className="flex shrink-0 flex-col items-start gap-2 lg:items-end">
+								<div className="flex items-baseline gap-2">
+									<span className="text-3xl font-semibold tracking-tight">{PRICE}</span>
+									<span className="text-sm text-muted-foreground line-through">{PRICE_ORIGINAL}</span>
+								</div>
+								<p className="text-sm text-muted-foreground">One-time on Adobe Exchange.</p>
+								<BuyButton label="Get it on Adobe Exchange" />
+							</div>
 						</div>
 					</div>
 				</section>
+
 			</div>
 		</main>
 	);

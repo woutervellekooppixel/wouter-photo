@@ -5,93 +5,101 @@ import { metadata as pageMetadata } from "./metadata";
 
 export const metadata: Metadata = pageMetadata;
 
+import Image from "next/image";
+
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PluginPreviewLightbox } from "@/components/PluginPreviewLightbox";
 import { TestimonialsCarousel } from "@/components/TestimonialsCarousel";
 import { ADOBE_EXCHANGE_EXPORT_EVERY_X_URL } from "@/lib/adobeExchange";
 
-const usps = [
-	"Export (slice) a canvas every X pixels",
-	"Perfect alignment across exports",
-	"Instagram carousel-ready panels (e.g. 1080px)",
-	"No guides or repetitive manual work",
-	"Paid plugin ($10)",
-];
+// ─── Update this when the price changes ───────────────────────────────────────
+const PRICE = "$10";
+const PRICE_ORIGINAL = "$15";
 
 const steps = [
 	{
+		step: "01",
 		title: "Install",
-		description: "Get it from Adobe Exchange and install it in Photoshop.",
+		description: "Get it from Adobe Exchange and install in Photoshop via Creative Cloud. One restart and it's ready.",
 	},
 	{
+		step: "02",
 		title: "Set X",
-		description: "Choose the pixel interval (e.g. 1080px for an Instagram carousel panel width).",
+		description:
+			"Choose the pixel interval — 1080px for Instagram carousels, 1920px for web banners, whatever your layout needs.",
 	},
 	{
+		step: "03",
 		title: "Export",
-		description: "Run once and get separate files for each segment.",
+		description:
+			"Run once. Every panel exports as a separate file at full document resolution. Perfectly aligned, every time.",
+	},
+];
+
+const features = [
+	{
+		title: "Any pixel interval",
+		body: "Set X to whatever your layout needs — 1080px for carousels, 1920px for banners, or anything in between. One setting, consistent output.",
+	},
+	{
+		title: "Perfect alignment",
+		body: "Every panel starts exactly where the previous one ended. No overlap, no gap, no manual adjustment after the fact.",
+	},
+	{
+		title: "Full resolution output",
+		body: "Exports at the document's pixel resolution. No surprise downscaling, no quality loss. What you designed is what you get.",
+	},
+	{
+		title: "Replaces the guide workflow",
+		body: "No guides. No manual slicing. No repetitive File › Export As per section. One operation handles the whole document.",
+	},
+	{
+		title: "Works on very wide canvases",
+		body: "Export As and Save for Web can behave unexpectedly on extremely wide files. Export Every X handles them reliably.",
+	},
+	{
+		title: "One-time purchase",
+		body: `${PRICE} on Adobe Exchange. No subscription, no license key, no expiry. Buy it once, use it.`,
 	},
 ];
 
 const faqs = [
 	{
 		q: "Can I export Instagram carousel slices (1080px / 1080×1350)?",
-		a: "Yes. Set X to 1080px to export a long design into 1080px-wide panels. Your document height can be whatever you need (e.g. 1080×1350 per panel).",
+		a: "Yes. Set X to 1080px to export a long design into 1080px-wide panels. Your document height can be whatever you need.",
 	},
 	{
 		q: "How do I split a panorama into equal parts in Photoshop?",
-		a: "If you have one very wide panorama/canvas and want evenly sized exports, set X (for example: 1920px or 1080px) and export. You’ll get one file per segment with consistent alignment.",
-	},
-	{
-		q: "Can I export 1920px-wide segments for web headers or banners?",
-		a: "Yes. X is the pixel interval, so you can set it to common widths like 1920px (or any value you need) and export a wide design as separate files.",
+		a: "Set X to your desired panel width (for example 1920px) and run export. You get one file per segment with consistent alignment across all of them.",
 	},
 	{
 		q: "How many panels will I get?",
-		a: "It depends on your document width and the X value. A simple rule of thumb is: number of panels ≈ document width ÷ X (rounded up).",
-	},
-	{
-		q: "My Photoshop document is extremely wide. Export As / Save for Web struggles — can this help?",
-		a: "That’s exactly the use case. With extremely wide documents, some users run into export quirks (including unexpectedly low-resolution output) with Export As / Save for Web. Instead of relying on a slice-heavy workflow or manually exporting sections, Export Every X exports your canvas in consistent pixel intervals (panels) at the document’s pixel resolution, which is often more reliable for very wide files.",
+		a: "Document width ÷ X, rounded up. A 3240px-wide canvas with X set to 1080px gives you three panels.",
 	},
 	{
 		q: "Why not just use Photoshop slices?",
-		a: "For very wide documents, slice-based workflows can get tedious (guides, manual slice management) and some users run into reliability/performance issues when exporting many slices. Also, Save for Web / Export As can be hit-or-miss on extremely wide files. Export Every X focuses on fast, consistent panel exports by pixel interval.",
+		a: "For very wide documents, slice-based workflows get tedious fast — guides, manual slice management, and Save for Web can be unreliable on big files. Export Every X focuses on fast, consistent panel exports by pixel interval.",
 	},
 	{
 		q: "Is this the same as artboards?",
-		a: "Not quite. Artboards are great when you can structure your design as separate boards. Export Every X is aimed at a single wide canvas where you want evenly sized exports (for example: carousel panels every 1080px).",
+		a: "Not quite. Artboards are great when you can structure your design as separate boards from the start. Export Every X is for a single wide canvas where you want evenly sized exports without restructuring the file.",
 	},
 	{
-		q: "How do I install the plugin?",
-		a:
-			"Install it via Adobe Exchange. In general: open the Adobe Exchange listing, click to install (you may be prompted to sign in), then complete the install in the Creative Cloud desktop app. Restart Photoshop after installation. The exact menu/location can vary by Photoshop version.",
+		q: "How do I install it?",
+		a: "Open the Adobe Exchange listing, click install (you may be prompted to sign in), then complete the install in the Creative Cloud desktop app. Restart Photoshop after installation.",
 	},
 	{
-		q: "I installed it from Adobe Exchange — where do I find it in Photoshop?",
-		a:
-			"After installing, restart Photoshop. The plugin usually appears under the Plugins menu or under Extensions (the exact place depends on your Photoshop version). If you don’t see it, check that the Creative Cloud desktop app shows it as installed and try restarting again.",
+		q: "Where do I find it in Photoshop after installing?",
+		a: "After restarting Photoshop, look under the Plugins menu or Extensions — the exact location depends on your version. If it's not there, check that Creative Cloud shows it as installed.",
 	},
 	{
 		q: "Which Photoshop versions are supported?",
-		a: "Tested with the desktop version of Adobe Photoshop. It may work on other versions, but that’s not guaranteed.",
-	},
-	{
-		q: "Does this work on Photoshop mobile / iPad?",
-		a: "No. This plugin is made for the desktop version of Photoshop (macOS/Windows). It doesn’t run on Photoshop for iPad or other mobile/web versions.",
-	},
-	{
-		q: "Can I set the pixel interval myself?",
-		a: "Yes. You define the X value (pixels per export segment) in the plugin.",
-	},
-	{
-		q: "Does it keep the export resolution?",
-		a: "It exports each segment as its own file at the document’s pixel resolution. Pick X to match your desired panel width (e.g. 1080px).",
+		a: "Tested with the desktop version of Adobe Photoshop on macOS and Windows. It may work on other versions, but that's not guaranteed. Not available for Photoshop on iPad.",
 	},
 	{
 		q: "How much does it cost?",
-		a: "Export Every X costs $10 (USD) on Adobe Exchange.",
+		a: `Export Every X is ${PRICE} (USD) on Adobe Exchange. One-time purchase.`,
 	},
 ];
 
@@ -107,7 +115,7 @@ const testimonials = [
 		role: "Graphic designer",
 	},
 	{
-		quote: "Splitting ultra-wide banners into 1920px segments used to be a pain. Now it’s predictable and fast.",
+		quote: "Splitting ultra-wide banners into 1920px segments used to be a pain. Now it's predictable and fast.",
 		name: "Eva Janssen",
 		role: "Web marketer",
 	},
@@ -125,10 +133,7 @@ export default function ExportEveryXShopPage() {
 		mainEntity: faqs.map((faq) => ({
 			"@type": "Question",
 			name: faq.q,
-			acceptedAnswer: {
-				"@type": "Answer",
-				text: faq.a,
-			},
+			acceptedAnswer: { "@type": "Answer", text: faq.a },
 		})),
 	};
 
@@ -152,26 +157,19 @@ export default function ExportEveryXShopPage() {
 		"@context": "https://schema.org",
 		"@type": "BreadcrumbList",
 		itemListElement: [
-			{
-				"@type": "ListItem",
-				position: 1,
-				name: "Home",
-				item: "https://wouter.photo/",
-			},
-			{
-				"@type": "ListItem",
-				position: 2,
-				name: "Shop",
-				item: "https://wouter.photo/shop",
-			},
-			{
-				"@type": "ListItem",
-				position: 3,
-				name: "Export Every X",
-				item: "https://wouter.photo/shop/export-every-x",
-			},
+			{ "@type": "ListItem", position: 1, name: "Home", item: "https://wouter.photo/" },
+			{ "@type": "ListItem", position: 2, name: "Shop", item: "https://wouter.photo/shop" },
+			{ "@type": "ListItem", position: 3, name: "Export Every X", item: "https://wouter.photo/shop/export-every-x" },
 		],
 	};
+
+	const BuyButton = ({ label = `Get it on Adobe Exchange — ${PRICE}`, className = "" }: { label?: string; className?: string }) => (
+		<Button asChild size="lg" className={className}>
+			<a href={ADOBE_EXCHANGE_EXPORT_EVERY_X_URL} target="_blank" rel="noopener noreferrer">
+				{label}
+			</a>
+		</Button>
+	);
 
 	return (
 		<main className="min-h-screen bg-background text-foreground">
@@ -180,87 +178,77 @@ export default function ExportEveryXShopPage() {
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
 			<div className="mx-auto w-full max-w-6xl px-6 py-14 sm:py-20">
-				<section className="grid gap-10 lg:grid-cols-2 lg:items-center">
-					<div className="space-y-6">
-						<div className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground">
-							Photoshop plugin • Export
-						</div>
-						<div className="space-y-3">
-							<h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Export Every X — Slice export plugin for Photoshop</h1>
-							<p className="text-base text-muted-foreground sm:text-lg">
-								Export (slice) huge wide Photoshop documents into panels every X pixels — perfect for Instagram carousel exports (e.g. 1080px).
+
+				{/* ── Hero ─────────────────────────────────────────────────────────── */}
+				<section className="overflow-hidden rounded-3xl border border-border bg-card">
+					<div className="grid gap-8 px-6 pt-8 sm:px-8 sm:pt-10 lg:grid-cols-2 lg:items-center">
+						<div className="space-y-5">
+							<p className="text-sm font-medium uppercase tracking-[0.22em] text-muted-foreground">
+								Export Every X — Photoshop Plugin
 							</p>
+							<div className="space-y-3">
+								<h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+									One canvas. Clean panels.
+								</h1>
+								<p className="text-base text-muted-foreground sm:text-lg">
+									Slice a wide Photoshop document into evenly sized panels in one operation. No guides,
+									no manual cropping, no repetitive File › Export As.
+								</p>
+								<p className="text-sm text-muted-foreground">
+									Built for Instagram carousels, web banners, panoramic layouts and anything else
+									where Photoshop's built-in export workflow starts to feel like a workaround.
+								</p>
+							</div>
+
+							<div className="flex items-baseline gap-3">
+								<span className="text-3xl font-semibold tracking-tight">{PRICE}</span>
+								<span className="text-sm text-muted-foreground line-through">{PRICE_ORIGINAL}</span>
+								<span className="text-sm text-muted-foreground">· One-time on Adobe Exchange</span>
+							</div>
+
+							<div className="flex flex-col gap-3 sm:flex-row">
+								<BuyButton label={`Get it on Adobe Exchange — ${PRICE}`} />
+								<Button asChild size="lg" variant="outline">
+									<a href="#how">How it works</a>
+								</Button>
+							</div>
 						</div>
 
-						<div className="flex items-baseline gap-3">
-							<span className="text-3xl font-semibold tracking-tight text-foreground">$10</span>
-							<span className="text-sm text-muted-foreground line-through">$15</span>
+						<div className="lg:py-6 lg:pr-2">
+							<PluginPreviewLightbox
+								src="/cropevery.png"
+								alt="Export Every X Photoshop plugin — slice export interface"
+								width={2990}
+								height={1766}
+								priority
+							/>
 						</div>
-
-						<div className="flex flex-col gap-3 sm:flex-row">
-							<Button asChild size="lg" className="sm:w-auto">
-								<a href={ADOBE_EXCHANGE_EXPORT_EVERY_X_URL} target="_blank" rel="noopener noreferrer">
-									Get it on Adobe Exchange
-								</a>
-							</Button>
-							<Button asChild size="lg" variant="outline" className="sm:w-auto">
-								<a href="#how">How it works</a>
-							</Button>
-						</div>
-
-						<ul className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-							{usps.map((usp) => (
-								<li key={usp} className="flex items-start gap-2">
-									<span className="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full bg-muted-foreground opacity-70" />
-									<span>{usp}</span>
-								</li>
-							))}
-						</ul>
 					</div>
 
-					<div>
-						<PluginPreviewLightbox
-							src="/cropevery.png"
-							alt="Export Every X Photoshop plugin preview (export 1080px carousel slices)"
-							width={2990}
-							height={1766}
-							priority
-						/>
+					{/* Steps */}
+					<div id="how" className="grid gap-3 px-6 pb-8 pt-6 sm:grid-cols-3 sm:px-8 sm:pb-10">
+						{steps.map((s) => (
+							<div key={s.step} className="rounded-2xl border border-border bg-background/70 px-4 py-4">
+								<p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">{s.step}</p>
+								<p className="mt-2 text-base font-semibold tracking-tight">{s.title}</p>
+								<p className="mt-1 text-sm leading-relaxed text-muted-foreground">{s.description}</p>
+							</div>
+						))}
 					</div>
 				</section>
 
-				<section id="how" className="mt-12 sm:mt-16">
-					<div className="space-y-2">
-						<h2 className="text-2xl font-semibold tracking-tight">How it works</h2>
-						<p className="text-sm text-muted-foreground">One operation from start to export.</p>
-					</div>
-
-					<div className="mt-6 grid gap-4 lg:grid-cols-3">
-						{steps.map((step, idx) => (
-							<Card key={step.title} className="bg-card">
-								<CardHeader className="space-y-2">
-									<div className="flex items-center gap-3">
-										<div className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-sm font-medium">
-											{idx + 1}
-										</div>
-										<CardTitle className="text-lg">{step.title}</CardTitle>
-									</div>
-									<CardDescription className="text-sm">{step.description}</CardDescription>
-								</CardHeader>
-							</Card>
-						))}
-					</div>
-
-					<div className="mt-6 rounded-2xl border border-border bg-card p-6 sm:p-8">
+				{/* ── Demo PSD ─────────────────────────────────────────────────────── */}
+				<section className="mt-10 sm:mt-14">
+					<div className="rounded-3xl border border-border bg-card px-6 py-6 sm:px-8 sm:py-8">
 						<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-							<div className="space-y-2">
-								<p className="text-sm font-medium text-foreground">Demo file</p>
-								<p className="text-sm text-muted-foreground">Free demo PSD to test the workflow quickly — it’s set up to work perfectly with Export Every X.</p>
+							<div className="space-y-1">
+								<p className="text-sm font-semibold tracking-tight">Free demo PSD</p>
 								<p className="text-sm text-muted-foreground">
-									Tip: if guides are not visible yet, turn on Guides and use the PSD as a template — drop/paste your own photos into it and run the export.
+									A ready-made PSD set up to work with Export Every X. Drop your photos in and run the
+									export — no setup needed.
 								</p>
 							</div>
-							<Button asChild variant="outline" className="w-full sm:w-auto">
+							<Button asChild variant="outline" className="shrink-0 sm:w-auto">
 								<a href="/crop-every-x_demo.psd" download>
 									Download demo PSD
 								</a>
@@ -269,68 +257,74 @@ export default function ExportEveryXShopPage() {
 					</div>
 				</section>
 
-				<section className="mt-12 sm:mt-16">
-					<Card>
-						<CardHeader className="space-y-2">
-							<CardTitle className="text-2xl">What it does</CardTitle>
-							<CardDescription>Wouter Photo – Export Every X is a precision export plugin for Adobe Photoshop.</CardDescription>
-						</CardHeader>
-						<CardContent className="space-y-6 text-sm text-muted-foreground">
-							<p>
-								It automatically divides very wide canvases into evenly sized segments and exports each section as a separate file. Ideal for Instagram carousel exports (1080px panels), panoramic layouts, web banners, and grid-based designs.
-							</p>
-							<p>
-								If you’ve ever built a super-wide Photoshop file with lots of “slices” and then struggled to export everything cleanly at high resolution, this workflow is for you: set X once, run export once, and you get consistent panels.
-							</p>
-							<div className="space-y-3">
-								<p className="font-medium text-foreground">What you can do</p>
-								<ul className="grid gap-2 sm:grid-cols-2">
-									<li className="flex items-start gap-2">
-										<span className="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full bg-muted-foreground opacity-70" />
-										<span>Export a canvas every X pixels (e.g. every 1080px for Instagram carousel panels)</span>
-									</li>
-									<li className="flex items-start gap-2">
-										<span className="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full bg-muted-foreground opacity-70" />
-										<span>Automatically generate separate image files for each segment</span>
-									</li>
-									<li className="flex items-start gap-2">
-										<span className="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full bg-muted-foreground opacity-70" />
-										<span>Maintain perfect alignment across all exports</span>
-									</li>
-									<li className="flex items-start gap-2">
-										<span className="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full bg-muted-foreground opacity-70" />
-										<span>Eliminate manual guides and repetitive cropping</span>
-									</li>
-									<li className="flex items-start gap-2">
-										<span className="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full bg-muted-foreground opacity-70" />
-										<span>Prepare carousel-ready visuals in seconds</span>
-									</li>
-								</ul>
+				{/* ── What you get ─────────────────────────────────────────────────── */}
+				<section className="mt-10 sm:mt-14">
+					<div className="rounded-3xl border border-border bg-card px-6 py-8 sm:px-8 sm:py-10">
+						<h2 className="text-2xl font-semibold tracking-tight">What you get</h2>
+						<p className="mt-1 text-sm text-muted-foreground">
+							One plugin. One operation. Consistent exports.
+						</p>
+						<div className="mt-6 grid gap-3 sm:grid-cols-2">
+							{features.map((f) => (
+								<div key={f.title} className="rounded-2xl border border-border bg-background/70 px-5 py-4">
+									<p className="text-sm font-semibold tracking-tight">{f.title}</p>
+									<p className="mt-1 text-sm leading-relaxed text-muted-foreground">{f.body}</p>
+								</div>
+							))}
+						</div>
+					</div>
+				</section>
+
+				{/* ── Why I built this ─────────────────────────────────────────────── */}
+				<section className="mt-10 sm:mt-14">
+					<Card className="overflow-hidden border-border bg-card">
+						<CardContent className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[160px_1fr] lg:items-start">
+							<div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-border bg-muted/20 lg:mt-1">
+								<Image
+									src="/2022_NSJF-Fri_1179.jpg"
+									alt="Wouter Vellekoop"
+									fill
+									sizes="(max-width: 1024px) 160px, 160px"
+									className="object-cover"
+								/>
 							</div>
-							<p>Instead of manually creating guides and slicing sections one by one, Export Every X handles the entire workflow in a single operation.</p>
+							<div className="space-y-4">
+								<div>
+									<p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+										Why I built this
+									</p>
+									<h2 className="mt-1 text-xl font-semibold tracking-tight">
+										Built because guides and slices were never the answer.
+									</h2>
+								</div>
+								<p className="text-sm leading-relaxed text-muted-foreground">
+									I am Wouter Vellekoop, a photographer who also does a lot of design work — Instagram
+									carousels, event visuals, banners. At some point you end up with a canvas that is
+									3000 pixels wide and needs to be split into clean 1080px panels.
+								</p>
+								<p className="text-sm leading-relaxed text-muted-foreground">
+									The standard Photoshop workflow for that is guides, manual slices, Export As — and
+									it works until it doesn't. On very wide files it gets unreliable. On files you
+									revisit and update, it gets tedious fast. I built Export Every X to replace that
+									whole process with one setting and one click.
+								</p>
+								<p className="text-sm leading-relaxed text-muted-foreground">
+									It doesn't do anything fancy. It just does the thing reliably, every time, without
+									having to think about it.
+								</p>
+								<div className="pt-2">
+									<BuyButton />
+								</div>
+							</div>
 						</CardContent>
 					</Card>
 				</section>
 
-				<section className="mt-12 sm:mt-16">
+				{/* ── Testimonials ─────────────────────────────────────────────────── */}
+				<section className="mt-10 sm:mt-14">
 					<Card>
-						<CardHeader className="space-y-2">
-							<CardTitle className="text-2xl">Why it matters</CardTitle>
-							<CardDescription>Precision and speed for wide layouts.</CardDescription>
-						</CardHeader>
-						<CardContent className="text-sm text-muted-foreground">
-							<p>
-								When working with wide layouts for Instagram carousels, website headers, or campaign visuals, precision and speed are essential. Export Every X lets you take one long design and export it into consistent panels (e.g. 1080px slices) without guides or manual slice management.
-							</p>
-							<p className="mt-4">Built for creators who value efficiency and clean execution.</p>
-						</CardContent>
-					</Card>
-				</section>
-
-				<section className="mt-12 sm:mt-16">
-					<Card>
-						<CardHeader className="space-y-2">
-							<CardTitle className="text-2xl">Testimonials</CardTitle>
+						<CardHeader className="space-y-1">
+							<CardTitle className="text-2xl">What people say</CardTitle>
 						</CardHeader>
 						<CardContent>
 							<TestimonialsCarousel items={testimonials} />
@@ -338,11 +332,12 @@ export default function ExportEveryXShopPage() {
 					</Card>
 				</section>
 
-				<section className="mt-12 sm:mt-16">
+				{/* ── FAQ ──────────────────────────────────────────────────────────── */}
+				<section className="mt-10 sm:mt-14">
 					<div className="overflow-hidden rounded-2xl border border-border bg-card">
-						<div className="space-y-2 px-6 py-5">
+						<div className="space-y-1 px-6 py-5">
 							<h2 className="text-2xl font-semibold tracking-tight">FAQ</h2>
-							<p className="text-sm text-muted-foreground">Short and practical.</p>
+							<p className="text-sm text-muted-foreground">Short answers before you buy.</p>
 						</div>
 						<div className="h-px bg-border" />
 						{faqs.map((faq, idx) => (
@@ -350,39 +345,45 @@ export default function ExportEveryXShopPage() {
 								<summary className="cursor-pointer list-none px-6 py-5 text-sm font-medium outline-none transition-colors hover:bg-accent/40">
 									<div className="flex items-center justify-between gap-4">
 										<span>{faq.q}</span>
-										<span className="text-muted-foreground transition-transform group-open:rotate-45">+</span>
+										<span className="shrink-0 text-muted-foreground transition-transform group-open:rotate-45">+</span>
 									</div>
 								</summary>
-								<div className="px-6 pb-6 text-sm text-muted-foreground">{faq.a}</div>
-								{idx !== faqs.length - 1 ? <div className="h-px bg-border" /> : null}
+								<div className="px-6 pb-6 text-sm leading-relaxed text-muted-foreground">{faq.a}</div>
+								{idx !== faqs.length - 1 && <div className="h-px bg-border" />}
 							</details>
 						))}
 					</div>
 				</section>
 
-				<section className="mt-12 sm:mt-16">
-					<div className="rounded-2xl border border-border bg-card p-8 sm:p-10">
-						<div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-							<div className="space-y-2">
-								<h2 className="text-2xl font-semibold tracking-tight">Get it</h2>
-								<p className="text-sm text-muted-foreground">
-									Tested with the desktop version of Adobe Photoshop. Install via Adobe Exchange and the Creative Cloud desktop app.
+				{/* ── Final CTA ────────────────────────────────────────────────────── */}
+				<section className="mt-10 sm:mt-14">
+					<div className="rounded-3xl border border-border bg-card p-8 sm:p-10">
+						<div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+							<div className="max-w-2xl space-y-3">
+								<h2 className="text-3xl font-semibold tracking-tight">Stop slicing by hand.</h2>
+								<p className="text-sm text-muted-foreground sm:text-base">
+									Set X once. Export all panels. Works on carousels, banners, panoramas — anything
+									where you need a wide canvas split into consistent pieces.
 								</p>
 								<p className="text-sm text-muted-foreground">
-									Questions? Email{" "}
+									Questions before buying?{" "}
 									<a href="mailto:hello@wouter.photo" className="underline underline-offset-4">
 										hello@wouter.photo
 									</a>
 								</p>
 							</div>
-							<Button asChild size="lg" className="sm:w-auto">
-								<a href={ADOBE_EXCHANGE_EXPORT_EVERY_X_URL} target="_blank" rel="noopener noreferrer">
-									Open Adobe Exchange
-								</a>
-							</Button>
+							<div className="flex shrink-0 flex-col items-start gap-2 lg:items-end">
+								<div className="flex items-baseline gap-2">
+									<span className="text-3xl font-semibold tracking-tight">{PRICE}</span>
+									<span className="text-sm text-muted-foreground line-through">{PRICE_ORIGINAL}</span>
+								</div>
+								<p className="text-sm text-muted-foreground">One-time on Adobe Exchange.</p>
+								<BuyButton label="Get it on Adobe Exchange" />
+							</div>
 						</div>
 					</div>
 				</section>
+
 			</div>
 		</main>
 	);
