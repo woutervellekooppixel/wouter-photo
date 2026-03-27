@@ -38,6 +38,10 @@ function parseMailbox(value: string): { email: string; name?: string } {
   return name ? { email, name } : { email };
 }
 
+function sanitizeMailboxName(value: string): string {
+  return value.replace(/[\r\n<>"']/g, "").trim();
+}
+
 function toRecipients(value: string | string[]): Array<{ email: string; name?: string }> {
   const items = Array.isArray(value) ? value : [value];
   return items.map(parseMailbox);
@@ -208,15 +212,20 @@ export async function sendContactFormEmail({
   email: string;
   message: string;
 }): Promise<void> {
+  const contactSender = parseMailbox(process.env.EMAIL_FROM_CONTACT || "Contact Form <hello@wouter.photo>");
+  const senderName = sanitizeMailboxName(name);
+  const baseSenderName = contactSender.name || "Contact Form";
+  const fromName = senderName ? `${senderName} via ${baseSenderName}` : baseSenderName;
+  const replyTo = senderName ? `${senderName} <${email}>` : email;
   const safeName = escapeHtml(name);
   const safeEmail = escapeHtml(email);
   const safeMessage = escapeHtml(message);
 
   await sendEmail({
-    from: process.env.EMAIL_FROM_CONTACT || "Contact Form <hello@wouter.photo>",
+    from: `${fromName} <${contactSender.email}>`,
     to: CONTACT_FORM_TO,
     subject: `New Contact Form Submission from ${name}`,
-    replyTo: email,
+    replyTo,
     textBody: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
     htmlBody: `
       <div style="font-family: sans-serif; max-width: 640px; margin: 0 auto; line-height: 1.6; color: #111;">
