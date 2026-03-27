@@ -1430,11 +1430,6 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
             </div>
           )}
 
-          {/* Footer */}
-          <div className="text-center mt-12 text-sm text-gray-500 dark:text-gray-400">
-            <p>© Wouter.Photo</p>
-          </div>
-
           {/* Lightbox mount */}
           {lightboxOpen && lightboxImages.length > 0 && (
             <Lightbox
