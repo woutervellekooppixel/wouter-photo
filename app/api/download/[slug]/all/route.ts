@@ -4,7 +4,7 @@ import archiver from "archiver";
 import { sendDownloadNotification } from "@/lib/email";
 import { downloadRateLimit } from "@/lib/rateLimit";
 import { isValidSlug } from "@/lib/validation";
-import { sortFilesChronological } from "@/lib/utils";
+import { sortFilesChronological, shouldFilterFile, isImageFile, isZipFile } from "@/lib/utils";
 import { isExpired } from "@/lib/expiry";
 import { Readable } from "stream";
 
@@ -47,24 +47,9 @@ export async function GET(
     // Special case: this download contains only a single ZIP file.
     // In that scenario, creating a new ZIP (containing the ZIP) is wasteful and can time out.
     // Stream the ZIP directly with a proper Content-Disposition.
-    const shouldFilterFile = (filename: string) => {
-      const name = filename.toLowerCase();
-      return [".ds_store", ".xmp", "thumbs.db", "desktop.ini"].some((p) => name.includes(p)) || name.startsWith(".");
-    };
-    const isImage = (filename: string) => {
-      const ext = filename.toLowerCase().split(".").pop();
-      return ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "heic", "heif"].includes(ext || "");
-    };
-    const isZip = (filename: string, contentType?: string) => {
-      const ext = filename.toLowerCase().split(".").pop();
-      if (ext === "zip") return true;
-      if ((contentType || "").toLowerCase().includes("zip")) return true;
-      return false;
-    };
-
     const visibleFiles = sortFilesChronological(metadata.files).filter((f) => !shouldFilterFile(f.name));
-    const visibleImageFiles = visibleFiles.filter((f) => isImage(f.name));
-    const visibleZipFiles = visibleFiles.filter((f) => isZip(f.name, f.type));
+    const visibleImageFiles = visibleFiles.filter((f) => isImageFile(f.name));
+    const visibleZipFiles = visibleFiles.filter((f) => isZipFile(f.name, f.type));
 
     if (visibleImageFiles.length === 0 && visibleFiles.length === 1 && visibleZipFiles.length === 1) {
       const zipFile = visibleZipFiles[0];

@@ -61,9 +61,13 @@ export async function GET(
     (async () => {
       try {
         for (const file of folderFiles) {
-          const fileName = file.name.split("/").pop() || file.name;
+          // Preserve subfolder structure relative to the requested folder.
+          // e.g. folderPath="Wedding", file.name="Wedding/Ceremony/img001.jpg" → "Ceremony/img001.jpg"
+          const relativePath = file.name.startsWith(folderPath + "/")
+            ? file.name.slice(folderPath.length + 1)
+            : (file.name.split("/").pop() || file.name);
           const fileStream = await getFileStream(file.key);
-          archive.append(fileStream, { name: fileName });
+          archive.append(fileStream, { name: relativePath });
         }
         await archive.finalize();
       } catch (error) {

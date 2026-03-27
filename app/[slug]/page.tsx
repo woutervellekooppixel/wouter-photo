@@ -7,7 +7,7 @@ const getCachedMetadata = cache(getMetadata);
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import ExpiredRedirect from '@/components/ExpiredRedirect';
-import { computeExpiresAtDate, isExpired } from '@/lib/expiry';
+import { computeExpiresAtDate, computeExpiresAtIso, isExpired } from '@/lib/expiry';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -96,5 +96,6 @@ export default async function DownloadPage({ params }: PageProps) {
   }
 
 
-  return <DownloadGallery metadata={metadata} />;
+  const expiresAt = computeExpiresAtIso(metadata) ?? undefined;
+  return <DownloadGallery metadata={metadata} expiresAt={expiresAt} />;
 }

@@ -16,6 +16,8 @@ import {
   Video,
   Music,
   Heart,
+  AlertCircle,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Lightbox, LightboxImage } from "@/components/Lightbox";
@@ -41,7 +43,7 @@ type UploadMetadata = {
 };
 /** ===================================================================================== */
 
-export default function DownloadGallery({ metadata }: { metadata: UploadMetadata }) {
+export default function DownloadGallery({ metadata, expiresAt }: { metadata: UploadMetadata; expiresAt?: string }) {
   // Lightbox state
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -64,6 +66,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [ratings, setRatings] = useState<Record<string, boolean>>({});
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
   const [heroKey, setHeroKey] = useState<string | null>(null);
@@ -136,6 +139,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   );
   const imageFiles = useMemo(() => visibleFiles.filter((f) => isImageFile(f.name)), [visibleFiles]);
   const otherFiles = useMemo(() => visibleFiles.filter((f) => !isImageFile(f.name)), [visibleFiles]);
+  const totalSize = useMemo(() => visibleFiles.reduce((sum, f) => sum + (f.size || 0), 0), [visibleFiles]);
 
   const favoriteImageFiles = useMemo(
     () => imageFiles.filter((f) => !!ratings[f.key]),
@@ -282,10 +286,17 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
     if (imgs.length === 0) {
       setThumbnailUrls({});
       setThumbnailsLoaded(0);
+      setPreviewLoaded(true);
+
+      // Truly empty gallery (no files at all) — skip the intro overlay entirely.
+      const allVisible = metadata.files.filter((f) => !shouldFilterFile(f.name));
+      if (allVisible.length === 0) {
+        setLoadingThumbnails(false);
+        return () => {};
+      }
 
       // Files-only (no images): keep the hero intro overlay visible briefly,
       // and allow the fakePercent fill animation to run.
-      setPreviewLoaded(true);
       setLoadingThumbnails(true);
 
       let cancelled = false;
@@ -410,15 +421,16 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
     if (!fileKeys || fileKeys.length === 0) return;
     setDownloading(true);
     setDownloadProgress(0);
+    setDownloadError(null);
     const progressInterval = setInterval(() => {
       setDownloadProgress((p) => {
-        if (p >= 95) {
+        if (p >= 90) {
           clearInterval(progressInterval);
-          return 95;
+          return 90;
         }
-        return p + 5;
+        return p + 3;
       });
-    }, 150);
+    }, 200);
 
     try {
       const response = await fetch(`/api/download/${metadata.slug}/selected`, {
@@ -426,7 +438,23 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fileKeys }),
       });
-      if (!response.ok) throw new Error("Download failed");
+
+      if (response.status === 429) {
+        const data = await response.json().catch(() => ({}));
+        const wait = data.retryAfter || 60;
+        setDownloadError(`Too many downloads. Please wait ${wait} seconds before trying again.`);
+        clearInterval(progressInterval);
+        setDownloading(false);
+        setDownloadProgress(0);
+        return;
+      }
+      if (!response.ok) {
+        setDownloadError("Download failed. Please try again.");
+        clearInterval(progressInterval);
+        setDownloading(false);
+        setDownloadProgress(0);
+        return;
+      }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -441,12 +469,12 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
       setDownloadProgress(100);
       setTimeout(() => {
         clearInterval(progressInterval);
-        // Hide the progress UI first, then reset state (prevents a visible 100->0 flash).
         setDownloading(false);
         setTimeout(() => setDownloadProgress(0), 0);
       }, 500);
     } catch (error) {
       console.error("Download failed:", error);
+      setDownloadError("Download failed. Please try again.");
       clearInterval(progressInterval);
       setDownloading(false);
       setDownloadProgress(0);
@@ -476,34 +504,56 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   const downloadAll = async () => {
     setDownloading(true);
     setDownloadProgress(0);
+    setDownloadError(null);
     const progressInterval = setInterval(() => {
       setDownloadProgress((p) => {
-        if (p >= 95) {
+        if (p >= 90) {
           clearInterval(progressInterval);
-          return 95;
+          return 90;
         }
-        return p + 5;
+        return p + 3;
       });
-    }, 150);
+    }, 200);
+
     try {
+      const response = await fetch(`/api/download/${metadata.slug}/all`);
+
+      if (response.status === 429) {
+        const data = await response.json().catch(() => ({}));
+        const wait = data.retryAfter || 60;
+        setDownloadError(`Too many downloads. Please wait ${wait} seconds before trying again.`);
+        clearInterval(progressInterval);
+        setDownloading(false);
+        setDownloadProgress(0);
+        return;
+      }
+      if (!response.ok) {
+        setDownloadError("Download failed. Please try again.");
+        clearInterval(progressInterval);
+        setDownloading(false);
+        setDownloadProgress(0);
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = `/api/download/${metadata.slug}/all`;
+      a.href = url;
       a.download = `${metadata.slug}.zip`;
       document.body.appendChild(a);
       a.click();
+      window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
+      setDownloadProgress(100);
       setTimeout(() => {
-        setDownloadProgress(100);
-        setTimeout(() => {
-          clearInterval(progressInterval);
-          // Hide the progress UI first, then reset state (prevents a visible 100->0 flash).
-          setDownloading(false);
-          setTimeout(() => setDownloadProgress(0), 0);
-        }, 500);
-      }, 2000);
+        clearInterval(progressInterval);
+        setDownloading(false);
+        setTimeout(() => setDownloadProgress(0), 0);
+      }, 500);
     } catch (error) {
       console.error("Download failed:", error);
+      setDownloadError("Download failed. Please try again.");
       clearInterval(progressInterval);
       setDownloading(false);
       setDownloadProgress(0);
@@ -552,7 +602,16 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
 
     try {
       const response = await fetch(`/api/download/${metadata.slug}/file?key=${encodeURIComponent(fileKey)}`);
-      if (!response.ok) throw new Error("Download failed");
+      if (response.status === 429) {
+        const data = await response.json().catch(() => ({}));
+        const wait = data.retryAfter || 60;
+        setDownloadError(`Too many downloads. Please wait ${wait} seconds before trying again.`);
+        throw new Error("rate_limited");
+      }
+      if (!response.ok) {
+        setDownloadError("Download failed. Please try again.");
+        throw new Error("download_failed");
+      }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -630,22 +689,33 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   };
 
   const downloadFolder = async (folderPath: string) => {
+    setDownloadError(null);
     try {
       const response = await fetch(
         `/api/download/${metadata.slug}/folder?path=${encodeURIComponent(folderPath)}`
       );
-      if (!response.ok) throw new Error("Download failed");
+      if (response.status === 429) {
+        const data = await response.json().catch(() => ({}));
+        const wait = data.retryAfter || 60;
+        setDownloadError(`Too many downloads. Please wait ${wait} seconds before trying again.`);
+        return;
+      }
+      if (!response.ok) {
+        setDownloadError("Download failed. Please try again.");
+        return;
+      }
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${folderPath}.zip`;
+      a.download = `${folderPath.replace(/[^a-zA-Z0-9-_]/g, "-")}.zip`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
       console.error("Folder download failed:", error);
+      setDownloadError("Download failed. Please try again.");
     }
   };
 
@@ -823,11 +893,45 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
           </div>
         )}
 
+        {/* Error toast (fixed, bottom-right) */}
+        {downloadError && (
+          <div className="fixed bottom-5 right-5 z-50 max-w-sm bg-white dark:bg-gray-900 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 text-sm flex items-start gap-3 shadow-xl">
+            <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+            <span className="flex-1">{downloadError}</span>
+            <button
+              onClick={() => setDownloadError(null)}
+              className="flex-shrink-0 text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors"
+              aria-label="Dismiss"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
         <div
           className={`container mx-auto p-6 max-w-6xl transition-opacity duration-1000 ${
             loadingThumbnails ? "opacity-0 pointer-events-none" : "opacity-100"
           }`}
         >
+          {/* Expiry banner (shown when link expires within 14 days) */}
+          {expiresAt && (() => {
+            const expires = new Date(expiresAt);
+            const daysLeft = Math.ceil((expires.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            if (daysLeft > 14) return null;
+            const urgent = daysLeft <= 3;
+            const label = daysLeft <= 0
+              ? "This link expires today"
+              : daysLeft === 1
+              ? "This link expires tomorrow"
+              : `This link expires in ${daysLeft} days`;
+            return (
+              <div className={`mb-6 rounded-xl px-4 py-3 text-sm flex items-center gap-2.5 border ${urgent ? "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800" : "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800"}`}>
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <span>{label} — {expires.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}. Download your files before then.</span>
+              </div>
+            );
+          })()}
+
           {/* Titel + stats */}
           <div className="mb-8 mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex flex-col items-start gap-3">
@@ -877,21 +981,14 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                   ) : (
                     <div className="relative w-40 h-9 bg-foreground/5 rounded-md overflow-hidden border border-border">
                       <div
-                        className="absolute left-0 top-0 h-full bg-foreground/12 transition-[width] duration-200 ease-out flex items-center justify-center overflow-hidden"
+                        className="absolute left-0 top-0 h-full bg-foreground/12 transition-[width] duration-200 ease-out overflow-hidden"
                         style={{ width: `${downloadProgress}%` }}
                       >
                         <div className="absolute inset-y-0 left-0 w-20 animate-shimmer-bar bg-white/30 dark:bg-white/12" />
-                        {downloadProgress > 10 && (
-                          <span className="text-foreground text-xs font-semibold tabular-nums">{downloadProgress}%</span>
-                        )}
                       </div>
-                      {downloadProgress <= 10 && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-muted-foreground text-xs font-semibold tabular-nums">
-                            {downloadProgress}%
-                          </span>
-                        </div>
-                      )}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-muted-foreground text-xs font-medium">Downloading…</span>
+                      </div>
                     </div>
                   )}
                 </>
@@ -914,6 +1011,12 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
               <span>
                 {otherFiles.length} file{otherFiles.length === 1 ? "" : "s"}
               </span>
+              {totalSize > 0 && (
+                <>
+                  <span className="mx-2 text-gray-400">|</span>
+                  <span>{formatBytes(totalSize)}</span>
+                </>
+              )}
             </div>
           </div>
 
@@ -954,21 +1057,14 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                 ) : (
                   <div className="relative w-40 h-9 bg-foreground/5 rounded-md overflow-hidden border border-border">
                     <div
-                      className="absolute left-0 top-0 h-full bg-foreground/12 transition-[width] duration-200 ease-out flex items-center justify-center overflow-hidden"
+                      className="absolute left-0 top-0 h-full bg-foreground/12 transition-[width] duration-200 ease-out overflow-hidden"
                       style={{ width: `${downloadProgress}%` }}
                     >
                       <div className="absolute inset-y-0 left-0 w-20 animate-shimmer-bar bg-white/30 dark:bg-white/12" />
-                      {downloadProgress > 10 && (
-                        <span className="text-foreground text-xs font-semibold tabular-nums">{downloadProgress}%</span>
-                      )}
                     </div>
-                    {downloadProgress <= 10 && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-muted-foreground text-xs font-semibold tabular-nums">
-                          {downloadProgress}%
-                        </span>
-                      </div>
-                    )}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-muted-foreground text-xs font-medium">Downloading…</span>
+                    </div>
                   </div>
                 )}
 
