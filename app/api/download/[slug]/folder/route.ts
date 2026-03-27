@@ -1,134 +1,88 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getMetadata, getFile, updateDownloadCount } from '@/lib/r2';
-import archiver from 'archiver';
-import { downloadRateLimit } from '@/lib/rateLimit';
-import { isValidSlug } from '@/lib/validation';
-import { sortFilesChronological } from '@/lib/utils';
-import { isExpired } from '@/lib/expiry';
+import { NextRequest, NextResponse } from "next/server";
+import { Readable } from "stream";
+import archiver from "archiver";
+import { getMetadata, getFileStream, updateDownloadCount } from "@/lib/r2";
+import { downloadRateLimit } from "@/lib/rateLimit";
+import { isValidSlug } from "@/lib/validation";
+import { isExpired } from "@/lib/expiry";
+import { sortFilesChronological } from "@/lib/utils";
+import { sendDownloadNotification } from "@/lib/email";
 
-// Configure route for large downloads
-export const maxDuration = 300; // 5 minutes
-export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
+export const dynamic = "force-dynamic";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  // Rate limiting
   const rateLimitResponse = await downloadRateLimit(request);
   if (rateLimitResponse) return rateLimitResponse;
 
   try {
     const { slug } = await params;
     if (!isValidSlug(slug)) {
-      return NextResponse.json(
-        { error: 'Invalid slug' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid slug" }, { status: 400 });
     }
-    const { searchParams } = new URL(request.url);
-    const folderPath = searchParams.get('path');
 
+    const folderPath = request.nextUrl.searchParams.get("path");
     if (!folderPath) {
-      return NextResponse.json(
-        { error: 'Folder path is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Folder path is required" }, { status: 400 });
     }
 
-    // Get metadata
     const metadata = await getMetadata(slug);
     if (!metadata) {
-      return NextResponse.json(
-        { error: 'Upload not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Upload not found" }, { status: 404 });
     }
-
     if (isExpired(metadata)) {
-      return NextResponse.json({ error: 'Expired' }, { status: 410 });
+      return NextResponse.json({ error: "Expired" }, { status: 410 });
     }
 
-
-    // Filter files that belong to this folder
-    const folderFiles = sortFilesChronological(metadata.files.filter(file => {
-      const fileFolderPath = file.name.includes('/') 
-        ? file.name.substring(0, file.name.lastIndexOf('/'))
-        : '';
-      return fileFolderPath === folderPath;
-    }));
+    const folderFiles = sortFilesChronological(
+      metadata.files.filter((file) => {
+        const fileFolderPath = file.name.includes("/")
+          ? file.name.substring(0, file.name.lastIndexOf("/"))
+          : "";
+        return fileFolderPath === folderPath;
+      })
+    );
 
     if (folderFiles.length === 0) {
-      return NextResponse.json(
-        { error: 'No files found in this folder' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "No files found in this folder" }, { status: 404 });
     }
 
-    // Create archive
-    const archive = archiver('zip', {
-      zlib: { level: 6 }
-    });
+    const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
+    const userAgent = request.headers.get("user-agent") || "unknown";
+    await updateDownloadCount(slug, "selected", folderFiles.map((f) => f.key), ip, userAgent);
+    sendDownloadNotification(slug, folderFiles.length).catch(console.error);
 
-    const chunks: Uint8Array[] = [];
-    
-    archive.on('data', (chunk: Buffer) => {
-      chunks.push(new Uint8Array(chunk));
-    });
+    const archive = archiver("zip", { zlib: { level: 6 } });
+    archive.on("warning", (err) => console.warn("[FolderDownload] ZIP warning:", err));
 
-    const archivePromise = new Promise<void>((resolve, reject) => {
-      archive.on('end', () => resolve());
-      archive.on('error', (err: Error) => reject(err));
-    });
-
-    // Add files to archive
-    for (const file of folderFiles) {
+    (async () => {
       try {
-        const fileData = await getFile(file.key);
-        if (fileData) {
-          // Get just the filename without folder path
-          const fileName = file.name.split('/').pop() || file.name;
-          archive.append(fileData, { name: fileName });
+        for (const file of folderFiles) {
+          const fileName = file.name.split("/").pop() || file.name;
+          const fileStream = await getFileStream(file.key);
+          archive.append(fileStream, { name: fileName });
         }
+        await archive.finalize();
       } catch (error) {
-        console.error(`Failed to add file ${file.key}:`, error);
+        archive.destroy();
       }
-    }
+    })();
 
-    // Finalize archive
-    await archive.finalize();
-    await archivePromise;
+    const safeFolderName = folderPath.replace(/[^a-zA-Z0-9-_]/g, "-");
+    const webStream = Readable.toWeb(archive) as unknown as ReadableStream<Uint8Array>;
 
-    // Combine chunks
-    const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-    const buffer = new Uint8Array(totalLength);
-    let offset = 0;
-    for (const chunk of chunks) {
-      buffer.set(chunk, offset);
-      offset += chunk.length;
-    }
-
-    // Track download
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-    const userAgent = request.headers.get('user-agent') || 'unknown';
-    await updateDownloadCount(slug, 'selected', folderFiles.map(f => f.key), ip, userAgent);
-
-    // Sanitize folder name for filename
-    const safeFolderName = folderPath.replace(/[^a-zA-Z0-9-_]/g, '-');
-    const fileName = `${safeFolderName}.zip`;
-
-    return new NextResponse(buffer, {
+    return new NextResponse(webStream, {
       headers: {
-        'Content-Type': 'application/zip',
-        'Content-Disposition': `attachment; filename="${fileName}"`,
+        "Content-Type": "application/zip",
+        "Content-Disposition": `attachment; filename="${safeFolderName}.zip"`,
+        "Cache-Control": "no-cache",
       },
     });
-
   } catch (error) {
-    console.error('Error creating folder ZIP:', error);
-    return NextResponse.json(
-      { error: 'Failed to create folder download' },
-      { status: 500 }
-    );
+    console.error("Error creating folder ZIP:", error);
+    return NextResponse.json({ error: "Failed to create folder download" }, { status: 500 });
   }
 }

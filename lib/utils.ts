@@ -88,3 +88,27 @@ export function sortFilesChronological<T extends ChronologicalFileLike>(files: T
     return aKey.localeCompare(bKey);
   });
 }
+
+// ── Shared file-type helpers ─────────────────────────────────────────────────
+// Used by both the download gallery UI and the API download routes.
+
+const FILTERED_FILES = [".ds_store", ".xmp", "thumbs.db", "desktop.ini"];
+
+export function shouldFilterFile(filename: string): boolean {
+  const name = filename.toLowerCase();
+  return FILTERED_FILES.some((p) => name.includes(p)) || name.startsWith(".");
+}
+
+const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "heic", "heif"];
+
+export function isImageFile(filename: string): boolean {
+  const ext = filename.toLowerCase().split(".").pop() ?? "";
+  return IMAGE_EXTENSIONS.includes(ext);
+}
+
+export function isZipFile(filename: string, contentType?: string): boolean {
+  const ext = filename.toLowerCase().split(".").pop();
+  if (ext === "zip") return true;
+  if ((contentType ?? "").toLowerCase().includes("zip")) return true;
+  return false;
+}

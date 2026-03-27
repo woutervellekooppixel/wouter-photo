@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Lightbox, LightboxImage } from "@/components/Lightbox";
-import { formatBytes, formatDate, sortFilesChronological } from "@/lib/utils";
+import { formatBytes, formatDate, sortFilesChronological, shouldFilterFile, isImageFile, isZipFile } from "@/lib/utils";
 
 /** ====== Minimaal benodigde types (vervang door je projecttypes indien gewenst) ====== */
 type UploadFile = {
@@ -48,17 +48,6 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
 
   // Per-thumbnail aspect ratio (width / height). Used to render each tile in its original proportion.
   const [thumbAspectRatios, setThumbAspectRatios] = useState<Record<string, number>>({});
-
-  // Track mobile
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 640); // Tailwind sm: 640px
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
 
   const [downloading, setDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
@@ -92,19 +81,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   }, [previewLoaded]);
 
   const hasImagesForIntro = useMemo(() => {
-    const shouldFilter = (filename: string) => {
-      const name = filename.toLowerCase();
-      return (
-        [".ds_store", ".xmp", "thumbs.db", "desktop.ini"].some((p) => name.includes(p)) ||
-        name.startsWith(".")
-      );
-    };
-    const isImg = (filename: string) => {
-      const ext = filename.toLowerCase().split(".").pop();
-      return ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "heic", "heif"].includes(ext || "");
-    };
-
-    return (metadata.files || []).some((f) => !shouldFilter(f.name) && isImg(f.name));
+    return (metadata.files || []).some((f) => !shouldFilterFile(f.name) && isImageFile(f.name));
   }, [metadata.files]);
 
   useEffect(() => {
@@ -152,30 +129,13 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
     return () => window.clearTimeout(t);
   }, [loadingThumbnails]);
 
-  // Helpers
-  const shouldFilterFile = (filename: string) => {
-    const name = filename.toLowerCase();
-    return [".ds_store", ".xmp", "thumbs.db", "desktop.ini"].some((p) => name.includes(p)) || name.startsWith(".");
-  };
-  const isImage = (filename: string) => {
-    const ext = filename.toLowerCase().split(".").pop();
-    return ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "heic", "heif"].includes(ext || "");
-  };
-
   // Filter zichtbare bestanden
   const visibleFiles = useMemo(
     () => sortFilesChronological(metadata.files).filter((f) => !shouldFilterFile(f.name)),
     [metadata.files]
   );
-  const imageFiles = useMemo(() => visibleFiles.filter((f) => isImage(f.name)), [visibleFiles]);
-  const otherFiles = useMemo(() => visibleFiles.filter((f) => !isImage(f.name)), [visibleFiles]);
-
-  const isZip = (filename: string, contentType?: string) => {
-    const ext = filename.toLowerCase().split(".").pop();
-    if (ext === "zip") return true;
-    if ((contentType || "").toLowerCase().includes("zip")) return true;
-    return false;
-  };
+  const imageFiles = useMemo(() => visibleFiles.filter((f) => isImageFile(f.name)), [visibleFiles]);
+  const otherFiles = useMemo(() => visibleFiles.filter((f) => !isImageFile(f.name)), [visibleFiles]);
 
   const favoriteImageFiles = useMemo(
     () => imageFiles.filter((f) => !!ratings[f.key]),
@@ -246,7 +206,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
     let cancelled = false;
 
     const imgs = sortFilesChronological(metadata.files)
-      .filter((f) => !shouldFilterFile(f.name) && isImage(f.name))
+      .filter((f) => !shouldFilterFile(f.name) && isImageFile(f.name))
       .map((f) => f.key);
 
     // Manual override from /admin always wins.
@@ -318,7 +278,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
   // Thumbnails "opbouwen" (geen echte fetch nodig; URLs naar je API)
   useEffect(() => {
     if (!metadata || !metadata.files) return;
-    const imgs = metadata.files.filter((f) => !shouldFilterFile(f.name) && isImage(f.name));
+    const imgs = metadata.files.filter((f) => !shouldFilterFile(f.name) && isImageFile(f.name));
     if (imgs.length === 0) {
       setThumbnailUrls({});
       setThumbnailsLoaded(0);
@@ -902,7 +862,7 @@ export default function DownloadGallery({ metadata }: { metadata: UploadMetadata
                         </>
                       ) : imageFiles.length === 0 &&
                         otherFiles.length === 1 &&
-                        isZip(otherFiles[0].name, otherFiles[0].type) ? (
+                        isZipFile(otherFiles[0].name, otherFiles[0].type) ? (
                         <>
                           <span className="hidden sm:inline">Download ZIP</span>
                           <span className="sm:hidden">Download</span>

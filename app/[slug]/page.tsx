@@ -1,6 +1,9 @@
+import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { getMetadata } from '@/lib/r2';
 import DownloadGallery from './download-gallery';
+
+const getCachedMetadata = cache(getMetadata);
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import ExpiredRedirect from '@/components/ExpiredRedirect';
@@ -12,7 +15,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const metadata = await getMetadata(slug);
+  const metadata = await getCachedMetadata(slug);
 
   if (!metadata) {
     return {
@@ -70,7 +73,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function DownloadPage({ params }: PageProps) {
   const { slug } = await params;
-  const metadata = await getMetadata(slug);
+  const metadata = await getCachedMetadata(slug);
 
   if (!metadata) {
     notFound();
