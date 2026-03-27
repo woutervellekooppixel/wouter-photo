@@ -213,7 +213,7 @@ export async function sendContactFormEmail({
   const safeMessage = escapeHtml(message);
 
   await sendEmail({
-    from: process.env.EMAIL_FROM_CONTACT || "Contact Form <no-reply@wouter.photo>",
+    from: process.env.EMAIL_FROM_CONTACT || "Contact Form <hello@wouter.photo>",
     to: CONTACT_FORM_TO,
     subject: `New Contact Form Submission from ${name}`,
     replyTo: email,

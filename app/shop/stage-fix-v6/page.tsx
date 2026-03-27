@@ -216,21 +216,6 @@ export default function StageFixV6Page() {
 							<p className="text-sm text-destructive">Set `NEXT_PUBLIC_PAYHIP_STAGE_FIX_URL` to enable the buy button.</p>
 						) : null}
 
-						<div className="text-xs text-muted-foreground">
-							<span className="font-medium text-foreground">Policies:</span>{" "}
-							<a className="underline underline-offset-4" href="/terms-of-service">
-								Terms
-							</a>
-							<span> · </span>
-							<a className="underline underline-offset-4" href="/privacy-policy">
-								Privacy
-							</a>
-							<span> · </span>
-							<a className="underline underline-offset-4" href="/refund-policy">
-								Refunds
-							</a>
-						</div>
-
 						<ul className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
 							{usps.map((usp) => (
 								<li key={usp} className="flex items-start gap-2">

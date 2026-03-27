@@ -32,10 +32,7 @@ export function middleware(request: NextRequest) {
     rootSegment === 'about' ||
     rootSegment === 'portfolio' ||
     rootSegment === 'plugins' ||
-    rootSegment === 'algemene-voorwaarden' ||
-    rootSegment === 'privacy-policy' ||
-    rootSegment === 'refund-policy' ||
-    rootSegment === 'terms-of-service'
+    rootSegment === 'algemene-voorwaarden'
 
   const isDownloadSlug = Boolean(rootSegment) && !isPublicSingleSegment
 
