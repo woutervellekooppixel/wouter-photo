@@ -88,6 +88,10 @@ const faqs = [
 		q: `Why does this cost ${PRICE}?`,
 		a: "Because it works. Most preset packs are built for demo images in controlled light. This one was built across thousands of real delivery edits where the light was green, the spots were clipping and the deadline was that evening.",
 	},
+	{
+		q: "What if it doesn't work for me?",
+		a: `If Stage Fix v6 isn't what you expected, email hello@wouter.photo within 30 days of purchase for a full refund. No questions asked.`,
+	},
 ];
 
 export default function StageFixV6Page() {
@@ -179,6 +183,7 @@ export default function StageFixV6Page() {
 								{!hasPayhipUrl && (
 									<p className="text-xs text-destructive">Set `NEXT_PUBLIC_PAYHIP_STAGE_FIX_URL` to enable.</p>
 								)}
+								<p className="text-xs text-muted-foreground">30-day money-back guarantee. No questions asked.</p>
 							</div>
 						</div>
 

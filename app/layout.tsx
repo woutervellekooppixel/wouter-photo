@@ -148,6 +148,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         
+        {/* ASCII art credit — visible in View Source */}
+        <Script id="ascii-credit" strategy="beforeInteractive">{`/*!
+ _       __           __                    ____  __          __
+| |     / /___  __  __/ /____  _____       / __ \\/ /_  ____  / /_____
+| | /| / / __ \\/ / / / __/ _ \\/ ___/     / /_/ / __ \\/ __ \\/ __/ __ \\
+| |/ |/ / /_/ / /_/ / /_/  __/ /         / ____/ / / / /_/ / /_/ /_/ /
+|__/|__/\\____/\\__,_/\\__/\\___/_/         /_/   /_/ /_/\\____/\\__/\\____/
+
+ © ${new Date().getFullYear()} Wouter Vellekoop — wouter.photo
+ Designed & built by Wouter Vellekoop
+*/`}</Script>
+
         {/* Google Analytics 4 (gtag) */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-SGRS9782NB"

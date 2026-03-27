@@ -131,7 +131,6 @@ export default function Header() {
           About
         </Link>
 
-
         <a
           href="https://instagram.com/woutervellekoop"
           target="_blank"

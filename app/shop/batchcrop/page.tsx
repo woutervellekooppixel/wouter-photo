@@ -101,6 +101,10 @@ const faqs = [
 		q: "How much does it cost?",
 		a: `BatchCrop is ${PRICE} (USD) on Adobe Exchange. One-time purchase.`,
 	},
+	{
+		q: "What if it doesn't work for me?",
+		a: "If BatchCrop isn't what you expected, email hello@wouter.photo within 30 days of purchase for a full refund. No questions asked.",
+	},
 ];
 
 const testimonials = [
@@ -212,6 +216,7 @@ export default function BatchCropShopPage() {
 									<a href="#how">How it works</a>
 								</Button>
 							</div>
+							<p className="text-xs text-muted-foreground">30-day money-back guarantee. No questions asked.</p>
 						</div>
 
 						<div className="lg:py-6 lg:pr-2">

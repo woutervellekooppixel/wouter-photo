@@ -54,6 +54,13 @@ export default async function HomePage() {
               </div>
             </div>
 
+            <p
+              className="mt-4 text-white/65 text-sm sm:text-base font-light tracking-wide animate-in fade-in slide-in-from-bottom-2 duration-700"
+              style={{ animationDelay: '150ms' }}
+            >
+              Concert &amp; event photographer
+            </p>
+
             <div className="mt-8 flex w-full max-w-md flex-row items-center gap-3 justify-center mx-auto">
               <Link
                 href="/portfolio"
