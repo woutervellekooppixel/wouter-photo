@@ -501,7 +501,7 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
     await toggleRatingByKey(fileKey);
   };
 
-  const downloadAll = async () => {
+  const downloadAll = () => {
     setDownloading(true);
     setDownloadProgress(0);
     setDownloadError(null);
@@ -515,49 +515,25 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
       });
     }, 200);
 
-    try {
-      const response = await fetch(`/api/download/${metadata.slug}/all`);
+    // Use an anchor tag so the browser handles the download natively.
+    // fetch() would break when the route redirects to a cross-origin R2 signed URL
+    // (no CORS headers on the bucket).
+    const a = document.createElement("a");
+    a.href = `/api/download/${metadata.slug}/all`;
+    a.download = `${metadata.slug}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 
-      if (response.status === 429) {
-        const data = await response.json().catch(() => ({}));
-        const wait = data.retryAfter || 60;
-        setDownloadError(`Too many downloads. Please wait ${wait} seconds before trying again.`);
-        clearInterval(progressInterval);
-        setDownloading(false);
-        setDownloadProgress(0);
-        return;
-      }
-      if (!response.ok) {
-        setDownloadError("Download failed. Please try again.");
-        clearInterval(progressInterval);
-        setDownloading(false);
-        setDownloadProgress(0);
-        return;
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${metadata.slug}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
+    // The browser takes over from here; reset UI after a short delay.
+    setTimeout(() => {
       setDownloadProgress(100);
       setTimeout(() => {
         clearInterval(progressInterval);
         setDownloading(false);
         setTimeout(() => setDownloadProgress(0), 0);
       }, 500);
-    } catch (error) {
-      console.error("Download failed:", error);
-      setDownloadError("Download failed. Please try again.");
-      clearInterval(progressInterval);
-      setDownloading(false);
-      setDownloadProgress(0);
-    }
+    }, 2000);
   };
 
   const handlePrimaryDownload = () => {
