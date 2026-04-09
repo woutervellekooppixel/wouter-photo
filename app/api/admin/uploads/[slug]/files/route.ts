@@ -180,6 +180,11 @@ export async function DELETE(
         } catch (err) {
           console.error("Failed to delete object:", key, err);
         }
+        try {
+          await deleteFile(`thumbnails/${key}`);
+        } catch {
+          // thumbnail bestaat mogelijk niet, geen probleem
+        }
       }
     }
 

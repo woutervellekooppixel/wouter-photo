@@ -365,7 +365,7 @@ export async function deleteUpload(slug: string): Promise<void> {
     throw new Error('Geen metadata gevonden voor ' + slug);
   }
 
-  // Delete all files
+  // Delete all files and their pre-generated thumbnails
   const sortedFiles = sortFilesChronological(metadata.files);
   for (const file of sortedFiles) {
     try {
@@ -373,6 +373,11 @@ export async function deleteUpload(slug: string): Promise<void> {
     } catch (err) {
       console.error('[deleteUpload] Fout bij verwijderen van', file.key, err);
       throw err;
+    }
+    try {
+      await deleteFile(`thumbnails/${file.key}`);
+    } catch {
+      // thumbnail bestaat mogelijk niet, geen probleem
     }
   }
 

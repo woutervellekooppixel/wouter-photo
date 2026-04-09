@@ -31,10 +31,16 @@ export async function POST(req: NextRequest) {
     // Als jpg of png, converteer naar webp en upload alleen webp
     if (ext === 'jpg' || ext === 'jpeg' || ext === 'png') {
       const sharp = (await import('sharp')).default;
-      const webpBuffer = await sharp(buffer).webp({ quality: 90 }).toBuffer();
+      const [webpBuffer, thumbBuffer] = await Promise.all([
+        sharp(buffer).webp({ quality: 90 }).toBuffer(),
+        sharp(buffer).rotate().resize({ width: 640, withoutEnlargement: true }).webp({ quality: 78 }).toBuffer(),
+      ]);
       const webpName = safeName.replace(/\.[^.]+$/, '.webp');
       const webpKey = `${category}/${webpName}`;
-      await uploadFile(webpBuffer, webpKey, 'image/webp');
+      await Promise.all([
+        uploadFile(webpBuffer, webpKey, 'image/webp'),
+        uploadFile(thumbBuffer, `thumbnails/${webpKey}`, 'image/webp'),
+      ]);
       uploadedKey = webpKey;
       uploadedName = webpName;
       // jpg/png niet uploaden, alleen webp

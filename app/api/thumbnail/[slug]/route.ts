@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getFile, getMetadata } from "@/lib/r2";
+import { getFile, getMetadata, headObject, uploadFile, getSignedDownloadUrl } from "@/lib/r2";
 import { isValidSlug } from "@/lib/validation";
-import sharp from "sharp";
 import { isExpired } from "@/lib/expiry";
 
 export const runtime = 'nodejs';
@@ -60,6 +59,28 @@ export async function GET(
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
+    // For hero/large sizes: redirect directly to original in R2 — no Sharp processing needed
+    if (width >= 2000) {
+      const signedUrl = await getSignedDownloadUrl(fileKey, 3600);
+      return NextResponse.redirect(signedUrl, { status: 307 });
+    }
+
+    // Check for pre-generated thumbnail in R2
+    const thumbKey = `thumbnails/${fileKey}`;
+    const existing = await headObject(thumbKey);
+    if (existing) {
+      const data = await getFile(thumbKey);
+      return new NextResponse(new Uint8Array(data), {
+        status: 200,
+        headers: {
+          'Content-Type': 'image/webp',
+          'Cache-Control': 'public, s-maxage=31536000, max-age=31536000, immutable',
+        },
+      });
+    }
+
+    // Generate thumbnail, store in R2 for future requests, and return
+    const sharp = (await import('sharp')).default;
     const original = await getFile(fileKey);
     if (!original || original.length === 0) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -71,11 +92,13 @@ export async function GET(
       .webp({ quality: 78 })
       .toBuffer();
 
+    await uploadFile(Buffer.from(resized), thumbKey, 'image/webp');
+
     return new NextResponse(new Uint8Array(resized), {
       status: 200,
       headers: {
         'Content-Type': 'image/webp',
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Cache-Control': 'public, s-maxage=31536000, max-age=31536000, immutable',
       },
     });
   } catch (error) {
