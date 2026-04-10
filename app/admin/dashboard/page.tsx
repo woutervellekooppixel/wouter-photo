@@ -335,7 +335,9 @@ export default function AdminDashboard() {
         const reader = entry.createReader();
         const entries = await readAllEntries(reader);
         const nextPath = `${currentPath}${entry.name}/`;
-        const nextRootToStrip = rootToStrip ?? entry.name;
+        // Only strip root when a single top-level directory is dropped.
+        // rootToStrip === "" means "don't strip" (multiple dirs dropped).
+        const nextRootToStrip = rootToStrip === "" ? "" : (rootToStrip ?? entry.name);
         const nested = await Promise.all(entries.map((e: any) => walkEntry(e, nextPath, nextRootToStrip)));
         return nested.flat();
       }
@@ -346,7 +348,13 @@ export default function AdminDashboard() {
       .map((i) => (i as any).webkitGetAsEntry?.())
       .filter(Boolean);
 
-    const nestedFiles = await Promise.all(topEntries.map((e: any) => walkEntry(e, "")));
+    const topDirCount = topEntries.filter((e: any) => e.isDirectory).length;
+    // If exactly one top-level directory is dropped, strip its name (single-session workflow).
+    // If multiple directories are dropped, preserve each folder name so they appear as
+    // separate sections on the download page.
+    const initialRootToStrip = (topEntries.length === 1 && topDirCount === 1) ? undefined : "";
+
+    const nestedFiles = await Promise.all(topEntries.map((e: any) => walkEntry(e, "", initialRootToStrip)));
     return nestedFiles.flat();
   };
 
