@@ -30,25 +30,6 @@ export function middleware(request: NextRequest) {
     return response
   }
 
-  // Noindex for root-level download slugs (e.g. /some-gallery-slug)
-  // Keep known public single-segment pages indexable.
-  const rootSlugMatch = pathname.match(/^\/([a-z0-9-]+)$/i)
-  const rootSegment = rootSlugMatch?.[1]?.toLowerCase()
-
-  const isPublicSingleSegment =
-    rootSegment === 'about' ||
-    rootSegment === 'portfolio' ||
-    rootSegment === 'plugins' ||
-    rootSegment === 'shop' ||
-    rootSegment === 'contact' ||
-    rootSegment === 'algemene-voorwaarden'
-
-  const isDownloadSlug = Boolean(rootSegment) && !isPublicSingleSegment
-
-  if (isDownloadSlug) {
-    response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex')
-  }
-
   return response
 }
 

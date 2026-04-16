@@ -88,39 +88,6 @@ async function sendEmail(options: SendEmailOptions): Promise<void> {
   }
 }
 
-export async function sendDownloadNotification(
-  slug: string,
-  fileCount: number
-): Promise<void> {
-  try {
-    const safeSlug = escapeHtml(slug);
-
-    await sendEmail({
-			from: process.env.EMAIL_FROM_DOWNLOAD_NOTIFICATIONS || "Download Notificaties <downloads@wouter.photo>",
-			to: ADMIN_EMAIL,
-			subject: `Download: ${slug}`,
-			htmlBody: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Download Notificatie</h2>
-          <p>Er is een download uitgevoerd:</p>
-          <ul>
-            <li><strong>Project:</strong> ${safeSlug}</li>
-            <li><strong>Aantal bestanden:</strong> ${fileCount}</li>
-            <li><strong>Tijd:</strong> ${new Date().toLocaleString("nl-NL")}</li>
-          </ul>
-          <p style="color: #666; font-size: 14px; margin-top: 20px;">
-            Dit is een automatische notificatie van je download portal.
-          </p>
-        </div>
-      `,
-      textBody: `Download notificatie\n\nProject: ${slug}\nAantal bestanden: ${fileCount}\nTijd: ${new Date().toLocaleString("nl-NL")}`,
-      tag: "download-notification",
-    });
-  } catch (error) {
-    console.error("Failed to send email notification:", error);
-    // Don't throw - email failure shouldn't break the download
-  }
-}
 
 export async function sendContactFormEmail({
   name,

@@ -38,7 +38,6 @@ export default function Header() {
     if (pathname === '/about') return 'ABOUT'
     if (pathname === '/algemene-voorwaarden') return 'ABOUT'
     if (pathname.startsWith('/admin')) return 'DOWNLOAD'
-    if (pathname === '/not-found' || /^\/[a-zA-Z0-9-]+$/.test(pathname)) return 'DOWNLOAD'
     return 'PHOTO'
   })()
 
@@ -68,7 +67,6 @@ export default function Header() {
         )}
       </Link>
 
-      {/* Spacer keeps the nav on the right without showing DownloadStats */}
       <div className="hidden md:flex flex-1" aria-hidden="true" />
 
       <nav

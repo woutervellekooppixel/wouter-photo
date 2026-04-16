@@ -86,11 +86,6 @@ export function rateLimit(config: RateLimitConfig) {
   };
 }
 
-export const downloadRateLimit = rateLimit({
-  name: 'download',
-  windowMs: 60 * 1000,
-  maxRequests: 10,
-});
 
 export const apiRateLimit = rateLimit({
   name: 'api',

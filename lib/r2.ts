@@ -45,9 +45,7 @@ import {
   HeadObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import archiver from "archiver";
 import { sortFilesChronological } from "@/lib/utils";
-import { PassThrough, Readable } from "stream";
 
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID!;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID!;
@@ -65,42 +63,18 @@ export const r2Client = new S3Client({
 
 export interface UploadMetadata {
   slug: string;
-  title?: string; // Optional: friendly title for the upload
+  title?: string;
   createdAt: string;
-  expiresAt?: string; // Optioneel, niet meer verplicht
   files: {
     key: string;
     name: string;
     size: number;
     type: string;
-    takenAt?: string; // Optional: EXIF capture time (ISO string)
+    takenAt?: string;
   }[];
-  downloads: number;
-  downloadHistory?: {
-    timestamp: string;
-    type: 'all' | 'single' | 'selected';
-    files?: string[]; // File keys that were downloaded
-    ip?: string;
-    userAgent?: string;
-  }[];
-  previewImageKey?: string; // Optional: key of the image to show on loading screen
-  backgroundImageKey?: string; // Optional: key of the image to use as background
-  ratings?: Record<string, boolean>; // Optional: client ratings for photos (fileKey -> rated)
-  ratingsEnabled?: boolean; // Optional: allow clients to rate photos
-  gallery?: boolean; // Optional: mark as gallery photo upload (not a real download)
+  gallery?: boolean;
 }
 
-export interface MonthlyStats {
-  month: string; // Format: "2025-12"
-  operations: {
-    listFiles: number;
-    getFile: number;
-    putFile: number;
-    deleteFile: number;
-  };
-  bandwidth: number; // bytes downloaded
-  storage: number; // average bytes stored
-}
 
 export async function uploadFile(
   file: Buffer,
@@ -128,33 +102,6 @@ export async function getFile(key: string): Promise<Buffer> {
   return Buffer.from(bytes || []);
 }
 
-export async function getFileStream(key: string): Promise<Readable> {
-  const command = new GetObjectCommand({
-    Bucket: R2_BUCKET_NAME,
-    Key: key,
-  });
-
-  const response = await r2Client.send(command);
-  if (!response.Body) {
-    throw new Error(`Empty body for key: ${key}`);
-  }
-
-  // In Node.js runtimes, AWS SDK v3 returns a Node readable stream here.
-  return response.Body as unknown as Readable;
-}
-
-export async function getFileRange(key: string, range: string): Promise<Buffer> {
-  const command = new GetObjectCommand({
-    Bucket: R2_BUCKET_NAME,
-    Key: key,
-    Range: range,
-  });
-
-  const response = await r2Client.send(command);
-  const bytes = await response.Body?.transformToByteArray();
-  return Buffer.from(bytes || []);
-}
-
 export async function getSignedDownloadUrl(
   key: string,
   expiresIn: number = 3600
@@ -167,57 +114,6 @@ export async function getSignedDownloadUrl(
   return getSignedUrl(r2Client, command, { expiresIn });
 }
 
-export async function getSignedDownloadUrlWithFilename(
-  key: string,
-  filename: string,
-  expiresIn: number = 3600
-): Promise<string> {
-  const safeName = filename.replace(/"/g, "");
-  const command = new GetObjectCommand({
-    Bucket: R2_BUCKET_NAME,
-    Key: key,
-    ResponseContentDisposition: `attachment; filename="${safeName}"`,
-  });
-
-  return getSignedUrl(r2Client, command, { expiresIn });
-}
-
-export async function headObject(key: string): Promise<{ contentLength: number } | null> {
-  try {
-    const command = new HeadObjectCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: key,
-    });
-    const response = await r2Client.send(command);
-    const contentLength = response.ContentLength;
-    if (typeof contentLength !== 'number') return null;
-    return { contentLength };
-  } catch {
-    return null;
-  }
-}
-
-export async function getZipSignedUrl(slug: string, expiresIn: number = 3600): Promise<string> {
-  const zipKey = `zips/${slug}.zip`;
-  return getSignedDownloadUrl(zipKey, expiresIn);
-}
-
-export async function isZipFileValid(slug: string): Promise<boolean> {
-  // Basic validity check: confirm file exists and tail contains End Of Central Directory (EOCD) signature.
-  const zipKey = `zips/${slug}.zip`;
-  const head = await headObject(zipKey);
-  if (!head) return false;
-  if (head.contentLength < 22) return false;
-
-  const tailWindow = Math.min(65_536, head.contentLength);
-  const start = Math.max(0, head.contentLength - tailWindow);
-  const end = head.contentLength - 1;
-
-  const tail = await getFileRange(zipKey, `bytes=${start}-${end}`);
-  // EOCD signature: 0x50 0x4b 0x05 0x06
-  const signature = Buffer.from([0x50, 0x4b, 0x05, 0x06]);
-  return tail.lastIndexOf(signature) !== -1;
-}
 
 export async function listFiles(prefix: string): Promise<string[]> {
   const allFiles: string[] = [];
@@ -269,76 +165,6 @@ export async function getMetadata(slug: string): Promise<UploadMetadata | null> 
     return JSON.parse(buffer.toString("utf-8"));
   } catch (error) {
     return null;
-  }
-}
-
-export async function createZipFile(slug: string): Promise<void> {
-  const metadata = await getMetadata(slug);
-  if (!metadata) {
-    throw new Error(`Metadata not found for ${slug}`);
-  }
-
-  const zipKey = `zips/${slug}.zip`;
-
-  // Stream ZIP directly to R2 to avoid OOM/truncation for large galleries.
-  const passThrough = new PassThrough();
-  const uploadPromise = r2Client.send(
-    new PutObjectCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: zipKey,
-      Body: passThrough,
-      ContentType: "application/zip",
-    })
-  );
-
-  const archive = archiver("zip", { zlib: { level: 6 } });
-  archive.on("error", (err) => {
-    passThrough.destroy(err);
-  });
-  archive.pipe(passThrough);
-
-  const sortedFiles = sortFilesChronological(metadata.files);
-  for (const file of sortedFiles) {
-    const fileStream = await getFileStream(file.key);
-    archive.append(fileStream, { name: file.name });
-  }
-
-  await archive.finalize();
-  await uploadPromise;
-}
-
-export async function getZipFile(slug: string): Promise<Buffer | null> {
-  try {
-    const zipKey = `zips/${slug}.zip`;
-    return await getFile(zipKey);
-  } catch (error) {
-    return null;
-  }
-}
-
-export async function updateDownloadCount(
-  slug: string,
-  type: 'all' | 'single' | 'selected' = 'all',
-  files?: string[],
-  ip?: string,
-  userAgent?: string
-): Promise<void> {
-  const metadata = await getMetadata(slug);
-  if (metadata) {
-    metadata.downloads = (metadata.downloads || 0) + 1;
-    
-    // Add to download history
-    if (!metadata.downloadHistory) {
-      metadata.downloadHistory = [];
-    }
-    metadata.downloadHistory.push({
-      timestamp: new Date().toISOString(),
-      type,
-      ...(files && { files }),
-      ...(ip && { ip }),
-      ...(userAgent && { userAgent }),
-    });
-    await saveMetadata(metadata);
   }
 }
 
@@ -434,116 +260,3 @@ export async function deleteFolder(prefix: string): Promise<void> {
   }
 }
 
-export async function findOrphanedUploads(): Promise<string[]> {
-  // Get all upload folders
-  const allFiles = await listFiles("uploads/");
-  const uploadFolders = new Set<string>();
-  
-  for (const key of allFiles) {
-    const parts = key.split('/');
-    if (parts.length >= 2) {
-      uploadFolders.add(parts[1]); // slug is the second part after "uploads/"
-    }
-  }
-
-  // Get all metadata slugs
-  const metadataKeys = await listFiles("metadata/");
-  const metadataSlugs = new Set<string>();
-  
-  for (const key of metadataKeys) {
-    if (key.endsWith(".json")) {
-      const slug = key.replace("metadata/", "").replace(".json", "");
-      metadataSlugs.add(slug);
-    }
-  }
-
-  // Find folders without metadata
-  const orphaned: string[] = [];
-  for (const folder of uploadFolders) {
-    if (!metadataSlugs.has(folder)) {
-      orphaned.push(folder);
-    }
-  }
-
-  return orphaned;
-}
-
-// Monthly stats tracking
-export async function getMonthlyStats(): Promise<MonthlyStats> {
-  const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  
-  try {
-    const key = `stats/${currentMonth}.json`;
-    const buffer = await getFile(key);
-    return JSON.parse(buffer.toString('utf-8'));
-  } catch (error) {
-    // Return default stats if not found
-    return {
-      month: currentMonth,
-      operations: {
-        listFiles: 0,
-        getFile: 0,
-        putFile: 0,
-        deleteFile: 0,
-      },
-      bandwidth: 0,
-      storage: 0,
-    };
-  }
-}
-
-export async function saveMonthlyStats(stats: MonthlyStats): Promise<void> {
-  const key = `stats/${stats.month}.json`;
-  await uploadFile(
-    Buffer.from(JSON.stringify(stats, null, 2)),
-    key,
-    'application/json'
-  );
-}
-
-export async function trackOperation(operation: keyof MonthlyStats['operations'], count: number = 1): Promise<void> {
-  const stats = await getMonthlyStats();
-  stats.operations[operation] += count;
-  await saveMonthlyStats(stats);
-}
-
-export async function trackBandwidth(bytes: number): Promise<void> {
-  const stats = await getMonthlyStats();
-  stats.bandwidth += bytes;
-  await saveMonthlyStats(stats);
-}
-
-export async function calculateMonthlyCost(): Promise<{
-  storage: number;
-  operations: number;
-  bandwidth: number;
-  total: number;
-}> {
-  const stats = await getMonthlyStats();
-  const uploads = await listAllUploads();
-  
-  // Calculate current storage
-  const totalStorage = uploads.reduce((acc, u) => 
-    acc + u.files.reduce((sum, f) => sum + f.size, 0), 0
-  );
-  
-  // R2 Pricing (per maand)
-  const storageGB = totalStorage / (1024 * 1024 * 1024);
-  const storageCost = storageGB * 0.015; // $0.015 per GB/month
-  
-  // Operations cost
-  const classAOps = stats.operations.listFiles + stats.operations.putFile + stats.operations.deleteFile;
-  const classBOps = stats.operations.getFile;
-  const operationsCost = (classAOps / 1000000) * 4.50 + (classBOps / 1000000) * 0.36;
-  
-  // Bandwidth cost (egress is free for first 10TB/month with R2!)
-  const bandwidthCost = 0;
-  
-  return {
-    storage: storageGB,
-    operations: operationsCost,
-    bandwidth: bandwidthCost,
-    total: storageCost + operationsCost + bandwidthCost,
-  };
-}
