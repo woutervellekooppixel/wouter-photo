@@ -45,7 +45,7 @@ export default async function PortfolioPage() {
         <div className="grid h-full w-full grid-cols-1 grid-rows-3 md:grid-cols-3 md:grid-rows-1">
           {categories.map((cat, idx) => {
             const first = data[cat.key]?.[0]
-            const src = first?.src ?? '/api/background/default-background'
+            const src = first?.src ?? null
             const alt = first?.alt ?? cat.label
 
             return (
@@ -56,6 +56,7 @@ export default async function PortfolioPage() {
                 aria-label={`Open ${cat.label} portfolio`}
               >
                 <div className="relative h-full">
+                  {src && (
                   <Image
                     src={src}
                     alt={alt}
@@ -64,6 +65,7 @@ export default async function PortfolioPage() {
                     sizes="(max-width: 768px) 100vw, 33vw"
                     className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                   />
+                  )}
 
                   {/* Readability overlay */}
                   <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/15 to-black/20" />

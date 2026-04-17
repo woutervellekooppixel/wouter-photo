@@ -19,7 +19,7 @@ export default async function HomePage() {
   const gallery = await getPortfolioGalleryData()
 
   const hero = gallery.concerts?.[0]
-  const heroSrc = hero?.src ?? '/api/background/default-background'
+  const heroSrc = hero?.src ?? null
   const heroAlt = hero?.alt ?? 'Concert photography by Wouter Vellekoop'
 
   return (
@@ -27,6 +27,7 @@ export default async function HomePage() {
       <DisableBodyScroll />
       {/* Use fixed so the hero sits behind the transparent header */}
       <section className="fixed inset-0">
+        {heroSrc && (
         <Image
           src={heroSrc}
           alt={heroAlt}
@@ -35,6 +36,7 @@ export default async function HomePage() {
           sizes="100vw"
           className="object-cover"
         />
+        )}
 
         {/* Overlays for readability */}
         <div className="absolute inset-0 bg-black/25" />

@@ -45,7 +45,7 @@ export async function getPortfolioGalleryData(): Promise<GalleryData> {
       )
       .map((f) => ({
         id: f,
-        src: `/api/photos/by-key?key=${encodeURIComponent(cat + '/' + f)}`,
+        src: `/api/photos/${encodeURIComponent(cat)}/${encodeURIComponent(f)}`,
         alt: f,
         category: cat,
         key: cat + '/' + f,
