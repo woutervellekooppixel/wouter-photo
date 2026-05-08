@@ -1,0 +1,307 @@
+{
+  "generated_at": "2026-05-08T21:27:46",
+  "archive_root": "/Users/woutervellekoop/Library/CloudStorage/OneDrive-WouterVellekoop.nl/002 Werkmappen/06_JPG",
+  "totals": {
+    "photos": 46623,
+    "shoots": 1043,
+    "years": 20
+  },
+  "year": {
+    "year": 2026,
+    "photos": 2639,
+    "shoots": 31
+  },
+  "month": {
+    "year": 2026,
+    "month": 5,
+    "photos": 134,
+    "shoots": 2
+  },
+  "last_shoot": {
+    "date": "2026-05-03",
+    "name": "2026-05-03_Berna-Lucy-Anna-Wouter",
+    "subject": "Berna-Lucy-Anna-Wouter",
+    "photos": 19,
+    "days_ago": 5,
+    "date_source": "prefix"
+  },
+  "years_history": [
+    {
+      "year": 2026,
+      "shoots": 31,
+      "photos": 2639
+    },
+    {
+      "year": 2025,
+      "shoots": 88,
+      "photos": 6171
+    },
+    {
+      "year": 2024,
+      "shoots": 75,
+      "photos": 4767
+    },
+    {
+      "year": 2023,
+      "shoots": 50,
+      "photos": 3415
+    },
+    {
+      "year": 2022,
+      "shoots": 66,
+      "photos": 4610
+    },
+    {
+      "year": 2021,
+      "shoots": 19,
+      "photos": 2410
+    },
+    {
+      "year": 2020,
+      "shoots": 24,
+      "photos": 1720
+    },
+    {
+      "year": 2019,
+      "shoots": 44,
+      "photos": 3565
+    },
+    {
+      "year": 2018,
+      "shoots": 53,
+      "photos": 3254
+    },
+    {
+      "year": 2017,
+      "shoots": 50,
+      "photos": 2394
+    },
+    {
+      "year": 2016,
+      "shoots": 131,
+      "photos": 1794
+    },
+    {
+      "year": 2015,
+      "shoots": 171,
+      "photos": 2180
+    },
+    {
+      "year": 2014,
+      "shoots": 119,
+      "photos": 2820
+    },
+    {
+      "year": 2013,
+      "shoots": 73,
+      "photos": 1682
+    },
+    {
+      "year": 2012,
+      "shoots": 16,
+      "photos": 424
+    },
+    {
+      "year": 2011,
+      "shoots": 5,
+      "photos": 277
+    },
+    {
+      "year": 2010,
+      "shoots": 9,
+      "photos": 162
+    },
+    {
+      "year": 2009,
+      "shoots": 4,
+      "photos": 593
+    },
+    {
+      "year": 2008,
+      "shoots": 6,
+      "photos": 817
+    },
+    {
+      "year": 2007,
+      "shoots": 9,
+      "photos": 929
+    }
+  ],
+  "recurring_subjects": [
+    {
+      "subject": "Residentie-Orkest",
+      "shoots": 33,
+      "photos": 2506
+    },
+    {
+      "subject": "Dag in de Branding",
+      "shoots": 15,
+      "photos": 1355
+    },
+    {
+      "subject": "Beeld-en-Geluid",
+      "shoots": 8,
+      "photos": 486
+    },
+    {
+      "subject": "F",
+      "shoots": 8,
+      "photos": 2504
+    },
+    {
+      "subject": "538",
+      "shoots": 7,
+      "photos": 822
+    },
+    {
+      "subject": "Sniester",
+      "shoots": 7,
+      "photos": 609
+    },
+    {
+      "subject": "NSJ",
+      "shoots": 6,
+      "photos": 802
+    },
+    {
+      "subject": "Parkpop",
+      "shoots": 6,
+      "photos": 669
+    }
+  ],
+  "biggest_shoot": {
+    "name": "F",
+    "subject": "F",
+    "photos": 757,
+    "year": 2007,
+    "date": "2007-01-01"
+  },
+  "data_quality": {
+    "shoots_with_prefix": 310,
+    "shoots_with_mtime": 1,
+    "shoots_year_only": 732,
+    "by_year": [
+      {
+        "year": 2026,
+        "prefix": 30,
+        "mtime": 1,
+        "year_only": 0
+      },
+      {
+        "year": 2025,
+        "prefix": 87,
+        "mtime": 0,
+        "year_only": 1
+      },
+      {
+        "year": 2024,
+        "prefix": 75,
+        "mtime": 0,
+        "year_only": 0
+      },
+      {
+        "year": 2023,
+        "prefix": 50,
+        "mtime": 0,
+        "year_only": 0
+      },
+      {
+        "year": 2022,
+        "prefix": 65,
+        "mtime": 0,
+        "year_only": 1
+      },
+      {
+        "year": 2021,
+        "prefix": 2,
+        "mtime": 0,
+        "year_only": 17
+      },
+      {
+        "year": 2020,
+        "prefix": 0,
+        "mtime": 0,
+        "year_only": 24
+      },
+      {
+        "year": 2019,
+        "prefix": 0,
+        "mtime": 0,
+        "year_only": 44
+      },
+      {
+        "year": 2018,
+        "prefix": 0,
+        "mtime": 0,
+        "year_only": 53
+      },
+      {
+        "year": 2017,
+        "prefix": 0,
+        "mtime": 0,
+        "year_only": 50
+      },
+      {
+        "year": 2016,
+        "prefix": 0,
+        "mtime": 0,
+        "year_only": 131
+      },
+      {
+        "year": 2015,
+        "prefix": 0,
+        "mtime": 0,
+        "year_only": 171
+      },
+      {
+        "year": 2014,
+        "prefix": 0,
+        "mtime": 0,
+        "year_only": 119
+      },
+      {
+        "year": 2013,
+        "prefix": 0,
+        "mtime": 0,
+        "year_only": 73
+      },
+      {
+        "year": 2012,
+        "prefix": 0,
+        "mtime": 0,
+        "year_only": 16
+      },
+      {
+        "year": 2011,
+        "prefix": 0,
+        "mtime": 0,
+        "year_only": 5
+      },
+      {
+        "year": 2010,
+        "prefix": 0,
+        "mtime": 0,
+        "year_only": 9
+      },
+      {
+        "year": 2009,
+        "prefix": 1,
+        "mtime": 0,
+        "year_only": 3
+      },
+      {
+        "year": 2008,
+        "prefix": 0,
+        "mtime": 0,
+        "year_only": 6
+      },
+      {
+        "year": 2007,
+        "prefix": 0,
+        "mtime": 0,
+        "year_only": 9
+      }
+    ]
+  },
+  "keepers": null
+}
