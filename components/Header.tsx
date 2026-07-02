@@ -37,12 +37,15 @@ export default function Header() {
     if (pathname === '/plugins' || pathname.startsWith('/plugins/')) return 'SHOP'
     if (pathname === '/about') return 'ABOUT'
     if (pathname === '/algemene-voorwaarden') return 'ABOUT'
-    if (pathname.startsWith('/admin')) return 'DOWNLOAD'
+    if (pathname.startsWith('/admin')) return 'ADMIN'
     return 'PHOTO'
   })()
 
   const baseCycle = ['PORTFOLIO', 'CONCERTS', 'EVENTS', 'MISC', 'ABOUT', 'PHOTO', 'DOWNLOAD']
-  const headerCycle = [...baseCycle.filter((s) => s !== targetSuffix), targetSuffix]
+  // In de admin toont het logo WOUTER.ADMIN i.p.v. WOUTER.DOWNLOAD; vervang die
+  // suffix ook in de cyclus zodat "download" er nergens even doorheen flitst.
+  const cycleSource = targetSuffix === 'ADMIN' ? baseCycle.map((s) => (s === 'DOWNLOAD' ? 'ADMIN' : s)) : baseCycle
+  const headerCycle = [...cycleSource.filter((s) => s !== targetSuffix), targetSuffix]
 
 
   return (
