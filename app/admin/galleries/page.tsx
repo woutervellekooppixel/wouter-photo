@@ -169,7 +169,7 @@ export default function AdminGalleries() {
         {...attributes}
         {...listeners}
       >
-        <div className="h-20 min-w-0 flex-shrink-0 flex items-center justify-center overflow-hidden rounded bg-gray-100">
+        <div className="h-20 min-w-0 flex-shrink-0 flex items-center justify-center overflow-hidden rounded bg-gray-100 dark:bg-gray-800">
           <Image
             src={photo.src}
             alt={photo.alt}
@@ -240,7 +240,7 @@ export default function AdminGalleries() {
                 <CardTitle>{cat.charAt(0).toUpperCase() + cat.slice(1)}</CardTitle>
                 {/* Dropzone bovenaan */}
                 <div
-                  className="my-2 p-4 border-2 border-dashed border-gray-300 rounded bg-gray-50 text-center cursor-pointer hover:bg-gray-100 transition"
+                  className="my-2 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800/50 text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition"
                   onClick={() => fileInputRefs.current[cat]?.click()}
                   onDragOver={e => { e.preventDefault(); e.stopPropagation(); }}
                   onDrop={e => {
@@ -260,7 +260,7 @@ export default function AdminGalleries() {
                   }}
                 >
                   <Upload className="mx-auto mb-1 w-6 h-6 text-gray-400" />
-                  <div className="text-xs text-gray-600">Sleep een foto hierheen of klik om te uploaden</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-300">Sleep een foto hierheen of klik om te uploaden</div>
                   <input
                     ref={el => { fileInputRefs.current[cat] = el; }}
                     type="file"
@@ -269,7 +269,7 @@ export default function AdminGalleries() {
                     onChange={e => handleFileChange(e, cat)}
                     disabled={!!uploadingCat}
                   />
-                  {uploadingCat === cat && <span className="text-xs text-gray-500 ml-2">Bezig met uploaden...</span>}
+                  {uploadingCat === cat && <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">Bezig met uploaden...</span>}
                 </div>
               </CardHeader>
               <CardContent>
