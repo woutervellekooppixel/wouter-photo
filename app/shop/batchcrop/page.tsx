@@ -157,6 +157,28 @@ export default function BatchCropShopPage() {
 		url: "https://wouter.photo/shop/batchcrop",
 	};
 
+	const productSchema = {
+		"@context": "https://schema.org",
+		"@type": "Product",
+		name: "BatchCrop",
+		description:
+			"Batch crop (bulk crop) photos in Photoshop. Set a crop once and apply it consistently across a whole folder or large photo set — fast and repeatable.",
+		category: "Photoshop Plugin",
+		offers: {
+			"@type": "Offer",
+			price: "15",
+			priceCurrency: "USD",
+			availability: "https://schema.org/InStock",
+			url: ADOBE_EXCHANGE_BATCHCROP_URL,
+		},
+		brand: {
+			"@type": "Brand",
+			name: "Wouter.Photo",
+		},
+		image: ["https://wouter.photo/batchcrop.png"],
+		url: "https://wouter.photo/shop/batchcrop",
+	};
+
 	const breadcrumbSchema = {
 		"@context": "https://schema.org",
 		"@type": "BreadcrumbList",
@@ -179,6 +201,7 @@ export default function BatchCropShopPage() {
 		<main className="min-h-screen bg-background text-foreground">
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }} />
+			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
 			<div className="mx-auto w-full max-w-6xl px-6 py-14 sm:py-20">
