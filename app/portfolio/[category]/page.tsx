@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { generateMetadata } from './metadata';
 import GalleryScroller from '../../../components/GalleryScroller';
 import { getGalleryData } from './gallery-data';
+import { seededShuffleFirstN } from '@/lib/utils';
 
 export { generateMetadata };
 export const dynamic = 'force-dynamic';
@@ -75,6 +76,13 @@ export default async function PortfolioPage({ params }: any) {
   } else {
     photos = dataApi[category] || [];
   }
+
+  // Roteer dagelijks de eerste 5 foto's: seeded shuffle op datum + categorie,
+  // zodat elke bezoeker die dag dezelfde volgorde ziet en die de volgende dag
+  // rouleert. Foto 6 en verder houden de bestaande (curated) volgorde.
+  // Server-side bepaald → geen hydration-mismatch.
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+  photos = seededShuffleFirstN(photos, 5, `${today}:${category}`);
 
   return (
     <>
