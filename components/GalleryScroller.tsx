@@ -4,11 +4,12 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 import OptimizedImage from './OptimizedImage'
+import type { Photo } from '@/lib/portfolioGallery'
 
 
 type Props = {
   category: string,
-  photos: any[]
+  photos: Photo[]
 }
 
 export default function GalleryScroller({ category, photos }: Props) {
@@ -19,7 +20,7 @@ export default function GalleryScroller({ category, photos }: Props) {
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
   const [isTransitioning, setIsTransitioning] = useState(false)
   // displayedPhotos is now derived from props
-  const [displayedPhotos, setDisplayedPhotos] = useState<any[]>(photos)
+  const [displayedPhotos, setDisplayedPhotos] = useState<Photo[]>(photos)
 
   // Disable body scroll on desktop
   useEffect(() => {
@@ -36,7 +37,7 @@ export default function GalleryScroller({ category, photos }: Props) {
 
   // Update displayedPhotos when photos/category changes
   useEffect(() => {
-    let newPhotos: any[] = []
+    let newPhotos: Photo[] = []
     if (category === 'all') {
       newPhotos = photos
     } else {

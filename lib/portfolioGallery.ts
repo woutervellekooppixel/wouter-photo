@@ -4,7 +4,7 @@ import { photoAltFromFilename } from '@/lib/utils';
 
 const EXCLUDED_ROOT_PREFIXES = new Set(['backgrounds', 'metadata', 'uploads', 'zips']);
 
-type Photo = { id: string; src: string; alt: string; category: string; key: string };
+export type Photo = { id: string; src: string; alt: string; category: string; key: string; blurDataURL?: string };
 
 type GalleryData = Record<string, Photo[]>;
 

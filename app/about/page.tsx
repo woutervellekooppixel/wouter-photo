@@ -57,6 +57,11 @@ export default function AboutPage() {
                     I&apos;ve worked with a wide range of artists, venues, organisations and media outlets, combining speed, consistency and style.
                     Whether it&apos;s the chaos of a music festival or the intimacy of a backstage moment, I aim to tell stories that resonate.
                   </p>
+                  <p>
+                    Based in the Netherlands and available for bookings worldwide, I photograph concerts and festivals — from clubs to venues
+                    like Ziggo Dome, Carré and Ahoy — alongside corporate and public events, conceptual series, and commercial campaigns
+                    for brands, agencies and media.
+                  </p>
                 </div>
               </div>
 

@@ -3,6 +3,7 @@ import { generateMetadata } from './metadata';
 import GalleryScroller from '../../../components/GalleryScroller';
 import { getGalleryData } from './gallery-data';
 import { seededShuffleFirstN } from '@/lib/utils';
+import type { Photo } from '@/lib/portfolioGallery';
 
 export { generateMetadata };
 
@@ -82,7 +83,7 @@ export default async function PortfolioPage({ params }: any) {
 
   // Haal gallery data op
   const dataApi = await getGalleryData();
-  let photos: any[] = [];
+  let photos: Photo[] = [];
   if (category === 'all') {
     photos = Object.values(dataApi || {}).flat();
   } else {
