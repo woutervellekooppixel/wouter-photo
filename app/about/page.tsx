@@ -1,20 +1,10 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import type { Metadata } from 'next'
 import PhoneReveal from '@/components/PhoneReveal'
 import FloatingContactButton from '@/components/FloatingContactButton'
+import { metadata as pageMetadata } from './metadata'
 
-export const metadata: Metadata = {
-  title: 'About — Wouter.Photo',
-  description:
-    'Concert and event photographer. Working with MOJO, Radio 538, North Sea Jazz, Ahoy\' and many more since 2016.',
-  alternates: { canonical: 'https://wouter.photo/about' },
-  openGraph: {
-    title: 'About — Wouter.Photo',
-    description: 'Concert and event photographer.',
-    url: 'https://wouter.photo/about',
-  },
-}
+export const metadata = pageMetadata
 
 export default function AboutPage() {
   return (

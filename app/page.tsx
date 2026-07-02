@@ -8,7 +8,7 @@ import HeroWordmark from '@/components/HeroWordmark'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Wouter.Photo',
+  title: { absolute: 'Wouter Vellekoop — Concert & Event Photographer' },
   description: 'Portfolio — Concerts, Events en Misc.',
   alternates: {
     canonical: 'https://wouter.photo',

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "BatchCrop – Crop Multiple Photos (Batch) in Photoshop – Wouter.Photo",
+	title: "BatchCrop – Crop Multiple Photos (Batch) in Photoshop",
 	description:
 		"Batch crop (bulk crop) photos in Photoshop. Set a crop once and apply it consistently across a whole folder or large photo set — fast and repeatable.",
 	keywords: [

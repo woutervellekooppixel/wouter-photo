@@ -12,7 +12,7 @@ export async function generateMetadata({
 
   if (!validCategories.includes(category as Category)) {
     return {
-      title: 'Wouter.Photo – Portfolio',
+      title: 'Portfolio',
       description: 'Photography by Wouter Vellekoop',
     }
   }
@@ -124,7 +124,7 @@ export async function generateMetadata({
   const baseUrl = 'https://wouter.photo'
 
   return {
-    title: `${data.title} – Wouter.Photo`,
+    title: data.title,
     description: data.description,
     keywords: data.keywords,
     openGraph: {

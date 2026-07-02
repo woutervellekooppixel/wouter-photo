@@ -3,6 +3,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import DisableBodyScroll from '@/components/DisableBodyScroll'
 import SetHeaderHeightVar from '@/components/SetHeaderHeightVar'
+import { metadata as pageMetadata } from './metadata'
+
+export const metadata = pageMetadata
 
 export const dynamic = 'force-dynamic'
 

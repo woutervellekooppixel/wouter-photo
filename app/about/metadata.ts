@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'About – Wouter Vellekoop',
+  title: 'About',
   description: 'Over Wouter Vellekoop: concert- en eventfotograaf in Nederland (NL/EN). Beschikbaar voor boekingen wereldwijd.',
   keywords: [
     'Wouter Vellekoop',
