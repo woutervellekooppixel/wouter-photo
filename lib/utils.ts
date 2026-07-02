@@ -89,6 +89,52 @@ export function sortFilesChronological<T extends ChronologicalFileLike>(files: T
   });
 }
 
+// ── Seeded shuffle helpers ───────────────────────────────────────────────────
+// Deterministic shuffle so every visitor sees the same order for a given seed
+// (e.g. date + category). Server-side only: the server decides the order, which
+// avoids any hydration mismatch on the client.
+
+// FNV-1a string hash → 32-bit unsigned seed.
+function hashSeed(str: string): number {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+// mulberry32 PRNG: fast, deterministic, good enough for shuffling.
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Fisher-Yates shuffle driven by a seeded PRNG. Returns a new array.
+export function seededShuffle<T>(items: T[], seed: string): T[] {
+  const rand = mulberry32(hashSeed(seed));
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+// Shuffle only the first `n` items (seeded), leaving the rest in place.
+// Used to "rotate" the first few gallery photos daily while keeping the
+// curated chronological order from item n onward.
+export function seededShuffleFirstN<T>(items: T[], n: number, seed: string): T[] {
+  if (items.length <= 1 || n <= 1) return items;
+  const head = seededShuffle(items.slice(0, n), seed);
+  return [...head, ...items.slice(n)];
+}
+
 // ── Shared file-type helpers ─────────────────────────────────────────────────
 // Used by both the download gallery UI and the API download routes.
 
