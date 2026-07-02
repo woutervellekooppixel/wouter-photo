@@ -5,7 +5,19 @@ import { getGalleryData } from './gallery-data';
 import { seededShuffleFirstN } from '@/lib/utils';
 
 export { generateMetadata };
-export const dynamic = 'force-dynamic';
+
+// Pre-render the fixed set of categories (also ensures they land in the sitemap)
+// and revalidate hourly. The gallery shuffle is date-seeded, so the first-5
+// order stays stable within a day and rotates the next day regardless of how
+// often the page is regenerated. New uploads/reorders appear within ~1 hour.
+export const dynamicParams = false;
+export const revalidate = 3600;
+
+const CATEGORY_PARAMS = ['concerts', 'events', 'misc', 'commercial', 'all'];
+
+export function generateStaticParams() {
+  return CATEGORY_PARAMS.map((category) => ({ category }));
+}
 
 
 

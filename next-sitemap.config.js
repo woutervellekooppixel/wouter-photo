@@ -6,6 +6,12 @@ module.exports = {
     '/admin*',
     '/api*',
     '/preview-home',
+    // Verwijderde routes (oude checkout/blog) — mogen niet meer in de sitemap
+    '/order-success',
+    '/order-failed',
+    '/order-status',
+    '/blog',
+    '/blog*',
   ],
   changefreq: 'weekly',
   priority: 0.7,

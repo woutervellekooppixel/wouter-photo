@@ -5,7 +5,9 @@ import { getPortfolioGalleryData } from '@/lib/portfolioGallery'
 import DisableBodyScroll from '@/components/DisableBodyScroll'
 import HeroWordmark from '@/components/HeroWordmark'
 
-export const dynamic = 'force-dynamic'
+// ISR: cache the page and refresh hourly instead of rendering on every request
+// (removes the per-request R2 round-trips while keeping the hero reasonably fresh).
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: { absolute: 'Wouter Vellekoop — Concert & Event Photographer' },

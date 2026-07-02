@@ -7,7 +7,8 @@ import { metadata as pageMetadata } from './metadata'
 
 export const metadata = pageMetadata
 
-export const dynamic = 'force-dynamic'
+// ISR: cache + hourly refresh instead of force-dynamic (fewer R2 round-trips).
+export const revalidate = 3600
 
 export default async function PortfolioPage() {
   const data = await getGalleryData()
