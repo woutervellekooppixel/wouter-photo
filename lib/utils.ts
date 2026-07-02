@@ -135,6 +135,51 @@ export function seededShuffleFirstN<T>(items: T[], n: number, seed: string): T[]
   return [...head, ...items.slice(n)];
 }
 
+// ── Gallery alt-text ─────────────────────────────────────────────────────────
+
+const CATEGORY_LABEL_NL: Record<string, string> = {
+  concerts: 'concertfotografie',
+  events: 'eventfotografie',
+  commercial: 'commerciële fotografie',
+  misc: 'fotografie',
+}
+
+// Build human-readable alt text from a gallery filename. Filenames look like:
+//   2026-03-02_Wu-Tang_Clan-Ziggo_Dome_Wouter-Vellekoop__V1_1916_3x2.webp
+// Take the subject part (before the "Wouter-Vellekoop" credit), strip date/
+// version/number noise, and fall back to a generic category label when nothing
+// usable remains (e.g. portfolio-concerts1.webp).
+export function photoAltFromFilename(filename: string, category: string): string {
+  const label = CATEGORY_LABEL_NL[category] ?? 'fotografie'
+  const generic = `${label[0].toUpperCase()}${label.slice(1)} door Wouter Vellekoop`
+
+  let base = filename.replace(/\.[a-z0-9]+$/i, '')
+  const year = base.match(/20\d{2}/)?.[0] ?? null
+
+  const creditIdx = base.search(/wouter[-_]vellekoop/i)
+  if (creditIdx >= 0) base = base.slice(0, creditIdx)
+
+  const words = base
+    .replace(/[_-]+/g, ' ')
+    .split(/\s+/)
+    .filter(
+      (t) =>
+        !!t &&
+        !/^\d+$/.test(t) && // pure numbers (ids, date parts)
+        !/^v\d+$/i.test(t) && // version tokens like V1
+        !/^\d+x\d+$/i.test(t) // aspect ratio like 3x2
+    )
+
+  const subject = words.join(' ').trim()
+
+  if (!subject || /^portfolio/i.test(subject) || subject.length < 3) {
+    return generic
+  }
+
+  const withYear = year ? `${subject}, ${year}` : subject
+  return `${withYear} — ${label} door Wouter Vellekoop`
+}
+
 // ── Shared file-type helpers ─────────────────────────────────────────────────
 // Used by both the download gallery UI and the API download routes.
 

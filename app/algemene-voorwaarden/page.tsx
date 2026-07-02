@@ -1,3 +1,7 @@
+import { metadata as pageMetadata } from './metadata'
+
+export const metadata = pageMetadata
+
 export default function AlgemeneVoorwaardenPage() {
   return (
     <main className="min-h-dvh bg-white dark:bg-black text-black dark:text-white">

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Stage Fix v6 – Lightroom Preset System For Concert, Event & Bad Stage Light – Wouter.Photo",
+	title: "Stage Fix v6 – Lightroom Preset System For Concert, Event & Bad Stage Light",
 	description:
 		"Stage Fix v6 is a modular Lightroom preset system with 90 presets + 15 reset presets for Lightroom Classic and Adobe Camera Raw. Built for concerts, festivals, clubs, events, backstage and other mixed-light shoots where one preset is not enough.",
 	keywords: [

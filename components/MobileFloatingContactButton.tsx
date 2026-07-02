@@ -79,9 +79,9 @@ export default function MobileFloatingContactButton() {
             </div>
           ) : (
             <form className="w-full flex flex-col gap-3" onSubmit={handleSubmit}>
-              <input name="name" type="text" required placeholder="Name" className="border rounded px-3 py-2 w-full" />
-              <input name="email" type="email" required placeholder="Email" className="border rounded px-3 py-2 w-full" />
-              <textarea name="message" required placeholder="Your message" className="border rounded px-3 py-2 w-full min-h-[80px]" />
+              <input name="name" type="text" required placeholder="Name" aria-label="Name" className="border rounded px-3 py-2 w-full" />
+              <input name="email" type="email" required placeholder="Email" aria-label="Email" className="border rounded px-3 py-2 w-full" />
+              <textarea name="message" required placeholder="Your message" aria-label="Message" className="border rounded px-3 py-2 w-full min-h-[80px]" />
               <Button type="submit" className="w-full" disabled={status === 'loading'}>
                 {status === 'loading' ? 'Sending...' : 'Send'}
               </Button>

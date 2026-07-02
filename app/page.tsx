@@ -5,10 +5,12 @@ import { getPortfolioGalleryData } from '@/lib/portfolioGallery'
 import DisableBodyScroll from '@/components/DisableBodyScroll'
 import HeroWordmark from '@/components/HeroWordmark'
 
-export const dynamic = 'force-dynamic'
+// ISR: cache the page and refresh hourly instead of rendering on every request
+// (removes the per-request R2 round-trips while keeping the hero reasonably fresh).
+export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: 'Wouter.Photo',
+  title: { absolute: 'Wouter Vellekoop — Concert & Event Photographer' },
   description: 'Portfolio — Concerts, Events en Misc.',
   alternates: {
     canonical: 'https://wouter.photo',
@@ -24,6 +26,7 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-dvh overflow-hidden bg-white dark:bg-black">
+      <h1 className="sr-only">Wouter Vellekoop — Concert &amp; Event Photographer</h1>
       <DisableBodyScroll />
       {/* Use fixed so the hero sits behind the transparent header */}
       <section className="fixed inset-0">

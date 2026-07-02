@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Algemene voorwaarden – wouter.photo',
+  title: 'Algemene voorwaarden',
   description: 'Algemene voorwaarden van wouter.photo voor fotografie-opdrachten, levering, auteursrecht, licentie en aansprakelijkheid.',
   keywords: [
     'algemene voorwaarden',
@@ -16,14 +16,23 @@ export const metadata: Metadata = {
     description: 'Algemene voorwaarden van wouter.photo voor fotografie-opdrachten.',
     url: 'https://wouter.photo/algemene-voorwaarden',
     siteName: 'Wouter.Photo',
+    images: [
+      {
+        url: 'https://wouter.photo/2022_NSJF-Fri_1179.jpg',
+        width: 1200,
+        height: 800,
+        alt: 'Wouter Vellekoop – wouter.photo',
+      },
+    ],
     locale: 'nl_NL',
     alternateLocale: ['en_US'],
     type: 'website',
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'Algemene voorwaarden – wouter.photo',
     description: 'Algemene voorwaarden van wouter.photo voor fotografie-opdrachten.',
+    images: ['https://wouter.photo/2022_NSJF-Fri_1179.jpg'],
   },
   alternates: {
     canonical: 'https://wouter.photo/algemene-voorwaarden',

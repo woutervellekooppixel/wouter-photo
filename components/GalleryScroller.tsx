@@ -4,11 +4,12 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 import OptimizedImage from './OptimizedImage'
+import type { Photo } from '@/lib/portfolioGallery'
 
 
 type Props = {
   category: string,
-  photos: any[]
+  photos: Photo[]
 }
 
 export default function GalleryScroller({ category, photos }: Props) {
@@ -19,7 +20,7 @@ export default function GalleryScroller({ category, photos }: Props) {
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
   const [isTransitioning, setIsTransitioning] = useState(false)
   // displayedPhotos is now derived from props
-  const [displayedPhotos, setDisplayedPhotos] = useState<any[]>(photos)
+  const [displayedPhotos, setDisplayedPhotos] = useState<Photo[]>(photos)
 
   // Disable body scroll on desktop
   useEffect(() => {
@@ -36,7 +37,7 @@ export default function GalleryScroller({ category, photos }: Props) {
 
   // Update displayedPhotos when photos/category changes
   useEffect(() => {
-    let newPhotos: any[] = []
+    let newPhotos: Photo[] = []
     if (category === 'all') {
       newPhotos = photos
     } else {
@@ -320,12 +321,14 @@ export default function GalleryScroller({ category, photos }: Props) {
     <section className="relative w-full bg-white dark:bg-black xl:h-screen xl:fixed xl:inset-0 xl:flex xl:items-center pt-0 sm:pt-0 xl:pt-16">
       <button
         onClick={scrollLeft}
+        aria-label="Vorige foto"
         className="hidden xl:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-black bg-opacity-80 dark:bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 dark:hover:bg-opacity-100 text-black dark:text-white"
       >
         <ChevronLeft />
       </button>
       <button
         onClick={scrollRight}
+        aria-label="Volgende foto"
         className="hidden xl:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-black bg-opacity-80 dark:bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 dark:hover:bg-opacity-100 text-black dark:text-white"
       >
         <ChevronRight />

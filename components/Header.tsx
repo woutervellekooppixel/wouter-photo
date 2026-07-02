@@ -118,10 +118,10 @@ export default function Header() {
 
 
         <Link
-          href="/plugins"
+          href="/shop"
           className={isHome ? 'hover:text-white/80' : 'hover:text-gray-600 dark:hover:text-gray-300'}
         >
-          Plugins
+          Shop
         </Link>
 
 

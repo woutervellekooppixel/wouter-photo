@@ -157,6 +157,28 @@ export default function ExportEveryXShopPage() {
 		url: "https://wouter.photo/shop/export-every-x",
 	};
 
+	const productSchema = {
+		"@context": "https://schema.org",
+		"@type": "Product",
+		name: "Export Every X",
+		description:
+			"Export (slice) huge wide Photoshop documents into panels every X pixels (e.g. 1080px) — perfect for Instagram carousel exports, banners, and panoramic layouts.",
+		category: "Photoshop Plugin",
+		offers: {
+			"@type": "Offer",
+			price: "10",
+			priceCurrency: "USD",
+			availability: "https://schema.org/InStock",
+			url: ADOBE_EXCHANGE_EXPORT_EVERY_X_URL,
+		},
+		brand: {
+			"@type": "Brand",
+			name: "Wouter.Photo",
+		},
+		image: ["https://wouter.photo/cropevery.png"],
+		url: "https://wouter.photo/shop/export-every-x",
+	};
+
 	const breadcrumbSchema = {
 		"@context": "https://schema.org",
 		"@type": "BreadcrumbList",
@@ -179,6 +201,7 @@ export default function ExportEveryXShopPage() {
 		<main className="min-h-screen bg-background text-foreground">
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }} />
+			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
 			<div className="mx-auto w-full max-w-6xl px-6 py-14 sm:py-20">

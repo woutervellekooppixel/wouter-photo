@@ -1,20 +1,10 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import type { Metadata } from 'next'
 import PhoneReveal from '@/components/PhoneReveal'
 import FloatingContactButton from '@/components/FloatingContactButton'
+import { metadata as pageMetadata } from './metadata'
 
-export const metadata: Metadata = {
-  title: 'About — Wouter.Photo',
-  description:
-    'Concert and event photographer. Working with MOJO, Radio 538, North Sea Jazz, Ahoy\' and many more since 2016.',
-  alternates: { canonical: 'https://wouter.photo/about' },
-  openGraph: {
-    title: 'About — Wouter.Photo',
-    description: 'Concert and event photographer.',
-    url: 'https://wouter.photo/about',
-  },
-}
+export const metadata = pageMetadata
 
 export default function AboutPage() {
   return (
@@ -66,6 +56,11 @@ export default function AboutPage() {
                   <p>
                     I&apos;ve worked with a wide range of artists, venues, organisations and media outlets, combining speed, consistency and style.
                     Whether it&apos;s the chaos of a music festival or the intimacy of a backstage moment, I aim to tell stories that resonate.
+                  </p>
+                  <p>
+                    Based in the Netherlands and available for bookings worldwide, I photograph concerts and festivals — from clubs to venues
+                    like Ziggo Dome, Carré and Ahoy — alongside corporate and public events, conceptual series, and commercial campaigns
+                    for brands, agencies and media.
                   </p>
                 </div>
               </div>

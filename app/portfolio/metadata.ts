@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Portfolio – Wouter.Photo | Professional Photography Gallery',
+  title: 'Portfolio – Professional Photography Gallery',
   description: 'Bekijk het portfolio van Wouter Vellekoop: concertfotografie, eventfotografie en creatief werk (NL/EN).',
   keywords: [
     // NL
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     siteName: 'Wouter.Photo',
     images: [
       {
-        url: 'https://wouter.photo/photos/concerts/portfolio-concerts1.webp',
+        url: 'https://wouter.photo/2022_NSJF-Fri_1179.jpg',
         width: 1200,
         height: 800,
         alt: 'Photography Portfolio by Wouter Vellekoop',
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Photography Portfolio – Wouter Vellekoop',
     description: 'Browse the professional photography portfolio of Wouter Vellekoop. Featuring concert photography, event photography, and creative work from the Netherlands and beyond.',
-    images: ['https://wouter.photo/photos/concerts/portfolio-concerts1.webp'],
+    images: ['https://wouter.photo/2022_NSJF-Fri_1179.jpg'],
   },
   alternates: {
     canonical: 'https://wouter.photo/portfolio',

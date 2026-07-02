@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Shop – Wouter.Photo",
+	title: "Shop",
 	description:
 		"Presets en tools van Wouter Vellekoop. Stage Fix v6 (Lightroom/ACR) en Photoshop plugins.",
 	keywords: [

@@ -3,9 +3,22 @@ import { generateMetadata } from './metadata';
 import GalleryScroller from '../../../components/GalleryScroller';
 import { getGalleryData } from './gallery-data';
 import { seededShuffleFirstN } from '@/lib/utils';
+import type { Photo } from '@/lib/portfolioGallery';
 
 export { generateMetadata };
-export const dynamic = 'force-dynamic';
+
+// Pre-render the fixed set of categories (also ensures they land in the sitemap)
+// and revalidate hourly. The gallery shuffle is date-seeded, so the first-5
+// order stays stable within a day and rotates the next day regardless of how
+// often the page is regenerated. New uploads/reorders appear within ~1 hour.
+export const dynamicParams = false;
+export const revalidate = 3600;
+
+const CATEGORY_PARAMS = ['concerts', 'events', 'misc', 'commercial', 'all'];
+
+export function generateStaticParams() {
+  return CATEGORY_PARAMS.map((category) => ({ category }));
+}
 
 
 
@@ -70,7 +83,7 @@ export default async function PortfolioPage({ params }: any) {
 
   // Haal gallery data op
   const dataApi = await getGalleryData();
-  let photos: any[] = [];
+  let photos: Photo[] = [];
   if (category === 'all') {
     photos = Object.values(dataApi || {}).flat();
   } else {
@@ -93,6 +106,7 @@ export default async function PortfolioPage({ params }: any) {
         />
       )}
       <div className="min-h-screen bg-white dark:bg-black py-6">
+        <h1 className="sr-only">{categoryTitles[category]} by Wouter Vellekoop</h1>
         <GalleryScroller category={category as string} photos={photos} />
       </div>
     </>

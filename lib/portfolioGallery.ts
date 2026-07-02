@@ -1,9 +1,10 @@
 import { ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { getGalleryOrder, listFiles, r2Client } from '@/lib/r2';
+import { photoAltFromFilename } from '@/lib/utils';
 
 const EXCLUDED_ROOT_PREFIXES = new Set(['backgrounds', 'metadata', 'uploads', 'zips']);
 
-type Photo = { id: string; src: string; alt: string; category: string; key: string };
+export type Photo = { id: string; src: string; alt: string; category: string; key: string; blurDataURL?: string };
 
 type GalleryData = Record<string, Photo[]>;
 
@@ -46,7 +47,7 @@ export async function getPortfolioGalleryData(): Promise<GalleryData> {
       .map((f) => ({
         id: f,
         src: `/api/photos/${encodeURIComponent(cat)}/${encodeURIComponent(f)}`,
-        alt: f,
+        alt: photoAltFromFilename(f, cat),
         category: cat,
         key: cat + '/' + f,
       }));

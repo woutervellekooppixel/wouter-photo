@@ -3,8 +3,12 @@ import Image from 'next/image'
 import Link from 'next/link'
 import DisableBodyScroll from '@/components/DisableBodyScroll'
 import SetHeaderHeightVar from '@/components/SetHeaderHeightVar'
+import { metadata as pageMetadata } from './metadata'
 
-export const dynamic = 'force-dynamic'
+export const metadata = pageMetadata
+
+// ISR: cache + hourly refresh instead of force-dynamic (fewer R2 round-trips).
+export const revalidate = 3600
 
 export default async function PortfolioPage() {
   const data = await getGalleryData()
@@ -37,6 +41,7 @@ export default async function PortfolioPage() {
     <main className="bg-white dark:bg-black overflow-hidden">
       <DisableBodyScroll />
       <SetHeaderHeightVar />
+      <h1 className="sr-only">Photography Portfolio — Wouter Vellekoop</h1>
 
       <section
         className="relative w-full"
