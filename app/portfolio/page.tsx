@@ -40,6 +40,7 @@ export default async function PortfolioPage() {
     <main className="bg-white dark:bg-black overflow-hidden">
       <DisableBodyScroll />
       <SetHeaderHeightVar />
+      <h1 className="sr-only">Photography Portfolio — Wouter Vellekoop</h1>
 
       <section
         className="relative w-full"

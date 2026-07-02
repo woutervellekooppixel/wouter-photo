@@ -24,6 +24,7 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-dvh overflow-hidden bg-white dark:bg-black">
+      <h1 className="sr-only">Wouter Vellekoop — Concert &amp; Event Photographer</h1>
       <DisableBodyScroll />
       {/* Use fixed so the hero sits behind the transparent header */}
       <section className="fixed inset-0">

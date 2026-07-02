@@ -93,6 +93,7 @@ export default async function PortfolioPage({ params }: any) {
         />
       )}
       <div className="min-h-screen bg-white dark:bg-black py-6">
+        <h1 className="sr-only">{categoryTitles[category]} by Wouter Vellekoop</h1>
         <GalleryScroller category={category as string} photos={photos} />
       </div>
     </>
