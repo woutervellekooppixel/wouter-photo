@@ -17,11 +17,11 @@ export const metadata: Metadata = {
 		title: "Shop – Wouter.Photo",
 		description:
 			"Presets en tools van Wouter Vellekoop. Stage Fix v6 (Lightroom/ACR) en Photoshop plugins.",
-		url: "https://wouter.photo/shop",
+		url: "https://www.wouter.photo/shop",
 		siteName: "Wouter.Photo",
 		images: [
 			{
-				url: "https://wouter.photo/batchcrop.png",
+				url: "https://www.wouter.photo/batchcrop.png",
 				width: 1360,
 				height: 800,
 				alt: "Shop – presets en tools",
@@ -36,10 +36,10 @@ export const metadata: Metadata = {
 		title: "Shop – Wouter.Photo",
 		description:
 			"Presets en tools van Wouter Vellekoop. Stage Fix v6 (Lightroom/ACR) en Photoshop plugins.",
-		images: ["https://wouter.photo/batchcrop.png"],
+		images: ["https://www.wouter.photo/batchcrop.png"],
 	},
 	alternates: {
-		canonical: "https://wouter.photo/shop",
+		canonical: "https://www.wouter.photo/shop",
 	},
 	robots: {
 		index: true,

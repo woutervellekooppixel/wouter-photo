@@ -154,7 +154,7 @@ export default function BatchCropShopPage() {
 			priceCurrency: "USD",
 			url: ADOBE_EXCHANGE_BATCHCROP_URL,
 		},
-		url: "https://wouter.photo/shop/batchcrop",
+		url: "https://www.wouter.photo/shop/batchcrop",
 	};
 
 	const productSchema = {
@@ -175,17 +175,17 @@ export default function BatchCropShopPage() {
 			"@type": "Brand",
 			name: "Wouter.Photo",
 		},
-		image: ["https://wouter.photo/batchcrop.png"],
-		url: "https://wouter.photo/shop/batchcrop",
+		image: ["https://www.wouter.photo/batchcrop.png"],
+		url: "https://www.wouter.photo/shop/batchcrop",
 	};
 
 	const breadcrumbSchema = {
 		"@context": "https://schema.org",
 		"@type": "BreadcrumbList",
 		itemListElement: [
-			{ "@type": "ListItem", position: 1, name: "Home", item: "https://wouter.photo/" },
-			{ "@type": "ListItem", position: 2, name: "Shop", item: "https://wouter.photo/shop" },
-			{ "@type": "ListItem", position: 3, name: "BatchCrop", item: "https://wouter.photo/shop/batchcrop" },
+			{ "@type": "ListItem", position: 1, name: "Home", item: "https://www.wouter.photo/" },
+			{ "@type": "ListItem", position: 2, name: "Shop", item: "https://www.wouter.photo/shop" },
+			{ "@type": "ListItem", position: 3, name: "BatchCrop", item: "https://www.wouter.photo/shop/batchcrop" },
 		],
 	};
 

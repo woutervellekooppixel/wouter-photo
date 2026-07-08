@@ -121,7 +121,7 @@ export async function generateMetadata({
   }
 
   const data = categoryData[category as Category]
-  const baseUrl = 'https://wouter.photo'
+  const baseUrl = 'https://www.wouter.photo'
 
   return {
     title: data.title,

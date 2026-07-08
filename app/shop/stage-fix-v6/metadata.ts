@@ -36,11 +36,11 @@ export const metadata: Metadata = {
 		title: "Stage Fix v6 – Lightroom preset system for brutal stage light",
 		description:
 			"A modular Lightroom preset system with 90 presets + 15 resets for Lightroom Classic and Adobe Camera Raw. Built for concerts, festivals, clubs, events and other mixed-light edits where one preset is not enough.",
-		url: "https://wouter.photo/shop/stage-fix-v6",
+		url: "https://www.wouter.photo/shop/stage-fix-v6",
 		siteName: "Wouter.Photo",
 		images: [
 			{
-				url: "https://wouter.photo/20251017-2025-10-17_Kane-Ahoy_Wouter-Vellekoop__V1_8693_3x2.jpg",
+				url: "https://www.wouter.photo/20251017-2025-10-17_Kane-Ahoy_Wouter-Vellekoop__V1_8693_3x2.jpg",
 				width: 2048,
 				height: 1366,
 				alt: "Kane live at Ahoy photographed by Wouter Vellekoop",
@@ -55,10 +55,10 @@ export const metadata: Metadata = {
 		title: "Stage Fix v6 – Lightroom preset system for stage light",
 		description:
 			"A Lightroom preset system with 90 presets + 15 resets for Lightroom Classic and Adobe Camera Raw. Built for concerts, events, clubs, festivals and other ugly mixed-light edits where one preset is not enough.",
-		images: ["https://wouter.photo/20251017-2025-10-17_Kane-Ahoy_Wouter-Vellekoop__V1_8693_3x2.jpg"],
+		images: ["https://www.wouter.photo/20251017-2025-10-17_Kane-Ahoy_Wouter-Vellekoop__V1_8693_3x2.jpg"],
 	},
 	alternates: {
-		canonical: "https://wouter.photo/shop/stage-fix-v6",
+		canonical: "https://www.wouter.photo/shop/stage-fix-v6",
 	},
 	robots: {
 		index: true,

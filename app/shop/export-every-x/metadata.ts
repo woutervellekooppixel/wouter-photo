@@ -25,11 +25,11 @@ export const metadata: Metadata = {
 		title: "Export Every X — Slice export plugin for Photoshop",
 		description:
 			"Export (slice) huge wide Photoshop documents into panels every X pixels (e.g. 1080px) for Instagram carousels, banners, and panoramic layouts.",
-		url: "https://wouter.photo/shop/export-every-x",
+		url: "https://www.wouter.photo/shop/export-every-x",
 		siteName: "Wouter.Photo",
 		images: [
 			{
-				url: "https://wouter.photo/cropevery.png",
+				url: "https://www.wouter.photo/cropevery.png",
 				width: 2990,
 				height: 1766,
 				alt: "Export Every X Photoshop plugin preview (export 1080px carousel slices)",
@@ -44,10 +44,10 @@ export const metadata: Metadata = {
 		title: "Export Every X — Slice export plugin for Photoshop",
 		description:
 			"Export (slice) huge wide Photoshop documents into panels every X pixels (e.g. 1080px) for Instagram carousels, banners, and panoramic layouts.",
-		images: ["https://wouter.photo/cropevery.png"],
+		images: ["https://www.wouter.photo/cropevery.png"],
 	},
 	alternates: {
-		canonical: "https://wouter.photo/shop/export-every-x",
+		canonical: "https://www.wouter.photo/shop/export-every-x",
 	},
 	robots: {
 		index: true,

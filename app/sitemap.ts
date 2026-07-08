@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 
-const BASE = 'https://wouter.photo'
+const BASE = 'https://www.wouter.photo'
 
 // Next-native sitemap (served at /sitemap.xml). Replaces next-sitemap, which
 // relied on a `postbuild` hook that does not run in Vercel's `next build`.

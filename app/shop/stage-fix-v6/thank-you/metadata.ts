@@ -8,6 +8,6 @@ export const metadata: Metadata = {
     follow: false,
   },
   alternates: {
-    canonical: "https://wouter.photo/shop/stage-fix-v6/thank-you",
+    canonical: "https://www.wouter.photo/shop/stage-fix-v6/thank-you",
   },
 };

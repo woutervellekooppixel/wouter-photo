@@ -10,7 +10,7 @@ export default async function NotFound() {
   return (
     <NotFoundClient
       variant={isDownloadHost ? "download" : "site"}
-      redirectTo="https://wouter.photo"
+      redirectTo="https://www.wouter.photo"
       redirectDelaySeconds={30}
     />
   );

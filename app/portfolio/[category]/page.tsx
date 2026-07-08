@@ -69,7 +69,7 @@ export default async function PortfolioPage({ params }: any) {
     creator: {
       '@type': 'Person',
       name: 'Wouter Vellekoop',
-      url: 'https://wouter.photo/about',
+      url: 'https://www.wouter.photo/about',
       jobTitle: 'Professional Photographer',
       knowsAbout: ['Concert Photography', 'Event Photography', 'Music Photography']
     },
