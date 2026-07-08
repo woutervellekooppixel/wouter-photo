@@ -17,11 +17,11 @@ export const metadata: Metadata = {
 		title: "Photoshop Plugins – WouterPhoto",
 		description:
 			"Small Photoshop utilities by WouterPhoto that speed up repetitive workflows. Available on Adobe Exchange.",
-		url: "https://wouter.photo/plugins",
+		url: "https://www.wouter.photo/plugins",
 		siteName: "Wouter.Photo",
 		images: [
 			{
-				url: "https://wouter.photo/batchcrop.png",
+				url: "https://www.wouter.photo/batchcrop.png",
 				width: 1360,
 				height: 800,
 				alt: "Photoshop plugin previews (BatchCrop)",
@@ -36,10 +36,10 @@ export const metadata: Metadata = {
 		title: "Photoshop Plugins – WouterPhoto",
 		description:
 			"Small Photoshop utilities by WouterPhoto that speed up repetitive workflows. Available on Adobe Exchange.",
-		images: ["https://wouter.photo/batchcrop.png"],
+		images: ["https://www.wouter.photo/batchcrop.png"],
 	},
 	alternates: {
-		canonical: "https://wouter.photo/plugins",
+		canonical: "https://www.wouter.photo/plugins",
 	},
 	robots: {
 		index: true,

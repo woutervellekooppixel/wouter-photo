@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: { absolute: 'Wouter Vellekoop — Concert & Event Photographer' },
   description: 'Portfolio — Concerts, Events en Misc.',
   alternates: {
-    canonical: 'https://wouter.photo',
+    canonical: 'https://www.wouter.photo',
   },
 }
 

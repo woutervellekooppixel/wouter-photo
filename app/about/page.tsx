@@ -17,7 +17,7 @@ export default function AboutPage() {
             '@type': 'Person',
             name: 'Wouter Vellekoop',
             jobTitle: 'Photographer',
-            url: 'https://wouter.photo',
+            url: 'https://www.wouter.photo',
             sameAs: [
               'https://instagram.com/woutervellekoop',
               'https://linkedin.com/in/woutervellekoop',

@@ -154,7 +154,7 @@ export default function ExportEveryXShopPage() {
 			priceCurrency: "USD",
 			url: ADOBE_EXCHANGE_EXPORT_EVERY_X_URL,
 		},
-		url: "https://wouter.photo/shop/export-every-x",
+		url: "https://www.wouter.photo/shop/export-every-x",
 	};
 
 	const productSchema = {
@@ -175,17 +175,17 @@ export default function ExportEveryXShopPage() {
 			"@type": "Brand",
 			name: "Wouter.Photo",
 		},
-		image: ["https://wouter.photo/cropevery.png"],
-		url: "https://wouter.photo/shop/export-every-x",
+		image: ["https://www.wouter.photo/cropevery.png"],
+		url: "https://www.wouter.photo/shop/export-every-x",
 	};
 
 	const breadcrumbSchema = {
 		"@context": "https://schema.org",
 		"@type": "BreadcrumbList",
 		itemListElement: [
-			{ "@type": "ListItem", position: 1, name: "Home", item: "https://wouter.photo/" },
-			{ "@type": "ListItem", position: 2, name: "Shop", item: "https://wouter.photo/shop" },
-			{ "@type": "ListItem", position: 3, name: "Export Every X", item: "https://wouter.photo/shop/export-every-x" },
+			{ "@type": "ListItem", position: 1, name: "Home", item: "https://www.wouter.photo/" },
+			{ "@type": "ListItem", position: 2, name: "Shop", item: "https://www.wouter.photo/shop" },
+			{ "@type": "ListItem", position: 3, name: "Export Every X", item: "https://www.wouter.photo/shop/export-every-x" },
 		],
 	};
 

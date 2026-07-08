@@ -21,11 +21,11 @@ export const metadata: Metadata = {
 		title: "BatchCrop – Crop Multiple Photos (Batch) in Photoshop",
 		description:
 			"Batch crop (bulk crop) photos in Photoshop. Set a crop once and apply it consistently across a whole folder or large photo set.",
-		url: "https://wouter.photo/shop/batchcrop",
+		url: "https://www.wouter.photo/shop/batchcrop",
 		siteName: "Wouter.Photo",
 		images: [
 			{
-				url: "https://wouter.photo/batchcrop.png",
+				url: "https://www.wouter.photo/batchcrop.png",
 				width: 1360,
 				height: 800,
 				alt: "BatchCrop Photoshop plugin preview (batch crop multiple photos)",
@@ -40,10 +40,10 @@ export const metadata: Metadata = {
 		title: "BatchCrop – Crop Multiple Photos (Batch) in Photoshop",
 		description:
 			"Batch crop (bulk crop) photos in Photoshop. Set a crop once and apply it consistently across a whole folder or large photo set.",
-		images: ["https://wouter.photo/batchcrop.png"],
+		images: ["https://www.wouter.photo/batchcrop.png"],
 	},
 	alternates: {
-		canonical: "https://wouter.photo/shop/batchcrop",
+		canonical: "https://www.wouter.photo/shop/batchcrop",
 	},
 	robots: {
 		index: true,

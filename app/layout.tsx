@@ -15,7 +15,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://wouter.photo'),
+  metadataBase: new URL('https://www.wouter.photo'),
   title: {
     default: 'Wouter Vellekoop – Concert & Event Photographer',
     template: '%s | Wouter.Photo'
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'nl_NL',
     alternateLocale: ['en_US'],
-    url: 'https://wouter.photo',
+    url: 'https://www.wouter.photo',
     siteName: 'Wouter Vellekoop Photography',
     title: 'Wouter Vellekoop – Concert & Event Photographer',
     description: 'Concert- en eventfotograaf in Nederland (NL/EN). Voor managers, marketing, productie en agencies.',
@@ -81,7 +81,7 @@ export const metadata: Metadata = {
     google: 'QhwH8_Tc3v4WQts7AmQoujJJbRFoR6ujekVGscalyao',
   },
   alternates: {
-    canonical: 'https://wouter.photo',
+    canonical: 'https://www.wouter.photo',
   },
 }
 
@@ -93,8 +93,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     name: 'Wouter Vellekoop',
     jobTitle: 'Photographer',
     description: 'Concert, event, and advertising photographer based in the Netherlands',
-    url: 'https://wouter.photo',
-    image: 'https://wouter.photo/2022_NSJF-Fri_1179.jpg',
+    url: 'https://www.wouter.photo',
+    image: 'https://www.wouter.photo/2022_NSJF-Fri_1179.jpg',
     address: {
       '@type': 'PostalAddress',
       addressCountry: 'NL',

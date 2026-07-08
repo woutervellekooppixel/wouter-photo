@@ -115,8 +115,8 @@ export default function StageFixV6Page() {
 			"@type": "Brand",
 			name: "Wouter.Photo",
 		},
-		image: ["https://wouter.photo/20251017-2025-10-17_Kane-Ahoy_Wouter-Vellekoop__V1_8693_3x2.jpg"],
-		url: "https://wouter.photo/shop/stage-fix-v6",
+		image: ["https://www.wouter.photo/20251017-2025-10-17_Kane-Ahoy_Wouter-Vellekoop__V1_8693_3x2.jpg"],
+		url: "https://www.wouter.photo/shop/stage-fix-v6",
 	};
 
 	const faqSchema = {
@@ -136,9 +136,9 @@ export default function StageFixV6Page() {
 		"@context": "https://schema.org",
 		"@type": "BreadcrumbList",
 		itemListElement: [
-			{ "@type": "ListItem", position: 1, name: "Home", item: "https://wouter.photo/" },
-			{ "@type": "ListItem", position: 2, name: "Shop", item: "https://wouter.photo/shop" },
-			{ "@type": "ListItem", position: 3, name: "Stage Fix v6", item: "https://wouter.photo/shop/stage-fix-v6" },
+			{ "@type": "ListItem", position: 1, name: "Home", item: "https://www.wouter.photo/" },
+			{ "@type": "ListItem", position: 2, name: "Shop", item: "https://www.wouter.photo/shop" },
+			{ "@type": "ListItem", position: 3, name: "Stage Fix v6", item: "https://www.wouter.photo/shop/stage-fix-v6" },
 		],
 	};
 

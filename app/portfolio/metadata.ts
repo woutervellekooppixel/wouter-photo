@@ -28,11 +28,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Photography Portfolio – Wouter Vellekoop',
     description: 'Portfolio met concertfotografie, eventfotografie en meer (NL/EN).',
-    url: 'https://wouter.photo/portfolio',
+    url: 'https://www.wouter.photo/portfolio',
     siteName: 'Wouter.Photo',
     images: [
       {
-        url: 'https://wouter.photo/2022_NSJF-Fri_1179.jpg',
+        url: 'https://www.wouter.photo/2022_NSJF-Fri_1179.jpg',
         width: 1200,
         height: 800,
         alt: 'Photography Portfolio by Wouter Vellekoop',
@@ -46,10 +46,10 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Photography Portfolio – Wouter Vellekoop',
     description: 'Browse the professional photography portfolio of Wouter Vellekoop. Featuring concert photography, event photography, and creative work from the Netherlands and beyond.',
-    images: ['https://wouter.photo/2022_NSJF-Fri_1179.jpg'],
+    images: ['https://www.wouter.photo/2022_NSJF-Fri_1179.jpg'],
   },
   alternates: {
-    canonical: 'https://wouter.photo/portfolio',
+    canonical: 'https://www.wouter.photo/portfolio',
   },
   robots: {
     index: true,
