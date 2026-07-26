@@ -22,12 +22,44 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url), 308)
   }
 
+  // Downloadsubdomein (download.wouter.photo): alleen transfer-pagina's.
+  // De root heeft daar niets te tonen — stuur door naar de hoofdsite.
+  const isDownloadHost = host.toLowerCase().startsWith('download.')
+  if (isDownloadHost && pathname === '/') {
+    return NextResponse.redirect('https://wouter.photo', 308)
+  }
+
   const response = NextResponse.next()
+
+  // Op het downloadsubdomein is elk pad een transfer: nooit indexeren.
+  if (isDownloadHost) {
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex')
+    return response
+  }
 
   // Explicit noindex for private multi-segment pages
   if (NOINDEX_PATHS.some((p) => pathname.startsWith(p))) {
     response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex')
     return response
+  }
+
+  // Noindex for root-level download slugs (e.g. /some-gallery-slug)
+  // Keep known public single-segment pages indexable.
+  const rootSlugMatch = pathname.match(/^\/([a-z0-9-]+)$/i)
+  const rootSegment = rootSlugMatch?.[1]?.toLowerCase()
+
+  const isPublicSingleSegment =
+    rootSegment === 'about' ||
+    rootSegment === 'portfolio' ||
+    rootSegment === 'plugins' ||
+    rootSegment === 'shop' ||
+    rootSegment === 'contact' ||
+    rootSegment === 'algemene-voorwaarden'
+
+  const isDownloadSlug = Boolean(rootSegment) && !isPublicSingleSegment
+
+  if (isDownloadSlug) {
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex')
   }
 
   return response

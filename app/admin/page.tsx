@@ -23,7 +23,7 @@ export default function AdminLoginPage() {
     });
 
     if (res.ok) {
-      router.push("/admin/galleries");
+      router.push("/admin/dashboard");
     } else {
       setError("Onjuist wachtwoord");
     }
@@ -37,7 +37,7 @@ export default function AdminLoginPage() {
             <Camera className="h-12 w-12 text-gray-700 dark:text-gray-300" />
           </div>
           <CardTitle>Admin Login</CardTitle>
-          <CardDescription>Wouter.Photo Admin</CardDescription>
+          <CardDescription>Wouter.Download</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
