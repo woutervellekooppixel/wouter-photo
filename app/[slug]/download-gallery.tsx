@@ -421,8 +421,92 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
     else setSelectedFiles(new Set(displayedImageFiles.map((f) => f.key)));
   };
 
+  const triggerDownloadAnchor = (href: string, downloadName?: string) => {
+    const a = document.createElement("a");
+    a.href = href;
+    if (downloadName) a.download = downloadName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  // Vraagt de downloadroute eerst om JSON (zelfde origin, dus fouten zijn
+  // leesbaar — een anchor-navigatie zou een 429/410-JSON-body als "foto"
+  // opslaan) en navigeert daarna pas naar de echte download-URL.
+  const requestManagedDownload = async (
+    apiPath: string,
+    downloadName?: string
+  ): Promise<boolean> => {
+    try {
+      const sep = apiPath.includes("?") ? "&" : "?";
+      const res = await fetch(`${apiPath}${sep}mode=json`);
+      if (res.status === 429) {
+        const data = await res.json().catch(() => ({} as any));
+        setDownloadError(
+          `Too many downloads. Please wait ${data.retryAfter || 60} seconds and try again.`
+        );
+        return false;
+      }
+      if (res.status === 202) {
+        setDownloadError(
+          "Your ZIP is being prepared — please try again in a few minutes."
+        );
+        return false;
+      }
+      if (res.status === 410) {
+        setDownloadError("This download link has expired.");
+        return false;
+      }
+      if (!res.ok) {
+        setDownloadError("Download failed. Please try again.");
+        return false;
+      }
+      const data = await res.json().catch(() => ({} as any));
+      if (data?.url) {
+        triggerDownloadAnchor(data.url, downloadName);
+        return true;
+      }
+      if (data?.stream) {
+        // Klein genoeg om te streamen; skipcount voorkomt dubbele telling/mail.
+        triggerDownloadAnchor(`${apiPath}${sep}skipcount=1`, downloadName);
+        return true;
+      }
+      setDownloadError("Download failed. Please try again.");
+      return false;
+    } catch (error) {
+      console.error("Download failed:", error);
+      setDownloadError("Download failed. Please try again.");
+      return false;
+    }
+  };
+
+  // Wachtrij voor losse downloads: 30 snelle klikken worden netjes één voor
+  // één afgehandeld i.p.v. 30 gelijktijdige navigaties (waar iOS Safari en
+  // de rate limiter op stukliepen).
+  const downloadQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const enqueueDownload = (fn: () => Promise<void>) => {
+    downloadQueueRef.current = downloadQueueRef.current
+      .then(fn)
+      .then(() => new Promise<void>((r) => setTimeout(r, 600)))
+      .catch(() => {});
+  };
+
+  // Boven deze grens geen selectie-zip via de browser bufferen (RAM!),
+  // maar de kant-en-klare map-/alles-zips gebruiken.
+  const MAX_SELECTION_ZIP_BYTES = 800 * 1024 * 1024;
+
   const downloadKeysAsZip = async (fileKeys: string[], zipFileName: string) => {
     if (!fileKeys || fileKeys.length === 0) return;
+    const totalBytes = fileKeys.reduce((acc, key) => {
+      const f = metadata.files.find((mf) => mf.key === key);
+      return acc + (f?.size || 0);
+    }, 0);
+    if (totalBytes > MAX_SELECTION_ZIP_BYTES) {
+      setDownloadError(
+        "This selection is too large to zip in the browser. Please use the folder download buttons or Download All instead."
+      );
+      return;
+    }
     setDownloading(true);
     setDownloadProgress(0);
     setDownloadError(null);
@@ -519,25 +603,26 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
       });
     }, 200);
 
-    // Use an anchor tag so the browser handles the download natively.
-    // fetch() would break when the route redirects to a cross-origin R2 signed URL
-    // (no CORS headers on the bucket).
-    const a = document.createElement("a");
-    a.href = `/api/download/${metadata.slug}/all`;
-    a.download = `${metadata.slug}.zip`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    // The browser takes over from here; reset UI after a short delay.
-    setTimeout(() => {
-      setDownloadProgress(100);
-      setTimeout(() => {
+    requestManagedDownload(
+      `/api/download/${metadata.slug}/all`,
+      `${metadata.slug}.zip`
+    ).then((started) => {
+      if (!started) {
         clearInterval(progressInterval);
         setDownloading(false);
-        setTimeout(() => setDownloadProgress(0), 0);
-      }, 500);
-    }, 2000);
+        setDownloadProgress(0);
+        return;
+      }
+      // The browser takes over from here; reset UI after a short delay.
+      setTimeout(() => {
+        setDownloadProgress(100);
+        setTimeout(() => {
+          clearInterval(progressInterval);
+          setDownloading(false);
+          setTimeout(() => setDownloadProgress(0), 0);
+        }, 500);
+      }, 2000);
+    });
   };
 
   const handlePrimaryDownload = () => {
@@ -581,14 +666,15 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
     }
 
     try {
-      // Anchor-navigatie i.p.v. fetch: de route redirect naar een presigned
-      // R2-URL en cross-origin fetch zou daar op CORS stuklopen.
-      const a = document.createElement("a");
-      a.href = `/api/download/${metadata.slug}/file?key=${encodeURIComponent(fileKey)}`;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      // Via de wachtrij + JSON-modus: fouten (429/verlopen) worden getoond
+      // i.p.v. als kapot bestand opgeslagen, en snelle klikken worden
+      // één voor één afgehandeld.
+      enqueueDownload(async () => {
+        await requestManagedDownload(
+          `/api/download/${metadata.slug}/file?key=${encodeURIComponent(fileKey)}`,
+          fileName
+        );
+      });
 
       if (animateProgress) {
         // Finish strong, then hide the progress UI before resetting state
@@ -657,19 +743,10 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
 
   const downloadFolder = async (folderPath: string) => {
     setDownloadError(null);
-    try {
-      // Anchor-navigatie i.p.v. fetch: de route redirect (indien mogelijk)
-      // naar een presigned R2-URL en cross-origin fetch zou op CORS stuklopen.
-      const a = document.createElement("a");
-      a.href = `/api/download/${metadata.slug}/folder?path=${encodeURIComponent(folderPath)}`;
-      a.download = `${folderPath.replace(/[^a-zA-Z0-9-_]/g, "-")}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error("Folder download failed:", error);
-      setDownloadError("Download failed. Please try again.");
-    }
+    await requestManagedDownload(
+      `/api/download/${metadata.slug}/folder?path=${encodeURIComponent(folderPath)}`,
+      `${folderPath.replace(/[^a-zA-Z0-9-_]/g, "-")}.zip`
+    );
   };
 
   // Groeperen per map

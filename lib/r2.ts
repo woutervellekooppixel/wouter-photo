@@ -79,7 +79,7 @@ export interface UploadMetadata {
   downloads: number;
   downloadHistory?: {
     timestamp: string;
-    type: 'all' | 'single' | 'selected';
+    type: 'all' | 'single' | 'selected' | 'folder';
     files?: string[]; // File keys that were downloaded
     ip?: string;
     userAgent?: string;
@@ -314,6 +314,10 @@ async function createZipObject(
     partSize: 16 * 1024 * 1024,
   });
   const uploadPromise = upload.done();
+  // Handler direct koppelen: als de multipart-upload faalt terwijl we nog
+  // bestanden aan het archiveren zijn, zou de rejection anders unhandled
+  // zijn en de hele functie crashen. De echte fout komt bij de await terug.
+  uploadPromise.catch(() => {});
 
   // STORE (level 0): foto's/video's zijn al gecomprimeerd; scheelt veel CPU.
   const archive = archiver("zip", { zlib: { level: 0 }, store: true });
@@ -322,14 +326,54 @@ async function createZipObject(
   });
   archive.pipe(passThrough);
 
+  // Eén bronbestand tegelijk: archiver verwerkt entries serieel, dus alle
+  // streams vooraf openen betekent duizenden idle R2-connecties die op
+  // idle-timeout klappen bij grote shoots.
+  const entryDone = () =>
+    new Promise<void>((resolve) => archive.once("entry", () => resolve()));
+
   const sortedFiles = sortFilesChronological(files);
   for (const file of sortedFiles) {
     const fileStream = await getFileStream(file.key);
+    const done = entryDone();
     archive.append(fileStream, { name: entryName(file) });
+    await done;
   }
 
   await archive.finalize();
   await uploadPromise;
+}
+
+// Boven deze totaalgrootte streamen we nooit on-the-fly een ZIP door een
+// Vercel-functie: dat haalt de maxDuration niet en levert dan een stil
+// afgekapte, kapotte ZIP op. In plaats daarvan wordt de kant-en-klare ZIP
+// (async) gegenereerd en krijgt de klant een "wordt voorbereid"-status.
+export const MAX_STREAMING_ZIP_BYTES = 1.5 * 1024 * 1024 * 1024;
+
+// Simpele generatie-marker zodat niet elke bezoeker een dubbele
+// zip-generatie aftrapt. Bewust best-effort: bij een race wint de laatste
+// schrijver en dat is onschadelijk (zelfde inhoud).
+export async function tryAcquireZipLock(slug: string): Promise<boolean> {
+  const lockKey = `zips/${slug}.generating`;
+  try {
+    const head = await r2Client.send(
+      new HeadObjectCommand({ Bucket: R2_BUCKET_NAME, Key: lockKey })
+    );
+    const age = Date.now() - (head.LastModified?.getTime() ?? 0);
+    if (age < 10 * 60 * 1000) return false;
+  } catch {
+    // geen lock aanwezig
+  }
+  await uploadFile(Buffer.from(new Date().toISOString()), lockKey, "text/plain");
+  return true;
+}
+
+export async function releaseZipLock(slug: string): Promise<void> {
+  try {
+    await deleteFile(`zips/${slug}.generating`);
+  } catch {
+    // best-effort
+  }
 }
 
 export async function createZipFile(slug: string): Promise<void> {
@@ -376,7 +420,7 @@ export async function getZipFile(slug: string): Promise<Buffer | null> {
 
 export async function updateDownloadCount(
   slug: string,
-  type: 'all' | 'single' | 'selected' = 'all',
+  type: 'all' | 'single' | 'selected' | 'folder' = 'all',
   files?: string[],
   ip?: string,
   userAgent?: string

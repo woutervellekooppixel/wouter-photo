@@ -47,14 +47,34 @@ export async function POST(
     const userAgent = request.headers.get("user-agent") || "unknown";
     await updateDownloadCount(slug, "selected", fileKeys, ip, userAgent);
 
-    const archive = archiver("zip", { zlib: { level: 6 } });
+    // Serverlimiet naast de clientlimiet: nooit een selectie streamen die
+    // de maxDuration niet haalt (zou een stil afgekapte ZIP opleveren).
+    const totalBytes = selectedFiles.reduce((acc, f) => acc + (f.size || 0), 0);
+    if (totalBytes > 1.5 * 1024 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: "Selection too large — use the folder or Download All buttons." },
+        { status: 413 }
+      );
+    }
+
+    // STORE i.p.v. compressie: foto's zijn al gecomprimeerd; minder CPU =
+    // minder kans op een timeout halverwege de stream.
+    const archive = archiver("zip", { zlib: { level: 0 }, store: true });
     archive.on("warning", (err) => console.warn("[SelectedDownload] ZIP warning:", err));
+    archive.on("error", (err) => {
+      console.error("[SelectedDownload] ZIP error:", err);
+      archive.destroy();
+    });
 
     (async () => {
       try {
+        const entryDone = () =>
+          new Promise<void>((resolve) => archive.once("entry", () => resolve()));
         for (const file of selectedFiles) {
           const fileStream = await getFileStream(file.key);
+          const done = entryDone();
           archive.append(fileStream, { name: file.name });
+          await done;
         }
         await archive.finalize();
       } catch (error) {

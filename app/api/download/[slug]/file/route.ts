@@ -46,6 +46,9 @@ export async function GET(
     // naar de klant (gratis egress) i.p.v. door deze Vercel-functie heen.
     const downloadName = file.name.split("/").pop() || file.name;
     const signedUrl = await getSignedDownloadUrlWithFilename(fileKey, downloadName, 3600);
+    if (request.nextUrl.searchParams.get("mode") === "json") {
+      return NextResponse.json({ url: signedUrl });
+    }
     return NextResponse.redirect(signedUrl, { status: 307 });
   } catch (error) {
     console.error("Download error:", error);
