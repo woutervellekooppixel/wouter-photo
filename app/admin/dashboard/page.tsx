@@ -10,6 +10,7 @@ import { formatBytes, formatDate, sortFilesChronological } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 import { useAutoLogout } from "@/lib/useAutoLogout";
 import { MAX_UPLOAD_FILE_SIZE_BYTES } from "@/lib/validation";
+import { uploadFilesToR2, type FailedFile } from "@/lib/uploadEngine";
 import AdminTabs from '@/components/AdminTabs';
 
 interface FileWithPreview extends File {
@@ -53,6 +54,8 @@ export default function AdminDashboard() {
   // Removed expiryDays state and logic
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [failedUploadFiles, setFailedUploadFiles] = useState<FailedFile[]>([]);
+  const [failedUploadSlug, setFailedUploadSlug] = useState<string>("");
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const [orphanedUploads, setOrphanedUploads] = useState<string[]>([]);
@@ -155,6 +158,24 @@ export default function AdminDashboard() {
     checkOrphanedUploads();
     loadMonthlyCost();
   }, []);
+
+  // Tijdens een upload: waarschuw bij wegklikken (upload zou afbreken) en
+  // houd de auto-logout wakker met een kunstmatige activiteitspuls.
+  useEffect(() => {
+    if (!uploading && !manageUploading) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    const activityPing = window.setInterval(() => {
+      window.dispatchEvent(new Event("mousemove"));
+    }, 4 * 60 * 1000);
+    return () => {
+      window.removeEventListener("beforeunload", handler);
+      window.clearInterval(activityPing);
+    };
+  }, [uploading, manageUploading]);
 
   // Load thumbnails when upload is expanded
   useEffect(() => {
@@ -267,10 +288,19 @@ export default function AdminDashboard() {
 
   const addSelectedFiles = (incomingFiles: File[]) => {
     const filteredFiles = incomingFiles.filter((file) => !isSystemFile(file.name));
+    const systemSkipped = incomingFiles.length - filteredFiles.length;
 
     setFiles((prev) => {
       const existing = new Set(prev.map((f) => `${f.name}-${f.size}`));
       const newFiles = filteredFiles.filter((f) => !existing.has(`${f.name}-${f.size}`));
+      const dupSkipped = filteredFiles.length - newFiles.length;
+      // Niet meer stilletjes overslaan: laat zien wat er buiten de selectie viel.
+      if (systemSkipped > 0 || dupSkipped > 0) {
+        const parts: string[] = [];
+        if (systemSkipped > 0) parts.push(`${systemSkipped} systeembestand(en)`);
+        if (dupSkipped > 0) parts.push(`${dupSkipped} al in de lijst`);
+        toast({ title: "Overgeslagen", description: parts.join(" en ") + " overgeslagen." });
+      }
       return [...prev, ...newFiles];
     });
 
@@ -559,11 +589,27 @@ export default function AdminDashboard() {
       return;
     }
 
-    const oversizedFile = manageFilesToAdd.find((file) => file.size > MAX_UPLOAD_FILE_SIZE_BYTES);
-    if (oversizedFile) {
+    const oversized = manageFilesToAdd.filter((file) => file.size > MAX_UPLOAD_FILE_SIZE_BYTES);
+    if (oversized.length > 0) {
       toast({
-        title: 'Bestand te groot',
-        description: `${oversizedFile.name} is groter dan ${formatBytes(MAX_UPLOAD_FILE_SIZE_BYTES)}`,
+        title: `${oversized.length} bestand(en) te groot`,
+        description: `Groter dan ${formatBytes(MAX_UPLOAD_FILE_SIZE_BYTES)}: ${oversized.slice(0, 5).map((f) => f.name).join(', ')}${oversized.length > 5 ? '…' : ''}`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Skip bestanden die al in deze transfer zitten: opnieuw uploaden zou
+    // het bestaande object in R2 stilletjes overschrijven.
+    const existingUpload = uploads.find((u) => u.slug === uploadSlug);
+    const existingKeys = new Set((existingUpload?.files || []).map((f) => f.key));
+    const duplicates = manageFilesToAdd.filter((f) => existingKeys.has(`uploads/${uploadSlug}/${f.name}`));
+    const filesToUpload = manageFilesToAdd.filter((f) => !existingKeys.has(`uploads/${uploadSlug}/${f.name}`));
+
+    if (filesToUpload.length === 0) {
+      toast({
+        title: 'Alles bestaat al',
+        description: 'Alle geselecteerde bestanden zitten al in deze transfer.',
         variant: 'destructive',
       });
       return;
@@ -573,98 +619,45 @@ export default function AdminDashboard() {
     setManageUploadProgress(0);
 
     try {
-      const withExif = await Promise.all(
-        manageFilesToAdd.map(async (file) => ({
-          file,
-          name: file.name,
-          key: file.name,
-          takenAt: await getTakenAtFromFile(file),
-        }))
-      );
+      const { uploaded, failed } = await uploadFilesToR2({
+        slug: uploadSlug,
+        files: filesToUpload,
+        getTakenAt: getTakenAtFromFile,
+        onProgress: (p) =>
+          setManageUploadProgress(p.totalBytes ? Math.round((p.uploadedBytes / p.totalBytes) * 100) : 0),
+      });
 
-      const sortedWithExif = sortFilesChronological(withExif);
-      const sortedFiles: File[] = sortedWithExif.map((w) => w.file);
-      const takenAtByName = new Map(sortedWithExif.map((w) => [w.name, w.takenAt] as const));
-
-      const uploadedFiles: Array<{ key: string; name: string; size: number; type: string; takenAt?: string }> = [];
-      let totalBytes = 0;
-      let uploadedBytes = 0;
-      sortedFiles.forEach((file) => (totalBytes += file.size));
-
-      for (const file of sortedFiles) {
-        const presignedRes = await fetch('/api/admin/presigned-url', {
+      if (uploaded.length > 0) {
+        const res = await fetch(`/api/admin/uploads/${encodeURIComponent(uploadSlug)}/files`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            slug: uploadSlug,
-            fileName: file.name,
-            fileType: file.type,
-            fileSize: file.size,
-          }),
+          body: JSON.stringify({ files: sortFilesChronological(uploaded) }),
         });
-
-        if (!presignedRes.ok) {
-          const err = await presignedRes.json().catch(() => ({}));
-          throw new Error(err.error || 'Failed to get upload URL');
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || 'Failed to update metadata');
         }
+        generateZipsInBackground(uploadSlug);
+      }
 
-        const { presignedUrl, key } = await presignedRes.json();
-
-        await new Promise<void>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-
-          xhr.upload.addEventListener('progress', (e) => {
-            if (e.lengthComputable) {
-              const fileProgress = uploadedBytes + e.loaded;
-              const percentComplete = Math.round((fileProgress / totalBytes) * 100);
-              setManageUploadProgress(percentComplete);
-            }
-          });
-
-          xhr.addEventListener('load', () => {
-            if (xhr.status === 200) {
-              uploadedBytes += file.size;
-              resolve();
-            } else {
-              reject(new Error(`Upload failed for ${file.name}`));
-            }
-          });
-
-          xhr.addEventListener('error', () => reject(new Error(`Upload failed for ${file.name}`)));
-
-          xhr.open('PUT', presignedUrl);
-          xhr.setRequestHeader('Content-Type', file.type);
-          xhr.send(file);
+      if (failed.length > 0) {
+        // Alleen de mislukte bestanden blijven staan zodat "Toevoegen"
+        // nogmaals klikken = gericht opnieuw proberen.
+        const failedNames = new Set(failed.map((f) => f.name));
+        setManageFilesToAdd((prev) => prev.filter((f) => failedNames.has(f.name)));
+        toast({
+          title: `${uploaded.length} gelukt, ${failed.length} mislukt`,
+          description: `Mislukt: ${failed.slice(0, 3).map((f) => `${f.name} (${f.error})`).join('; ')}${failed.length > 3 ? '…' : ''} — klik nogmaals op Toevoegen om opnieuw te proberen.`,
+          variant: 'destructive',
         });
-
-        uploadedFiles.push({
-          key,
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          takenAt: takenAtByName.get(file.name),
+      } else {
+        setManageFilesToAdd([]);
+        toast({
+          title: 'Toegevoegd!',
+          description: `${uploaded.length} bestand(en) toegevoegd aan ${uploadSlug}.${duplicates.length > 0 ? ` ${duplicates.length} overgeslagen (bestonden al).` : ''} ZIPs worden op de achtergrond klaargezet.`,
         });
       }
 
-      const res = await fetch(`/api/admin/uploads/${encodeURIComponent(uploadSlug)}/files`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: uploadedFiles }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to update metadata');
-      }
-
-      generateZipsInBackground(uploadSlug);
-
-      toast({
-        title: 'Toegevoegd!',
-        description: `${uploadedFiles.length} bestand(en) toegevoegd aan ${uploadSlug}. ZIPs worden op de achtergrond klaargezet.`,
-      });
-
-      setManageFilesToAdd([]);
       setManageUploadProgress(0);
       await loadUploads();
     } catch (error) {
@@ -783,11 +776,25 @@ export default function AdminDashboard() {
       return;
     }
 
-    const oversizedFile = files.find((file) => file.size > MAX_UPLOAD_FILE_SIZE_BYTES);
-    if (oversizedFile) {
+    const oversized = files.filter((file) => file.size > MAX_UPLOAD_FILE_SIZE_BYTES);
+    if (oversized.length > 0) {
       toast({
-        title: "Bestand te groot",
-        description: `${oversizedFile.name} is groter dan ${formatBytes(MAX_UPLOAD_FILE_SIZE_BYTES)}`,
+        title: `${oversized.length} bestand(en) te groot`,
+        description: `Groter dan ${formatBytes(MAX_UPLOAD_FILE_SIZE_BYTES)}: ${oversized.slice(0, 5).map((f) => f.name).join(', ')}${oversized.length > 5 ? '…' : ''}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Dubbele paden binnen de batch: tweede exemplaar zou het eerste in R2
+    // stilletjes overschrijven. Melden en stoppen vóór er iets geüpload is.
+    const nameCounts = new Map<string, number>();
+    files.forEach((f) => nameCounts.set(f.name, (nameCounts.get(f.name) || 0) + 1));
+    const dupeNames = [...nameCounts.entries()].filter(([, c]) => c > 1).map(([n]) => n);
+    if (dupeNames.length > 0) {
+      toast({
+        title: "Dubbele bestandsnamen",
+        description: `Deze namen komen meerdere keren voor: ${dupeNames.slice(0, 5).join(', ')}${dupeNames.length > 5 ? '…' : ''}. Hernoem ze of upload ze in aparte mappen.`,
         variant: "destructive",
       });
       return;
@@ -795,124 +802,161 @@ export default function AdminDashboard() {
 
     setUploading(true);
     setUploadProgress(0);
+    setFailedUploadFiles([]);
 
     try {
-      const withExif = await Promise.all(
-        files.map(async (file) => ({
-          file,
-          name: file.name,
-          key: file.name,
-          takenAt: await getTakenAtFromFile(file),
-        }))
-      );
-      const sortedWithExif = sortFilesChronological(withExif);
-      const sortedFiles = sortedWithExif.map((w) => w.file);
-      const takenAtByName = new Map(sortedWithExif.map((w) => [w.name, w.takenAt] as const));
-
-      const uploadedFiles: Array<{key: string; name: string; size: number; type: string; takenAt?: string}> = [];
-      let totalBytes = 0;
-      let uploadedBytes = 0;
-
-      // Calculate total bytes
-      sortedFiles.forEach(file => totalBytes += file.size);
-
-      // Upload each file directly to R2
-      for (const file of sortedFiles) {
-        // Get presigned URL
-        const presignedRes = await fetch('/api/admin/presigned-url', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            slug,
-            fileName: file.name,
-            fileType: file.type,
-            fileSize: file.size,
-          }),
-        });
-
-        if (!presignedRes.ok) {
-          throw new Error('Failed to get upload URL');
-        }
-
-        const { presignedUrl, key } = await presignedRes.json();
-
-        // Upload file directly to R2 with progress tracking
-        await new Promise<void>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-
-          xhr.upload.addEventListener('progress', (e) => {
-            if (e.lengthComputable) {
-              const fileProgress = uploadedBytes + e.loaded;
-              const percentComplete = Math.round((fileProgress / totalBytes) * 100);
-              setUploadProgress(percentComplete);
-            }
-          });
-
-          xhr.addEventListener('load', () => {
-            if (xhr.status === 200) {
-              uploadedBytes += file.size;
-              resolve();
-            } else {
-              reject(new Error(`Upload failed for ${file.name}`));
-            }
-          });
-
-          xhr.addEventListener('error', () => {
-            reject(new Error(`Upload failed for ${file.name}`));
-          });
-
-          xhr.open('PUT', presignedUrl);
-          xhr.setRequestHeader('Content-Type', file.type);
-          xhr.send(file);
-        });
-
-        uploadedFiles.push({
-          key,
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          takenAt: takenAtByName.get(file.name),
-        });
-      }
-
-      // Save metadata
+      // Metadata éérst (als lege transfer): elk geüpload bestand wordt
+      // daarna direct bijgeschreven. Breekt de upload halverwege af, dan
+      // zijn de al geüploade bestanden gewoon geregistreerd — geen wezen
+      // in R2, en de link werkt alvast.
       const metadataRes = await fetch('/api/admin/save-metadata', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           slug,
           title: title.trim() || undefined,
-          files: uploadedFiles,
+          files: [],
         }),
       });
-
       if (!metadataRes.ok) {
-        throw new Error('Failed to save metadata');
+        const err = await metadataRes.json().catch(() => ({}));
+        throw new Error(err.error || 'Kon transfer niet aanmaken');
       }
 
-      generateZipsInBackground(slug);
+      // Geüploade bestanden in batches bijschrijven, geserialiseerd zodat
+      // appends elkaar niet overschrijven.
+      const pendingAppends: Array<{ key: string; name: string; size: number; type: string; takenAt?: string }> = [];
+      let appendChain: Promise<void> = Promise.resolve();
+      let appendFailures = 0;
+      const flushAppends = () => {
+        const batch = pendingAppends.splice(0, pendingAppends.length);
+        if (batch.length === 0) return appendChain;
+        appendChain = appendChain.then(async () => {
+          const res = await fetch(`/api/admin/uploads/${encodeURIComponent(slug)}/files`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ files: batch }),
+          });
+          if (!res.ok) appendFailures += batch.length;
+        }).catch(() => {
+          appendFailures += batch.length;
+        });
+        return appendChain;
+      };
 
-      toast({
-        title: "Succes!",
-        description: `Upload succesvol: ${title || slug}. ZIPs worden op de achtergrond klaargezet.`,
+      const { uploaded, failed } = await uploadFilesToR2({
+        slug,
+        files,
+        getTakenAt: getTakenAtFromFile,
+        onProgress: (p) =>
+          setUploadProgress(p.totalBytes ? Math.round((p.uploadedBytes / p.totalBytes) * 100) : 0),
+        onFileUploaded: (meta) => {
+          pendingAppends.push(meta);
+          if (pendingAppends.length >= 15) flushAppends();
+        },
       });
+      await flushAppends();
 
-      // Reset form
-      setFiles([]);
-      setTitle("");
-      setSlug("");
-      setSlugManuallyEdited(false);
-      setSlugToken("");
-      
+      if (appendFailures > 0) {
+        throw new Error(`${appendFailures} bestand(en) geüpload maar niet geregistreerd — probeer het opnieuw via Bestanden beheren.`);
+      }
+
+      if (failed.length > 0) {
+        setFailedUploadFiles(failed);
+        setFailedUploadSlug(slug);
+        toast({
+          title: `${uploaded.length} gelukt, ${failed.length} mislukt`,
+          description: "Zie de lijst onder de voortgangsbalk — daar kun je de mislukte bestanden opnieuw proberen.",
+          variant: "destructive",
+        });
+        // Formulier NIET resetten: slug blijft nodig voor de retry.
+      } else {
+        generateZipsInBackground(slug);
+        toast({
+          title: "Succes!",
+          description: `Upload succesvol: ${title || slug} (${uploaded.length} bestanden). ZIPs worden op de achtergrond klaargezet.`,
+        });
+        // Reset form
+        setFiles([]);
+        setTitle("");
+        setSlug("");
+        setSlugManuallyEdited(false);
+        setSlugToken("");
+      }
+
       // Reload uploads list
       await loadUploads();
-      
+
       // Reset progress after list is refreshed
       setUploadProgress(0);
     } catch (error) {
       toast({
         title: "Fout",
         description: error instanceof Error ? error.message : "Upload mislukt",
+        variant: "destructive",
+      });
+      setUploadProgress(0);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Gerichte retry van alleen de mislukte bestanden uit de laatste upload.
+  const retryFailedUploads = async () => {
+    if (failedUploadFiles.length === 0 || !failedUploadSlug) return;
+    const retrySlug = failedUploadSlug;
+    const retryFiles = failedUploadFiles.map((f) => f.file);
+    setUploading(true);
+    setUploadProgress(0);
+    setFailedUploadFiles([]);
+
+    try {
+      const { uploaded, failed } = await uploadFilesToR2({
+        slug: retrySlug,
+        files: retryFiles,
+        getTakenAt: getTakenAtFromFile,
+        onProgress: (p) =>
+          setUploadProgress(p.totalBytes ? Math.round((p.uploadedBytes / p.totalBytes) * 100) : 0),
+      });
+
+      if (uploaded.length > 0) {
+        const res = await fetch(`/api/admin/uploads/${encodeURIComponent(retrySlug)}/files`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ files: sortFilesChronological(uploaded) }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || 'Bijschrijven van metadata mislukt');
+        }
+      }
+
+      if (failed.length > 0) {
+        setFailedUploadFiles(failed);
+        toast({
+          title: `Nog ${failed.length} bestand(en) mislukt`,
+          description: failed.slice(0, 3).map((f) => `${f.name}: ${f.error}`).join('; '),
+          variant: "destructive",
+        });
+      } else {
+        generateZipsInBackground(retrySlug);
+        setFailedUploadSlug("");
+        toast({
+          title: "Alles binnen!",
+          description: `${uploaded.length} bestand(en) alsnog geüpload. ZIPs worden klaargezet.`,
+        });
+        setFiles([]);
+        setTitle("");
+        setSlug("");
+        setSlugManuallyEdited(false);
+        setSlugToken("");
+      }
+      await loadUploads();
+      setUploadProgress(0);
+    } catch (error) {
+      toast({
+        title: "Fout",
+        description: error instanceof Error ? error.message : "Retry mislukt",
         variant: "destructive",
       });
       setUploadProgress(0);
@@ -1348,6 +1392,28 @@ export default function AdminDashboard() {
                   <p className="text-xs text-center text-gray-500">
                     Bestanden uploaden...
                   </p>
+                </div>
+              )}
+
+              {/* Mislukte bestanden uit de laatste upload + gerichte retry */}
+              {!uploading && failedUploadFiles.length > 0 && (
+                <div className="mt-3 rounded-md border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 p-3 space-y-2">
+                  <p className="text-sm font-semibold text-red-700 dark:text-red-400">
+                    {failedUploadFiles.length} bestand(en) niet geüpload
+                  </p>
+                  <ul className="text-xs text-red-700/90 dark:text-red-400/90 space-y-0.5 max-h-32 overflow-y-auto">
+                    {failedUploadFiles.slice(0, 10).map((f) => (
+                      <li key={f.name} className="truncate">
+                        {f.name} — {f.error}
+                      </li>
+                    ))}
+                    {failedUploadFiles.length > 10 && (
+                      <li>… en {failedUploadFiles.length - 10} meer</li>
+                    )}
+                  </ul>
+                  <Button size="sm" variant="outline" onClick={retryFailedUploads}>
+                    Mislukte bestanden opnieuw proberen
+                  </Button>
                 </div>
               )}
             </CardContent>

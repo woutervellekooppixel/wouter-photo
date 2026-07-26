@@ -3,7 +3,8 @@ import { requireAdminAuth } from "@/lib/auth";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { r2Client } from "@/lib/r2";
-import { isValidSlug, MAX_UPLOAD_FILE_SIZE_BYTES } from "@/lib/validation";
+import { isValidSlug, SINGLE_PUT_MAX_BYTES } from "@/lib/validation";
+import { getSession } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   const authError = await requireAdminAuth();
@@ -26,11 +27,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (typeof fileSize !== "number" || fileSize <= 0 || fileSize > MAX_UPLOAD_FILE_SIZE_BYTES) {
+    if (typeof fileSize !== "number" || fileSize <= 0 || fileSize > SINGLE_PUT_MAX_BYTES) {
       return NextResponse.json(
-        { error: "File size exceeds allowed limit" },
+        { error: "File too large for single upload — use multipart" },
         { status: 413 }
       );
+    }
+
+    // Verleng de admin-sessie tijdens lange upload-batches.
+    try {
+      const session = await getSession();
+      if (session.isLoggedIn) await session.save();
+    } catch {
+      // best-effort
     }
 
     // Zelfde naamregels als de append-route: geen traversal of rare keys.

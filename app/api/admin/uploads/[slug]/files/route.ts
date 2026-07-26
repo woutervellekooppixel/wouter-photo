@@ -87,6 +87,7 @@ export async function POST(
     const existingKeys = new Set(metadata.files.map((f) => f.key));
 
     const toAdd: UploadMetadata["files"] = [];
+    const skipped: string[] = [];
     for (const f of files) {
       if (!f || typeof f !== "object") {
         return NextResponse.json({ error: "Invalid file entry" }, { status: 400 });
@@ -104,9 +105,13 @@ export async function POST(
         return NextResponse.json({ error: "Invalid file type" }, { status: 400 });
       }
       if (existingKeys.has(f.key)) {
-        return NextResponse.json({ error: `File already exists: ${f.name}` }, { status: 409 });
+        // Al geregistreerd (bv. retry van een deels gelukte batch):
+        // overslaan i.p.v. de hele batch weigeren.
+        skipped.push(f.name);
+        continue;
       }
 
+      existingKeys.add(f.key);
       toAdd.push({
         key: f.key,
         name: f.name,
@@ -116,13 +121,16 @@ export async function POST(
       });
     }
 
-    metadata.files = [...metadata.files, ...toAdd];
-    await saveMetadata(metadata);
-    await invalidateZip(slug);
+    if (toAdd.length > 0) {
+      metadata.files = [...metadata.files, ...toAdd];
+      await saveMetadata(metadata);
+      await invalidateZip(slug);
+    }
 
     return NextResponse.json({
       success: true,
       added: toAdd.length,
+      skipped,
       totalFiles: metadata.files.length,
     });
   } catch (error) {
