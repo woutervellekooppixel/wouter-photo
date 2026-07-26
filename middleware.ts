@@ -26,7 +26,7 @@ export function middleware(request: NextRequest) {
   // De root heeft daar niets te tonen — stuur door naar de hoofdsite.
   const isDownloadHost = host.toLowerCase().startsWith('download.')
   if (isDownloadHost && pathname === '/') {
-    return NextResponse.redirect('https://wouter.photo', 308)
+    return NextResponse.redirect('https://www.wouter.photo', 308)
   }
 
   const response = NextResponse.next()
