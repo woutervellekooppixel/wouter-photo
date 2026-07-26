@@ -23,6 +23,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Upload not found" }, { status: 404 });
     }
 
+    // Alleen bestanden die echt in deze transfer zitten
+    if (
+      backgroundImageKey != null &&
+      !metadata.files.some((f) => f.key === backgroundImageKey)
+    ) {
+      return NextResponse.json({ error: "Unknown file key" }, { status: 400 });
+    }
+
     metadata.backgroundImageKey = backgroundImageKey;
     await saveMetadata(metadata);
 

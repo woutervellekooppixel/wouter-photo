@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
 import { getPortfolioGalleryData } from '@/lib/portfolioGallery';
+import { requireAdminAuth } from '@/lib/auth';
 
 
 export const dynamic = 'force-dynamic';
@@ -14,17 +15,17 @@ export async function GET(request: Request) {
   return res;
 }
 
-// CORS headers helper
+// Geen Access-Control-Allow-Origin: dit is een destructief admin-endpoint
+// en mag alleen same-origin (met sessiecookie) aangeroepen worden.
 function withCORS(res: Response) {
-  res.headers.set('Access-Control-Allow-Origin', '*');
-  res.headers.set('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
-  res.headers.set('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-  // Admin endpoint responses should never be cached
   res.headers.set('Cache-Control', 'private, no-store, max-age=0, must-revalidate');
   return res;
 }
 
 export async function DELETE(req: NextRequest) {
+  const authError = await requireAdminAuth();
+  if (authError) return authError;
+
   let debug: any = {};
   let slug = '';
   let metadata = null;

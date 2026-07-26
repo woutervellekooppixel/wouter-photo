@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminAuth } from "@/lib/auth";
 import { findOrphanedUploads, deleteFolder } from "@/lib/r2";
+import { isValidSlug } from "@/lib/validation";
 
 export async function GET(request: NextRequest) {
   const authError = await requireAdminAuth();
@@ -26,9 +27,9 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const slug = searchParams.get("slug");
 
-    if (!slug) {
+    if (!slug || !isValidSlug(slug)) {
       return NextResponse.json(
-        { error: "Slug is required" },
+        { error: "Valid slug is required" },
         { status: 400 }
       );
     }

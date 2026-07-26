@@ -3,23 +3,24 @@ import { listFiles, getMetadata, saveMetadata, deleteUpload } from "@/lib/r2";
 import { computeExpiresAtDate, computeExpiresAtIso } from "@/lib/expiry";
 
 // This runs as a cron job (configured in vercel.json)
+export const maxDuration = 300;
+
 export async function GET(request: NextRequest) {
-  // Allow Vercel Cron OR a shared secret for external schedulers.
-  // Note: x-vercel-cron is not cryptographically secure; prefer CRON_SECRET where possible.
-  const vercelCron = request.headers.get('x-vercel-cron');
+  // Alleen met CRON_SECRET: Vercel Cron stuurt zelf "Authorization: Bearer
+  // <CRON_SECRET>" mee zodra die env var bestaat. De x-vercel-cron header is
+  // door iedereen te zetten en is dus géén geldige auth.
   const authHeader = request.headers.get('authorization');
   const secret = process.env.CRON_SECRET;
-  const secretOk = secret && authHeader === `Bearer ${secret}`;
-  const vercelOk = vercelCron === '1';
-  if (!secretOk && !vercelOk) {
+  if (!secret || authHeader !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     const now = new Date();
     const metadataFiles = await listFiles('metadata/');
-    
+
     const deletedSlugs: string[] = [];
+    const backfilledSlugs: string[] = [];
     const errors: string[] = [];
 
     for (const metadataFile of metadataFiles) {
@@ -37,13 +38,20 @@ export async function GET(request: NextRequest) {
           continue;
         }
 
-        // Backfill expiresAt if missing (so admin can display it)
+        // Backfill voor oude uploads zonder expiresAt (en evt. createdAt):
+        // geef minimaal 7 dagen respijt vanaf nu en verwijder ze NIET in
+        // dezelfde run — anders wist de eerste cron-run in één klap alle
+        // legacy transfers.
         if (!metadata.expiresAt) {
-          const iso = computeExpiresAtIso(metadata);
-          if (iso) {
-            metadata.expiresAt = iso;
-            await saveMetadata(metadata);
+          if (!metadata.createdAt) {
+            metadata.createdAt = now.toISOString();
           }
+          const computed = computeExpiresAtIso(metadata);
+          const grace = new Date(now.getTime() + 7 * 24 * 3600 * 1000).toISOString();
+          metadata.expiresAt = computed && computed > grace ? computed : grace;
+          await saveMetadata(metadata);
+          backfilledSlugs.push(slug);
+          continue;
         }
 
         const expiresAt = computeExpiresAtDate(metadata, now);
@@ -55,7 +63,7 @@ export async function GET(request: NextRequest) {
           await deleteUpload(slug);
           deletedSlugs.push(slug);
         }
-        
+
       } catch (error) {
         console.error(`[Cleanup] Error processing ${metadataFile}:`, error);
         errors.push(`${metadataFile}: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -66,6 +74,7 @@ export async function GET(request: NextRequest) {
       success: true,
       deleted: deletedSlugs,
       count: deletedSlugs.length,
+      backfilled: backfilledSlugs.length > 0 ? backfilledSlugs : undefined,
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error) {

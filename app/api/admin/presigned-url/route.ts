@@ -33,6 +33,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Zelfde naamregels als de append-route: geen traversal of rare keys.
+    if (
+      typeof fileName !== "string" ||
+      fileName.length > 1024 ||
+      fileName.includes("..") ||
+      fileName.includes("\\") ||
+      fileName.startsWith("/")
+    ) {
+      return NextResponse.json({ error: "Invalid file name" }, { status: 400 });
+    }
+
     const key = `uploads/${slug}/${fileName}`;
     
     // Generate presigned URL for upload (valid for 1 hour)

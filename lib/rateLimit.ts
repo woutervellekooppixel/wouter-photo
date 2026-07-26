@@ -59,7 +59,13 @@ function incrementMemoryCounter(key: string, windowMs: number): RateLimitEntry {
 
 export function rateLimit(config: RateLimitConfig) {
   return async (request: NextRequest): Promise<NextResponse | null> => {
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    // x-real-ip wordt door Vercel gezet en is niet door de client te spoofen.
+    // De ruwe x-forwarded-for string kan client-toevoegingen bevatten en zou
+    // per request een verse bucket opleveren; gebruik hooguit de eerste hop.
+    const ip =
+      request.headers.get('x-real-ip') ||
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      'unknown';
     const now = Date.now();
     // Include limiter name in the key so different limiters don't share counters
     const key = `rl:${config.name}:${ip}`;
@@ -86,10 +92,12 @@ export function rateLimit(config: RateLimitConfig) {
   };
 }
 
+// Ruim genoeg voor een klant die losse foto's klikt (elke download telt
+// alleen de redirect-hop); krap genoeg om scrapers af te remmen.
 export const downloadRateLimit = rateLimit({
   name: 'download',
   windowMs: 60 * 1000,
-  maxRequests: 10,
+  maxRequests: 60,
 });
 
 export const apiRateLimit = rateLimit({

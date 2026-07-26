@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getMetadata, saveMetadata } from "@/lib/r2";
+import { requireAdminAuth } from "@/lib/auth";
+import { isValidSlug } from "@/lib/validation";
 
 /**
  * Toggle rating for a single photo on an existing upload (admin).
@@ -10,8 +12,14 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const authError = await requireAdminAuth();
+  if (authError) return authError;
+
   try {
     const { slug } = await params;
+    if (!isValidSlug(slug)) {
+      return NextResponse.json({ error: "Invalid slug" }, { status: 400 });
+    }
 
     const { fileKey, rated } = (await req.json()) as {
       fileKey?: string;

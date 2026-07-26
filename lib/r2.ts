@@ -437,11 +437,13 @@ export async function deleteUpload(slug: string): Promise<void> {
     } catch {
       // thumbnail bestaat mogelijk niet, geen probleem
     }
-    try {
-      // Lightbox-rendities (breedte-specifieke cache, zie thumbnail-route)
-      await deleteFile(`thumbnails/w1920/${file.key}`);
-    } catch {
-      // bestaat mogelijk niet, geen probleem
+    // Breedte-specifieke rendities (lightbox/hero — zie thumbnail-route)
+    for (const w of [1920, 2560]) {
+      try {
+        await deleteFile(`thumbnails/w${w}/${file.key}`);
+      } catch {
+        // bestaat mogelijk niet, geen probleem
+      }
     }
   }
 
@@ -477,28 +479,23 @@ export async function deleteUpload(slug: string): Promise<void> {
 }
 
 export async function deleteFolder(prefix: string): Promise<void> {
-  const files = await listFiles(prefix);
-  let keysToDelete = files;
-  
-  if (files.length === 0) {
-    // Try without trailing slash
-    const prefixWithoutSlash = prefix.endsWith('/') ? prefix.slice(0, -1) : prefix;
-    const filesAlt = await listFiles(prefixWithoutSlash);
-    
-    if (filesAlt.length === 0) {
-      return;
-    }
+  // Alleen met trailing slash: een prefix zonder slash matcht óók
+  // buurmap-objecten (zips/wedding → zips/wedding-teaser.zip) en zou
+  // bestanden van een ándere transfer wissen.
+  const safePrefix = prefix.endsWith('/') ? prefix : `${prefix}/`;
+  const keysToDelete = await listFiles(safePrefix);
 
-    keysToDelete = filesAlt;
+  if (keysToDelete.length === 0) {
+    return;
   }
-  
+
   for (const key of keysToDelete) {
     await deleteFile(key);
   }
   
   // Verify deletion
-  const remainingFiles = await listFiles(prefix);
-  
+  const remainingFiles = await listFiles(safePrefix);
+
   if (remainingFiles.length > 0) {
     console.error('[R2] WARNING: Some files were not deleted:', remainingFiles);
     throw new Error(`Failed to delete all files. ${remainingFiles.length} files remaining.`);

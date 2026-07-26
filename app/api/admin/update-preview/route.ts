@@ -27,6 +27,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Alleen bestanden die echt in deze transfer zitten
+    if (
+      previewImageKey != null &&
+      !metadata.files.some((f) => f.key === previewImageKey)
+    ) {
+      return NextResponse.json({ error: "Unknown file key" }, { status: 400 });
+    }
+
     // Update preview image
     metadata.previewImageKey = previewImageKey;
 

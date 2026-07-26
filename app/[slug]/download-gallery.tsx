@@ -161,11 +161,6 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
     return src.startsWith("/api/thumbnail/");
   };
 
-  // API helper voor image url
-  const getFullImageUrl = (key: string) => {
-    return `/api/photos/by-key?key=${encodeURIComponent(key)}`;
-  };
-
   const getThumbUrl = (key: string) => {
     // Serve real resized thumbnails (webp) to keep the page light.
     return `/api/thumbnail/${metadata.slug}?key=${encodeURIComponent(key)}&w=640`;
@@ -181,9 +176,9 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
   };
 
   const getHeroUrl = (key: string) => {
-    // Hero is full-bleed on most screens; use a much larger rendition than the grid thumbnails.
-    // This avoids the hero looking blurry after selecting it in /admin.
-    return `/api/thumbnail/${metadata.slug}?key=${encodeURIComponent(key)}&w=3840&v=2`;
+    // Hero is full-bleed op de meeste schermen; grotere renditie dan de grid-
+    // thumbnails, maar bewust een verkleinde webp — nooit het origineel.
+    return `/api/thumbnail/${metadata.slug}?key=${encodeURIComponent(key)}&w=2560&v=3`;
   };
 
   const probeImageSize = (src: string, timeoutMs = 2500) => {

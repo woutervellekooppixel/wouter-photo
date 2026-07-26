@@ -190,10 +190,12 @@ export async function DELETE(
         } catch {
           // thumbnail bestaat mogelijk niet, geen probleem
         }
-        try {
-          await deleteFile(`thumbnails/w1920/${key}`);
-        } catch {
-          // bestaat mogelijk niet, geen probleem
+        for (const w of [1920, 2560]) {
+          try {
+            await deleteFile(`thumbnails/w${w}/${key}`);
+          } catch {
+            // bestaat mogelijk niet, geen probleem
+          }
         }
       }
     }

@@ -42,8 +42,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const baseUrl = host
     ? `${proto}://${host}`
     : (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://download.wouter.photo');
+  // Verkleinde webp voor social previews — nooit het originele bestand.
   const ogImageUrl = metadata.previewImageKey
-    ? `${baseUrl}/api/photos/by-key?key=${encodeURIComponent(metadata.previewImageKey)}`
+    ? `${baseUrl}/api/thumbnail/${encodeURIComponent(slug)}?key=${encodeURIComponent(metadata.previewImageKey)}&w=1920`
     : `${baseUrl}/api/background/default-background`;
 
   return {
@@ -98,5 +99,23 @@ export default async function DownloadPage({ params }: PageProps) {
 
 
   const expiresAt = computeExpiresAtIso(metadata) ?? undefined;
-  return <DownloadGallery metadata={metadata} expiresAt={expiresAt} />;
+
+  // Alleen de velden die de klant-pagina nodig heeft. Nooit het volledige
+  // metadata-object doorgeven: downloadHistory bevat IP-adressen en
+  // user-agents van eerdere downloaders en zou anders in de paginabron
+  // van elke bezoeker belanden.
+  const clientMetadata = {
+    slug: metadata.slug,
+    title: metadata.title,
+    createdAt: metadata.createdAt,
+    expiresAt: metadata.expiresAt,
+    files: metadata.files,
+    previewImageKey: metadata.previewImageKey,
+    backgroundImageKey: metadata.backgroundImageKey,
+    ratings: metadata.ratings,
+    ratingsEnabled: metadata.ratingsEnabled,
+    downloads: 0,
+  };
+
+  return <DownloadGallery metadata={clientMetadata} expiresAt={expiresAt} />;
 }

@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMetadata, saveMetadata } from "@/lib/r2";
 import { isValidSlug } from "@/lib/validation";
+import { isExpired } from "@/lib/expiry";
+import { apiRateLimit } from "@/lib/rateLimit";
 
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ slug: string }> }
 ) {
+  const rateLimitResponse = await apiRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { slug } = await context.params;
     if (!isValidSlug(slug)) {
@@ -16,7 +21,7 @@ export async function POST(
     }
     const { fileKey, rated } = await request.json();
 
-    if (!fileKey || typeof rated !== 'boolean') {
+    if (typeof fileKey !== "string" || !fileKey || typeof rated !== 'boolean') {
       return NextResponse.json(
         { error: "fileKey and rated are required" },
         { status: 400 }
@@ -29,6 +34,15 @@ export async function POST(
         { error: "Upload not found" },
         { status: 404 }
       );
+    }
+    if (isExpired(metadata)) {
+      return NextResponse.json({ error: "Expired" }, { status: 410 });
+    }
+
+    // Alleen keys die echt in deze transfer zitten — voorkomt dat een
+    // willekeurige bezoeker het metadata-bestand volpompt met rommel.
+    if (!metadata.files.some((f) => f.key === fileKey)) {
+      return NextResponse.json({ error: "Unknown file" }, { status: 400 });
     }
 
     const currentRatings = metadata.ratings || {};
@@ -57,6 +71,9 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ slug: string }> }
 ) {
+  const rateLimitResponse = await apiRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { slug } = await context.params;
     if (!isValidSlug(slug)) {
@@ -72,6 +89,9 @@ export async function GET(
         { error: "Upload not found" },
         { status: 404 }
       );
+    }
+    if (isExpired(metadata)) {
+      return NextResponse.json({ error: "Expired" }, { status: 410 });
     }
 
     return NextResponse.json({ ratings: metadata.ratings || {} });

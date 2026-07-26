@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getFile, getMetadata, headObject, uploadFile, getSignedDownloadUrl } from "@/lib/r2";
+import { getFile, getMetadata, headObject, uploadFile } from "@/lib/r2";
 import { isValidSlug } from "@/lib/validation";
 import { isExpired } from "@/lib/expiry";
 
@@ -26,9 +26,13 @@ export async function GET(
     const fileKey = searchParams.get("key");
     const widthParam = searchParams.get('w');
     const requestedWidth = widthParam ? Number(widthParam) : 640;
-    const width = Number.isFinite(requestedWidth)
-      ? Math.max(200, Math.min(4096, Math.round(requestedWidth)))
-      : 640;
+    // Alleen vaste breedtes: voorkomt dat een aanvaller met duizenden
+    // verschillende w-waardes onbeperkt Sharp-CPU en R2-opslag genereert,
+    // en houdt het aantal cache-varianten (en de cleanup) beheersbaar.
+    const ALLOWED_WIDTHS = [640, 1920, 2560];
+    const width = ALLOWED_WIDTHS.reduce((best, w) =>
+      Math.abs(w - requestedWidth) < Math.abs(best - requestedWidth) ? w : best
+    , ALLOWED_WIDTHS[0]);
 
     if (!fileKey) {
       return NextResponse.json({ error: "File key required" }, { status: 400 });
@@ -59,16 +63,14 @@ export async function GET(
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
-    // For hero/large sizes: redirect directly to original in R2 — no Sharp processing needed
-    if (width >= 2000) {
-      const signedUrl = await getSignedDownloadUrl(fileKey, 3600);
-      return NextResponse.redirect(signedUrl, { status: 307 });
-    }
+    // Nooit doorverwijzen naar het origineel: het origineel is uitsluitend
+    // via de downloadknop (/api/download/.../file) bereikbaar. Ook de hero
+    // (2560) is een verkleinde webp.
 
     // Check for pre-generated thumbnail in R2.
-    // 640 (grid-standaard) gebruikt de legacy key; andere breedtes (bv. 1920
-    // voor de lightbox) krijgen een eigen key zodat ze elkaars cache niet
-    // overschrijven.
+    // 640 (grid-standaard) gebruikt de legacy key; andere breedtes (1920
+    // lightbox, 2560 hero) krijgen een eigen key zodat ze elkaars cache
+    // niet overschrijven.
     const thumbKey = width === 640 ? `thumbnails/${fileKey}` : `thumbnails/w${width}/${fileKey}`;
     const existing = await headObject(thumbKey);
     if (existing) {
@@ -92,7 +94,7 @@ export async function GET(
     const resized = await sharp(original)
       .rotate()
       .resize({ width, withoutEnlargement: true })
-      .webp({ quality: 78 })
+      .webp({ quality: width >= 2560 ? 84 : 78 })
       .toBuffer();
 
     await uploadFile(Buffer.from(resized), thumbKey, 'image/webp');
