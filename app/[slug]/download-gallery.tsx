@@ -946,11 +946,17 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
           {/* Expiry banner (shown when link expires within 14 days) */}
           {expiresAt && (() => {
             const expires = new Date(expiresAt);
-            const daysLeft = Math.ceil((expires.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            const msLeft = expires.getTime() - Date.now();
+            const hoursLeft = msLeft / (1000 * 60 * 60);
+            const daysLeft = Math.ceil(hoursLeft / 24);
             if (daysLeft > 14) return null;
             const urgent = daysLeft <= 3;
-            const label = daysLeft <= 0
-              ? "This link expires today"
+            // Vervaldatum is een exact tijdstip: onder de 24 uur tonen we het
+            // tijdstip (in de tijdzone van de kijker) i.p.v. "tomorrow".
+            const label = hoursLeft <= 0
+              ? "This link has expired"
+              : hoursLeft <= 24
+              ? `This link expires today at ${expires.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
               : daysLeft === 1
               ? "This link expires tomorrow"
               : `This link expires in ${daysLeft} days`;

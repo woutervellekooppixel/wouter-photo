@@ -56,6 +56,7 @@ export default function AdminDashboard() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [failedUploadFiles, setFailedUploadFiles] = useState<FailedFile[]>([]);
   const [failedUploadSlug, setFailedUploadSlug] = useState<string>("");
+  const [expiryDays, setExpiryDays] = useState<number>(31);
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const [orphanedUploads, setOrphanedUploads] = useState<string[]>([]);
@@ -758,12 +759,63 @@ export default function AdminDashboard() {
 
   // Zet ZIPs (alles + per map) alvast klaar in R2, zodat klant-downloads
   // pure redirects naar R2 zijn i.p.v. streams door Vercel-functies.
+  // keepalive: het verzoek overleeft het sluiten van de tab.
   const generateZipsInBackground = (uploadSlug: string) => {
     fetch(`/api/admin/uploads/${encodeURIComponent(uploadSlug)}/zips`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
+      keepalive: true,
     }).catch((err) => console.error('ZIP generation failed:', err));
+  };
+
+  // Toon de ZIP-status van een transfer (klaar / ontbreekt per map)
+  const checkZipStatus = async (uploadSlug: string) => {
+    try {
+      const res = await fetch(`/api/admin/uploads/${encodeURIComponent(uploadSlug)}/zips`);
+      if (!res.ok) throw new Error('Status ophalen mislukt');
+      const data = await res.json();
+      const entries = Object.entries<boolean>(data.status || {});
+      const ready = entries.filter(([, ok]) => ok).map(([k]) => (k === '_all' ? 'Alles' : k));
+      const missing = entries.filter(([, ok]) => !ok).map(([k]) => (k === '_all' ? 'Alles' : k));
+      toast({
+        title: `ZIP-status: ${uploadSlug}`,
+        description: `Klaar: ${ready.length ? ready.join(', ') : 'geen'}${missing.length ? ` — Ontbreekt: ${missing.join(', ')} (klik "ZIPs klaarzetten")` : ''}`,
+      });
+    } catch (err) {
+      toast({
+        title: 'Fout',
+        description: 'Kon ZIP-status niet ophalen',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Vervaldatum verlengen
+  const extendExpiry = async (uploadSlug: string, days: number) => {
+    try {
+      const res = await fetch(`/api/admin/uploads/${encodeURIComponent(uploadSlug)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ extendDays: days }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Verlengen mislukt');
+      }
+      const data = await res.json();
+      toast({
+        title: 'Verlengd',
+        description: `${uploadSlug} verloopt nu op ${formatDate(new Date(data.expiresAt))}`,
+      });
+      await loadUploads();
+    } catch (err) {
+      toast({
+        title: 'Fout',
+        description: err instanceof Error ? err.message : 'Verlengen mislukt',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleUpload = async () => {
@@ -816,6 +868,7 @@ export default function AdminDashboard() {
           slug,
           title: title.trim() || undefined,
           files: [],
+          expiresAt: new Date(Date.now() + expiryDays * 24 * 3600 * 1000).toISOString(),
         }),
       });
       if (!metadataRes.ok) {
@@ -1280,12 +1333,30 @@ export default function AdminDashboard() {
                 />
                 {slug && (
                   <p className="text-xs text-blue-600 mt-1">
-                    → wouter.photo/{slug}
+                    → download.wouter.photo/{slug}
                   </p>
                 )}
               </div>
 
-              {/* Expiry UI removed: no vervaldatum/expiry fields shown */}
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Vervalt na (dagen)
+                </label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={expiryDays}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    setExpiryDays(Number.isFinite(v) ? Math.min(Math.max(v, 1), 365) : 31);
+                  }}
+                  className="w-28"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Daarna wordt de transfer automatisch opgeruimd (later te verlengen).
+                </p>
+              </div>
 
               <div
                 className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer select-none ${isDropzoneDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-white"}`}
@@ -1555,10 +1626,18 @@ export default function AdminDashboard() {
                           return (
                             <p className={expired ? 'text-red-600' : undefined}>
                               Verloopt: {formatDate(expiresAt)}
+                              {' '}
+                              <button
+                                onClick={() => extendExpiry(upload.slug, 31)}
+                                className="text-blue-600 hover:text-blue-800 underline"
+                                title="Verleng de vervaldatum met 31 dagen"
+                              >
+                                +31 dagen
+                              </button>
                             </p>
                           );
                         })()}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <p>Downloads: {upload.downloads}×</p>
                           {upload.downloadHistory && upload.downloadHistory.length > 0 && (
                             <button
@@ -1568,6 +1647,23 @@ export default function AdminDashboard() {
                               {expandedUpload === upload.slug ? 'Verberg details' : 'Bekijk details'}
                             </button>
                           )}
+                          <button
+                            onClick={() => checkZipStatus(upload.slug)}
+                            className="text-blue-600 hover:text-blue-800 underline"
+                            title="Controleer of de kant-en-klare ZIPs in R2 staan"
+                          >
+                            ZIP-status
+                          </button>
+                          <button
+                            onClick={() => {
+                              generateZipsInBackground(upload.slug);
+                              toast({ title: 'ZIPs worden klaargezet', description: `Voor ${upload.slug} — check zo de ZIP-status.` });
+                            }}
+                            className="text-blue-600 hover:text-blue-800 underline"
+                            title="(Her)genereer de kant-en-klare ZIPs in R2"
+                          >
+                            ZIPs klaarzetten
+                          </button>
                         </div>
                         {upload.ratings && Object.keys(upload.ratings).length > 0 && (
                           <div className="flex items-center gap-3">

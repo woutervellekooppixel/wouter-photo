@@ -216,7 +216,7 @@ export function Lightbox({
 
       {/* Counter */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 text-white/80 text-sm select-none">
-        {index + 1} / {images.length}
+        {safeIndex + 1} / {images.length}
       </div>
 
       {/* Prev/Next */}
@@ -294,11 +294,22 @@ export function Lightbox({
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
       >
+        {/* Thumbnail als onderlaag: geen zwart gat terwijl de grote
+            renditie nog gegenereerd/geladen wordt */}
+        {current.thumb && (
+          <img
+            src={current.thumb}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 m-auto max-w-full max-h-full object-contain"
+            draggable={false}
+          />
+        )}
         {/* afbeelding met object-contain */}
         <img
           src={current.src}
           alt={current.alt ?? ""}
-          className="absolute inset-0 m-auto max-w-full max-h-full object-contain drop-shadow-lg transition-opacity duration-300"
+          className="absolute z-10 inset-0 m-auto max-w-full max-h-full object-contain drop-shadow-lg transition-opacity duration-300"
           draggable={false}
         />
       </div>

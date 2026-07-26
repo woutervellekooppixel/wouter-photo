@@ -445,20 +445,57 @@ export async function updateDownloadCount(
 }
 
 export async function listAllUploads(): Promise<UploadMetadata[]> {
-  const metadataKeys = await listFiles("metadata/");
+  const metadataKeys = (await listFiles("metadata/")).filter((k) => k.endsWith(".json"));
   const uploads: UploadMetadata[] = [];
 
-  for (const key of metadataKeys) {
-    if (key.endsWith(".json")) {
-      const buffer = await getFile(key);
-      const metadata = JSON.parse(buffer.toString("utf-8"));
-      uploads.push(metadata);
+  // Parallel (met plafond) i.p.v. één-voor-één: bij 200 transfers scheelt
+  // dat tientallen seconden dashboard-laadtijd. Eén corrupt JSON-bestand
+  // mag bovendien niet het hele overzicht laten crashen.
+  const CONCURRENCY = 10;
+  let next = 0;
+  const worker = async () => {
+    while (true) {
+      const i = next++;
+      if (i >= metadataKeys.length) return;
+      try {
+        const buffer = await getFile(metadataKeys[i]);
+        uploads.push(JSON.parse(buffer.toString("utf-8")));
+      } catch (err) {
+        console.error(`[listAllUploads] Overslaan van corrupt metadata-bestand ${metadataKeys[i]}:`, err);
+      }
     }
-  }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(CONCURRENCY, metadataKeys.length) }, () => worker())
+  );
 
-  return uploads.sort((a, b) => 
+  return uploads.sort((a, b) =>
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
+}
+
+// Max één download-notificatiemail per transfer per uur: klanten die een
+// paar keer klikken (of 6 mappen apart downloaden) spammen de inbox anders vol.
+export async function shouldSendDownloadNotification(
+  slug: string,
+  windowMs: number = 60 * 60 * 1000
+): Promise<boolean> {
+  const markerKey = `notifications/${slug}.last`;
+  try {
+    const head = await r2Client.send(
+      new HeadObjectCommand({ Bucket: R2_BUCKET_NAME, Key: markerKey })
+    );
+    const age = Date.now() - (head.LastModified?.getTime() ?? 0);
+    if (age < windowMs) return false;
+  } catch {
+    // geen marker: eerste notificatie
+  }
+  try {
+    await uploadFile(Buffer.from(new Date().toISOString()), markerKey, "text/plain");
+  } catch {
+    // best-effort; liever een dubbele mail dan geen mail
+  }
+  return true;
 }
 
 export async function deleteUpload(slug: string): Promise<void> {
@@ -503,6 +540,15 @@ export async function deleteUpload(slug: string): Promise<void> {
     await deleteFolder(`zips/${slug}/`);
   } catch (err) {
     console.error('[deleteUpload] Fout bij verwijderen van folder-zips', err);
+  }
+
+  // Notificatie-marker en zip-lock opruimen (best-effort)
+  for (const key of [`notifications/${slug}.last`, `zips/${slug}.generating`]) {
+    try {
+      await deleteFile(key);
+    } catch {
+      // bestaat mogelijk niet
+    }
   }
 
   // Best-effort: remove any remaining objects under uploads/<slug>/

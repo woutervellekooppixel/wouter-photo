@@ -93,6 +93,12 @@ export async function sendDownloadNotification(
   fileCount: number
 ): Promise<void> {
   try {
+    // Dedup: max één mail per transfer per uur (marker in R2)
+    const { shouldSendDownloadNotification } = await import("@/lib/r2");
+    if (!(await shouldSendDownloadNotification(slug))) {
+      return;
+    }
+
     const safeSlug = escapeHtml(slug);
 
     await sendEmail({
