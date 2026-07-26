@@ -86,6 +86,7 @@ export interface UploadMetadata {
   }[];
   previewImageKey?: string; // Optional: key of the image to show on loading screen
   backgroundImageKey?: string; // Optional: key of the image to use as background
+  useDefaultHero?: boolean; // Designlevering: altijd de standaard-hero, nooit een foto uit de transfer
   ratings?: Record<string, boolean>; // Optional: client ratings for photos (fileKey -> rated)
   ratingsEnabled?: boolean; // Optional: allow clients to rate photos
   gallery?: boolean; // Optional: mark as gallery photo upload (not a real download)

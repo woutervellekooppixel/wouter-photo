@@ -18,7 +18,7 @@ export async function PATCH(
     }
 
     const body = await request.json().catch(() => ({}));
-    const { expiresAt, extendDays, title } = body || {};
+    const { expiresAt, extendDays, title, useDefaultHero } = body || {};
 
     const metadata = await getMetadata(slug);
     if (!metadata) {
@@ -42,6 +42,11 @@ export async function PATCH(
 
     if (typeof title === "string") {
       metadata.title = title.trim() || undefined;
+    }
+
+    if (typeof useDefaultHero === "boolean") {
+      if (useDefaultHero) metadata.useDefaultHero = true;
+      else delete metadata.useDefaultHero;
     }
 
     await saveMetadata(metadata);

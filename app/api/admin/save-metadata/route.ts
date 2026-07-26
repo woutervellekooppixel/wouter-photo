@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   if (authError) return authError;
 
   try {
-    const { slug, title, files, expiresAt, overwrite } = await request.json();
+    const { slug, title, files, expiresAt, overwrite, useDefaultHero } = await request.json();
 
     if (!slug || !Array.isArray(files)) {
       return NextResponse.json(
@@ -101,6 +101,7 @@ export async function POST(request: NextRequest) {
       expiresAt: resolvedExpiresAt,
       files: files,
       downloads: 0,
+      ...(useDefaultHero === true ? { useDefaultHero: true } : {}),
     };
 
     await saveMetadata(metadata);

@@ -35,6 +35,7 @@ interface Upload {
   backgroundImageKey?: string;
   ratings?: Record<string, boolean>;
   ratingsEnabled?: boolean;
+  useDefaultHero?: boolean;
 }
 
 export default function AdminDashboard() {
@@ -57,6 +58,7 @@ export default function AdminDashboard() {
   const [failedUploadFiles, setFailedUploadFiles] = useState<FailedFile[]>([]);
   const [failedUploadSlug, setFailedUploadSlug] = useState<string>("");
   const [expiryDays, setExpiryDays] = useState<number>(31);
+  const [useDefaultHero, setUseDefaultHero] = useState<boolean>(false);
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const [orphanedUploads, setOrphanedUploads] = useState<string[]>([]);
@@ -791,6 +793,34 @@ export default function AdminDashboard() {
     }
   };
 
+  // Designlevering-vlag (standaard-hero) aan/uit zetten op een bestaande transfer
+  const toggleDefaultHero = async (uploadSlug: string, next: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/uploads/${encodeURIComponent(uploadSlug)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ useDefaultHero: next }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Aanpassen mislukt');
+      }
+      toast({
+        title: next ? 'Designlevering aan' : 'Designlevering uit',
+        description: next
+          ? `${uploadSlug} toont nu altijd de standaard-hero.`
+          : `${uploadSlug} kiest weer een foto uit de transfer als hero.`,
+      });
+      await loadUploads();
+    } catch (err) {
+      toast({
+        title: 'Fout',
+        description: err instanceof Error ? err.message : 'Aanpassen mislukt',
+        variant: 'destructive',
+      });
+    }
+  };
+
   // Vervaldatum verlengen
   const extendExpiry = async (uploadSlug: string, days: number) => {
     try {
@@ -869,6 +899,7 @@ export default function AdminDashboard() {
           title: title.trim() || undefined,
           files: [],
           expiresAt: new Date(Date.now() + expiryDays * 24 * 3600 * 1000).toISOString(),
+          useDefaultHero,
         }),
       });
       if (!metadataRes.ok) {
@@ -1358,6 +1389,22 @@ export default function AdminDashboard() {
                 </p>
               </div>
 
+              <label className="flex items-start gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={useDefaultHero}
+                  onChange={(e) => setUseDefaultHero(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-gray-300 cursor-pointer"
+                />
+                <span>
+                  <span className="text-sm font-medium block">Designlevering</span>
+                  <span className="text-xs text-gray-500 block">
+                    Gebruik altijd de standaard-hero — afbeeldingen in de transfer
+                    (logo&apos;s, PNG&apos;s) worden niet als header gekozen.
+                  </span>
+                </span>
+              </label>
+
               <div
                 className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer select-none ${isDropzoneDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-white"}`}
                 onDragEnter={handleDropzoneDragEnter}
@@ -1663,6 +1710,13 @@ export default function AdminDashboard() {
                             title="(Her)genereer de kant-en-klare ZIPs in R2"
                           >
                             ZIPs klaarzetten
+                          </button>
+                          <button
+                            onClick={() => toggleDefaultHero(upload.slug, !upload.useDefaultHero)}
+                            className="text-blue-600 hover:text-blue-800 underline"
+                            title="Designlevering: altijd de standaard-hero tonen i.p.v. een foto uit de transfer"
+                          >
+                            {upload.useDefaultHero ? 'Designlevering: aan' : 'Designlevering: uit'}
                           </button>
                         </div>
                         {upload.ratings && Object.keys(upload.ratings).length > 0 && (

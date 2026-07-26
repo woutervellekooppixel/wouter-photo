@@ -43,7 +43,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ? `${proto}://${host}`
     : (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://download.wouter.photo');
   // Verkleinde webp voor social previews — nooit het originele bestand.
-  const ogImageUrl = metadata.previewImageKey
+  // Designleveringen (useDefaultHero) tonen ook in de link-preview de
+  // standaard-achtergrond i.p.v. een bestand uit de transfer.
+  const ogImageUrl = metadata.previewImageKey && !metadata.useDefaultHero
     ? `${baseUrl}/api/thumbnail/${encodeURIComponent(slug)}?key=${encodeURIComponent(metadata.previewImageKey)}&w=1920`
     : `${baseUrl}/api/background/default-background`;
 
@@ -114,6 +116,7 @@ export default async function DownloadPage({ params }: PageProps) {
     backgroundImageKey: metadata.backgroundImageKey,
     ratings: metadata.ratings,
     ratingsEnabled: metadata.ratingsEnabled,
+    useDefaultHero: metadata.useDefaultHero,
     downloads: 0,
   };
 

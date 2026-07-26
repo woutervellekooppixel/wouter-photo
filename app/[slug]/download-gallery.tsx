@@ -40,6 +40,7 @@ type UploadMetadata = {
   files: UploadFile[];
   ratingsEnabled?: boolean;
   ratings?: Record<string, boolean>;
+  useDefaultHero?: boolean;
 };
 /** ===================================================================================== */
 
@@ -209,9 +210,19 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
   };
 
   // Auto-choose hero if admin hasn't picked one.
-  // Rule: first (chronological) photo that is ~3:2 becomes hero.
+    // Rule: first (chronological) photo that is ~3:2 becomes hero.
   useEffect(() => {
     let cancelled = false;
+
+    // Designlevering: nooit een bestand uit de transfer als hero gebruiken —
+    // altijd de standaard-achtergrond (backgroundUrl-fallback pakt het op).
+    if (metadata.useDefaultHero) {
+      setHeroKey(null);
+      setHeroUrl(null);
+      return () => {
+        cancelled = true;
+      };
+    }
 
     const imgs = sortFilesChronological(metadata.files)
       .filter((f) => !shouldFilterFile(f.name) && isImageFile(f.name))
@@ -281,7 +292,7 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [metadata.slug, metadata.previewImageKey, metadata.files]);
+  }, [metadata.slug, metadata.previewImageKey, metadata.files, metadata.useDefaultHero]);
 
   // Thumbnails "opbouwen" (geen echte fetch nodig; URLs naar je API)
   useEffect(() => {
@@ -290,28 +301,38 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
     if (imgs.length === 0) {
       setThumbnailUrls({});
       setThumbnailsLoaded(0);
-      setPreviewLoaded(true);
 
       // Truly empty gallery (no files at all) — skip the intro overlay entirely.
       const allVisible = metadata.files.filter((f) => !shouldFilterFile(f.name));
       if (allVisible.length === 0) {
+        setPreviewLoaded(true);
         setLoadingThumbnails(false);
         return () => {};
       }
 
-      // Files-only (no images): keep the hero intro overlay visible briefly,
-      // and allow the fakePercent fill animation to run.
+      // Files-only (no images): keep the hero intro overlay visible briefly.
+      // previewLoaded wordt pas gezet zodra de standaard-hero geladen is
+      // (onLoad van de achtergrond-Image), zodat de animatie én de 6s-klok
+      // niet starten op een lege/zwarte achtergrond.
+      setPreviewLoaded(false);
       setLoadingThumbnails(true);
 
       let cancelled = false;
-      const minDelay = 6000;
-      const t = window.setTimeout(() => {
+      (async () => {
+        // Wacht tot de hero geladen is (met vangnet als dat nooit gebeurt)
+        const graceMs = 5000;
+        const t0 = Date.now();
+        while (!cancelled && !previewLoadedRef.current && Date.now() - t0 < graceMs) {
+          await new Promise((res) => setTimeout(res, 75));
+        }
+        // Vanaf nu pas de intro-duur laten lopen
+        const minDelay = 6000;
+        await new Promise((res) => setTimeout(res, minDelay));
         if (!cancelled) setLoadingThumbnails(false);
-      }, minDelay);
+      })();
 
       return () => {
         cancelled = true;
-        window.clearTimeout(t);
       };
     }
 
@@ -331,22 +352,18 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
       }
       if (!cancelled) setThumbnailUrls(urls);
 
-      // Minimaal 6s overlay zichtbaar houden
-      const minDelay = 6000;
-      const start = Date.now();
+      // Eerst wachten tot de hero echt geladen is (de vulanimatie start dan
+      // pas — die wacht op previewLoaded), en dáárna de 6s intro-duur laten
+      // lopen. Vangnet: als de hero nooit laadt, gaan we na 4s toch verder.
       const finish = async () => {
-        const elapsed = Date.now() - start;
-        if (elapsed < minDelay) {
-          await new Promise((res) => setTimeout(res, minDelay - elapsed));
-        }
-
-        // Don't dismiss the overlay until the hero image is loaded.
-        // Safety: if the hero never loads, continue after a short grace period.
         const graceMs = 4000;
         const t0 = Date.now();
         while (!cancelled && !previewLoadedRef.current && Date.now() - t0 < graceMs) {
           await new Promise((res) => setTimeout(res, 75));
         }
+
+        const minDelay = 6000;
+        await new Promise((res) => setTimeout(res, minDelay));
         if (!cancelled) setLoadingThumbnails(false);
       };
       finish();
@@ -761,13 +778,17 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
   }, [displayedImageFiles]);
   const imageFolders = Object.keys(imagesByFolder);
   const hasImageFolders = imageFolders.length > 1 || !imagesByFolder["Main"];
-  // Count "folders" including the root bucket ("Main").
-  // If there are images but no subfolders, we still show 1 folder.
-  const folderCount = imageFiles.length === 0 ? 0 : Object.keys(
-    imageFiles.reduce((acc, file) => {
+  // Mappenteller over ÁLLE zichtbare bestanden (foto's én andere bestanden),
+  // anders staat er "0 folders" bij een designlevering met mappen vol PDF's.
+  // Root-foto's tellen als de "Main"-groep mee zodra er foto's zijn.
+  const folderCount = Object.keys(
+    visibleFiles.reduce((acc, file) => {
       const parts = file.name.split("/");
-      const folder = parts.length > 1 ? parts[0] : "Main";
-      acc[folder] = true;
+      if (parts.length > 1) {
+        acc[parts[0]] = true;
+      } else if (isImageFile(file.name)) {
+        acc["Main"] = true;
+      }
       return acc;
     }, {} as Record<string, boolean>)
   ).length;
@@ -828,8 +849,8 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
             className="fixed inset-0 z-[100] transition-opacity duration-1000"
             style={{ opacity: loadingThumbnails ? 1 : 0 }}
           >
-            {/* Fullscreen hero image */}
-            <div className="absolute inset-0 bg-gray-900">
+            {/* Fullscreen hero image — zwarte basis, geen blauwige placeholder */}
+            <div className="absolute inset-0 bg-black">
               {heroKey && heroUrl ? (
                 <Image
                   src={heroUrl}
@@ -868,7 +889,7 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
                   unoptimized={backgroundUrl?.startsWith("http")}
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-900">
+                <div className="w-full h-full flex items-center justify-center bg-black">
                   <div className="relative w-32 h-32">
                     <div className="absolute inset-0 bg-gray-700 rounded-full opacity-30 animate-pulse" />
                     <ImageIcon className="absolute inset-0 m-auto h-16 w-16 text-white/40" />
