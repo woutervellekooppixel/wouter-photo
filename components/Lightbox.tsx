@@ -37,6 +37,11 @@ type LightboxProps = {
 
   /** Extra className op outer container */
   className?: string;
+
+  /** Blokkeer rechtermuisknop/slepen op de afbeelding en toon een melding */
+  protectImages?: boolean;
+  /** Melding die verschijnt bij een poging tot rechtermuisknop-opslaan */
+  protectMessage?: string;
 };
 
 export function Lightbox({
@@ -51,6 +56,8 @@ export function Lightbox({
   isFavorite,
   onToggleFavorite,
   className = "",
+  protectImages = false,
+  protectMessage = "Please use the download icon — saving this way only gives you a low-resolution preview.",
 }: LightboxProps) {
   const [mounted, setMounted] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -59,6 +66,23 @@ export function Lightbox({
   const [isDragging, setIsDragging] = useState(false);
   const dragStartX = useRef(0);
   const dragDx = useRef(0);
+
+  const [showProtectNotice, setShowProtectNotice] = useState(false);
+  const protectNoticeTimer = useRef<number | null>(null);
+
+  const onProtectedContextMenu = (e: React.MouseEvent) => {
+    if (!protectImages) return;
+    e.preventDefault();
+    setShowProtectNotice(true);
+    if (protectNoticeTimer.current) window.clearTimeout(protectNoticeTimer.current);
+    protectNoticeTimer.current = window.setTimeout(() => setShowProtectNotice(false), 4000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (protectNoticeTimer.current) window.clearTimeout(protectNoticeTimer.current);
+    };
+  }, []);
 
   // Alleen renderen als we in de browser zitten (portal)
   useEffect(() => {
@@ -178,6 +202,7 @@ export function Lightbox({
       aria-label="Afbeelding viewer"
       className={`fixed inset-0 z-[100] bg-black/90 flex items-center justify-center ${className}`}
       onClick={onBackdropClick}
+      onContextMenu={onProtectedContextMenu}
     >
       {/* Close button */}
       <button
@@ -277,6 +302,16 @@ export function Lightbox({
           draggable={false}
         />
       </div>
+
+      {/* Melding bij poging tot rechtermuisknop-opslaan */}
+      {protectImages && showProtectNotice && (
+        <div
+          role="status"
+          className="absolute bottom-20 left-1/2 -translate-x-1/2 max-w-[90vw] md:max-w-md px-4 py-3 rounded-lg bg-white/95 text-black text-sm text-center shadow-xl backdrop-blur-sm"
+        >
+          {protectMessage}
+        </div>
+      )}
     </div>
   );
 

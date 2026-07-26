@@ -65,8 +65,11 @@ export async function GET(
       return NextResponse.redirect(signedUrl, { status: 307 });
     }
 
-    // Check for pre-generated thumbnail in R2
-    const thumbKey = `thumbnails/${fileKey}`;
+    // Check for pre-generated thumbnail in R2.
+    // 640 (grid-standaard) gebruikt de legacy key; andere breedtes (bv. 1920
+    // voor de lightbox) krijgen een eigen key zodat ze elkaars cache niet
+    // overschrijven.
+    const thumbKey = width === 640 ? `thumbnails/${fileKey}` : `thumbnails/w${width}/${fileKey}`;
     const existing = await headObject(thumbKey);
     if (existing) {
       const data = await getFile(thumbKey);

@@ -437,6 +437,12 @@ export async function deleteUpload(slug: string): Promise<void> {
     } catch {
       // thumbnail bestaat mogelijk niet, geen probleem
     }
+    try {
+      // Lightbox-rendities (breedte-specifieke cache, zie thumbnail-route)
+      await deleteFile(`thumbnails/w1920/${file.key}`);
+    } catch {
+      // bestaat mogelijk niet, geen probleem
+    }
   }
 
   // Delete pre-made zip if present

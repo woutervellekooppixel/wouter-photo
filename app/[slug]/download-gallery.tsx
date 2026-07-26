@@ -171,6 +171,15 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
     return `/api/thumbnail/${metadata.slug}?key=${encodeURIComponent(key)}&w=640`;
   };
 
+  const getLightboxUrl = (key: string) => {
+    // Bewust een verkleinde webp (géén origineel): wie via rechtermuisknop
+    // of dev-tools opslaat, krijgt hooguit deze preview. Het origineel is
+    // alleen via de downloadknop (/api/download/.../file) bereikbaar.
+    // Let op: w moet < 2000 blijven, anders redirect de thumbnail-route
+    // naar het origineel in R2.
+    return `/api/thumbnail/${metadata.slug}?key=${encodeURIComponent(key)}&w=1920`;
+  };
+
   const getHeroUrl = (key: string) => {
     // Hero is full-bleed on most screens; use a much larger rendition than the grid thumbnails.
     // This avoids the hero looking blurry after selecting it in /admin.
@@ -712,11 +721,11 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
 
   /** ===== Lightbox integratie ===== */
 
-  // Volledige resolutie in Lightbox
+  // Grote preview in Lightbox (bewust niet het origineel — zie getLightboxUrl)
   const lightboxImages: LightboxImage[] = useMemo(
     () =>
       displayedImageFiles.map((f) => ({
-        src: getFullImageUrl(f.key),
+        src: getLightboxUrl(f.key),
         alt: f.name.split("/").pop() || f.name,
         thumb: thumbnailUrls[f.key] || getThumbUrl(f.key),
       })),
@@ -1435,6 +1444,8 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
                 const name = (file?.name.split("/").pop() || `image-${idx + 1}`).toString();
                 downloadSingle(file.key, name);
               }}
+              protectImages
+              protectMessage="Please use the download icon — if you save the image this way, you're only saving a low-resolution preview."
             />
           )}
         </div>
