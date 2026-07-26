@@ -85,8 +85,9 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
   }, [previewLoaded]);
 
   const hasImagesForIntro = useMemo(() => {
+    if (metadata.useDefaultHero) return false;
     return (metadata.files || []).some((f) => !shouldFilterFile(f.name) && isImageFile(f.name));
-  }, [metadata.files]);
+  }, [metadata.files, metadata.useDefaultHero]);
 
   useEffect(() => {
     if (!loadingThumbnails) {
@@ -138,8 +139,16 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
     () => sortFilesChronological(metadata.files).filter((f) => !shouldFilterFile(f.name)),
     [metadata.files]
   );
-  const imageFiles = useMemo(() => visibleFiles.filter((f) => isImageFile(f.name)), [visibleFiles]);
-  const otherFiles = useMemo(() => visibleFiles.filter((f) => !isImageFile(f.name)), [visibleFiles]);
+  // Fotofunctie uit (useDefaultHero): álle bestanden — ook afbeeldingen —
+  // worden als gewone bestanden in de lijst getoond i.p.v. als fotogalerij.
+  const imageFiles = useMemo(
+    () => (metadata.useDefaultHero ? [] : visibleFiles.filter((f) => isImageFile(f.name))),
+    [visibleFiles, metadata.useDefaultHero]
+  );
+  const otherFiles = useMemo(
+    () => (metadata.useDefaultHero ? visibleFiles : visibleFiles.filter((f) => !isImageFile(f.name))),
+    [visibleFiles, metadata.useDefaultHero]
+  );
   const totalSize = useMemo(() => visibleFiles.reduce((sum, f) => sum + (f.size || 0), 0), [visibleFiles]);
 
   const favoriteImageFiles = useMemo(
@@ -297,7 +306,11 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
   // Thumbnails "opbouwen" (geen echte fetch nodig; URLs naar je API)
   useEffect(() => {
     if (!metadata || !metadata.files) return;
-    const imgs = metadata.files.filter((f) => !shouldFilterFile(f.name) && isImageFile(f.name));
+    // Fotofunctie uit: afbeeldingen worden als gewone bestanden behandeld,
+    // dus ook geen thumbnails/fotogalerij-intro voorbereiden.
+    const imgs = metadata.useDefaultHero
+      ? []
+      : metadata.files.filter((f) => !shouldFilterFile(f.name) && isImageFile(f.name));
     if (imgs.length === 0) {
       setThumbnailUrls({});
       setThumbnailsLoaded(0);
@@ -786,7 +799,7 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
       const parts = file.name.split("/");
       if (parts.length > 1) {
         acc[parts[0]] = true;
-      } else if (isImageFile(file.name)) {
+      } else if (!metadata.useDefaultHero && isImageFile(file.name)) {
         acc["Main"] = true;
       }
       return acc;

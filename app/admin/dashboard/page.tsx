@@ -806,10 +806,10 @@ export default function AdminDashboard() {
         throw new Error(err.error || 'Aanpassen mislukt');
       }
       toast({
-        title: next ? 'Designlevering aan' : 'Designlevering uit',
+        title: next ? 'Fotofunctie uit' : 'Fotofunctie aan',
         description: next
-          ? `${uploadSlug} toont nu altijd de standaard-hero.`
-          : `${uploadSlug} kiest weer een foto uit de transfer als hero.`,
+          ? `${uploadSlug} toont de standaard-hero en levert afbeeldingen als gewone bestanden.`
+          : `${uploadSlug} gedraagt zich weer als fotogalerij (hero uit de transfer).`,
       });
       await loadUploads();
     } catch (err) {
@@ -1397,10 +1397,11 @@ export default function AdminDashboard() {
                   className="mt-0.5 w-4 h-4 rounded border-gray-300 cursor-pointer"
                 />
                 <span>
-                  <span className="text-sm font-medium block">Designlevering</span>
+                  <span className="text-sm font-medium block">Fotofunctie uit</span>
                   <span className="text-xs text-gray-500 block">
-                    Gebruik altijd de standaard-hero — afbeeldingen in de transfer
-                    (logo&apos;s, PNG&apos;s) worden niet als header gekozen.
+                    Voor design-opleveringen: altijd de standaard-hero, en
+                    afbeeldingen (logo&apos;s, PNG&apos;s) verschijnen als gewone
+                    bestanden in de lijst — niet als fotogalerij.
                   </span>
                 </span>
               </label>
@@ -1714,9 +1715,9 @@ export default function AdminDashboard() {
                           <button
                             onClick={() => toggleDefaultHero(upload.slug, !upload.useDefaultHero)}
                             className="text-blue-600 hover:text-blue-800 underline"
-                            title="Designlevering: altijd de standaard-hero tonen i.p.v. een foto uit de transfer"
+                            title="Fotofunctie uit = standaard-hero en afbeeldingen als gewone bestanden (voor design-opleveringen)"
                           >
-                            {upload.useDefaultHero ? 'Designlevering: aan' : 'Designlevering: uit'}
+                            {upload.useDefaultHero ? 'Fotofunctie: uit' : 'Fotofunctie: aan'}
                           </button>
                         </div>
                         {upload.ratings && Object.keys(upload.ratings).length > 0 && (
