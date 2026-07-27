@@ -88,6 +88,37 @@ async function sendEmail(options: SendEmailOptions): Promise<void> {
   }
 }
 
+// Klant vroeg op de verlopen-pagina om een nieuwe link
+export async function sendRelinkRequestNotification(
+  slug: string,
+  title?: string
+): Promise<void> {
+  const safeSlug = escapeHtml(slug);
+  const safeTitle = title ? escapeHtml(title) : safeSlug;
+
+  await sendEmail({
+    from: process.env.EMAIL_FROM_DOWNLOAD_NOTIFICATIONS || "Download Notificaties <downloads@wouter.photo>",
+    to: ADMIN_EMAIL,
+    subject: `Nieuwe link aangevraagd: ${title || slug}`,
+    htmlBody: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Nieuwe link aangevraagd</h2>
+        <p>Een klant heeft op de verlopen-pagina om een nieuwe downloadlink gevraagd:</p>
+        <ul>
+          <li><strong>Transfer:</strong> ${safeTitle}</li>
+          <li><strong>Slug:</strong> ${safeSlug}</li>
+          <li><strong>Tijd:</strong> ${new Date().toLocaleString("nl-NL")}</li>
+        </ul>
+        <p style="color: #666; font-size: 14px; margin-top: 20px;">
+          Verleng de vervaldatum in het admin-dashboard (knop "+31 dagen") en stuur de klant dezelfde link opnieuw.
+        </p>
+      </div>
+    `,
+    textBody: `Nieuwe link aangevraagd\n\nTransfer: ${title || slug}\nSlug: ${slug}\nTijd: ${new Date().toLocaleString("nl-NL")}\n\nVerleng de vervaldatum in het admin-dashboard en stuur de klant dezelfde link opnieuw.`,
+    tag: "relink-request",
+  });
+}
+
 export async function sendDownloadNotification(
   slug: string,
   fileCount: number

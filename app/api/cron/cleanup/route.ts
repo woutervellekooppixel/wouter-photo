@@ -59,7 +59,11 @@ export async function GET(request: NextRequest) {
           continue;
         }
 
-        if (now.getTime() > expiresAt.getTime()) {
+        // 7 dagen respijt na het verlopen: de klantpagina is dan al dicht
+        // (downloads geven 410), maar een "nieuwe link"-aanvraag kan nog
+        // met één klik gehonoreerd worden (+31 dagen) zonder heruploaden.
+        const graceMs = 7 * 24 * 3600 * 1000;
+        if (now.getTime() > expiresAt.getTime() + graceMs) {
           await deleteUpload(slug);
           deletedSlugs.push(slug);
         }

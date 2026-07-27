@@ -7,6 +7,9 @@ import {
   isZipFileValid,
   getFolderZipKey,
   isZipObjectValid,
+  isZipGenerationInProgress,
+  tryAcquireZipLock,
+  releaseZipLock,
 } from "@/lib/r2";
 import { isValidSlug } from "@/lib/validation";
 
@@ -49,32 +52,42 @@ export async function POST(
     const body = await request.json().catch(() => ({}));
     const force: boolean = body?.force === true;
 
-    const results: Record<string, "created" | "cached" | "failed"> = {};
-
-    if (force || !(await isZipFileValid(slug))) {
-      try {
-        await createZipFile(slug);
-        results["_all"] = "created";
-      } catch (err) {
-        console.error(`[zips] Failed to create main zip for ${slug}:`, err);
-        results["_all"] = "failed";
-      }
-    } else {
-      results["_all"] = "cached";
+    // Lock: voorkomt dubbele generatie (dubbelklik, of samenloop met een
+    // klant-download die de generatie al aftrapte) en voedt de live
+    // "bezig"-status in het dashboard.
+    if (!(await tryAcquireZipLock(slug))) {
+      return NextResponse.json({ success: true, generating: true }, { status: 202 });
     }
 
-    for (const folder of getTopLevelFolders(metadata.files.map((f) => f.name))) {
-      if (!force && (await isZipObjectValid(getFolderZipKey(slug, folder)))) {
-        results[folder] = "cached";
-        continue;
+    const results: Record<string, "created" | "cached" | "failed"> = {};
+    try {
+      if (force || !(await isZipFileValid(slug))) {
+        try {
+          await createZipFile(slug);
+          results["_all"] = "created";
+        } catch (err) {
+          console.error(`[zips] Failed to create main zip for ${slug}:`, err);
+          results["_all"] = "failed";
+        }
+      } else {
+        results["_all"] = "cached";
       }
-      try {
-        await createFolderZipFile(slug, folder);
-        results[folder] = "created";
-      } catch (err) {
-        console.error(`[zips] Failed to create folder zip ${folder} for ${slug}:`, err);
-        results[folder] = "failed";
+
+      for (const folder of getTopLevelFolders(metadata.files.map((f) => f.name))) {
+        if (!force && (await isZipObjectValid(getFolderZipKey(slug, folder)))) {
+          results[folder] = "cached";
+          continue;
+        }
+        try {
+          await createFolderZipFile(slug, folder);
+          results[folder] = "created";
+        } catch (err) {
+          console.error(`[zips] Failed to create folder zip ${folder} for ${slug}:`, err);
+          results[folder] = "failed";
+        }
       }
+    } finally {
+      await releaseZipLock(slug);
     }
 
     const failed = Object.values(results).filter((r) => r === "failed").length;
@@ -110,7 +123,10 @@ export async function GET(
       status[folder] = await isZipObjectValid(getFolderZipKey(slug, folder));
     }
 
-    return NextResponse.json({ status });
+    // "bezig": er loopt (waarschijnlijk) een generatie — verse lock-marker
+    const generating = await isZipGenerationInProgress(slug);
+
+    return NextResponse.json({ status, generating });
   } catch (error) {
     console.error("Error checking zips:", error);
     return NextResponse.json({ error: "Failed to check zips" }, { status: 500 });

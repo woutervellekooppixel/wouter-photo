@@ -85,16 +85,17 @@ export default async function DownloadPage({ params }: PageProps) {
 
   if (isExpired(metadata)) {
     const expiresAt = computeExpiresAtDate(metadata);
-    const destination = 'https://wouter.photo';
+    const destination = 'https://www.wouter.photo';
     return (
       <ExpiredRedirect
         destination={destination}
         title="This download has expired"
         description={
           expiresAt
-            ? `This link expired on ${expiresAt.toLocaleDateString('en-US')}.`
-            : 'This link has expired.'
+            ? `This link expired on ${expiresAt.toLocaleDateString('en-US')}. Need the files again? Request a new link below.`
+            : 'This link has expired. Need the files again? Request a new link below.'
         }
+        slug={slug}
       />
     );
   }

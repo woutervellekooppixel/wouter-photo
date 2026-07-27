@@ -393,6 +393,42 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
     if (metadata.ratings) setRatings(metadata.ratings);
   }, [metadata.ratings]);
 
+  // Live countdown tot de vervaldatum in de statistiekbalk — tikt per
+  // seconde weg ("Expires in 31 days 10 hours 10 minutes and 21 seconds").
+  const [expiryCountdown, setExpiryCountdown] = useState<string | null>(null);
+  useEffect(() => {
+    if (!expiresAt) {
+      setExpiryCountdown(null);
+      return;
+    }
+    const expires = new Date(expiresAt).getTime();
+    if (!Number.isFinite(expires)) {
+      setExpiryCountdown(null);
+      return;
+    }
+    const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
+    const update = () => {
+      const ms = expires - Date.now();
+      if (ms <= 0) {
+        setExpiryCountdown("Expired");
+        return;
+      }
+      const s = Math.floor(ms / 1000);
+      const days = Math.floor(s / 86400);
+      const hours = Math.floor((s % 86400) / 3600);
+      const minutes = Math.floor((s % 3600) / 60);
+      const seconds = s % 60;
+      const parts: string[] = [];
+      if (days > 0) parts.push(plural(days, "day"));
+      if (days > 0 || hours > 0) parts.push(plural(hours, "hour"));
+      parts.push(plural(minutes, "minute"));
+      setExpiryCountdown(`Expires in ${parts.join(" ")} and ${plural(seconds, "second")}`);
+    };
+    update();
+    const t = window.setInterval(update, 1000);
+    return () => window.clearInterval(t);
+  }, [expiresAt]);
+
   // Achtergrond (fallback) laden als geen preview
   useEffect(() => {
     if (heroKey) return;
@@ -1067,7 +1103,7 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
 
             <div className="text-xs sm:text-sm text-gray-600 sm:text-right whitespace-nowrap">
               <span>
-                {metadata.createdAt ? formatDate(new Date(metadata.createdAt)) : ""}
+                {expiryCountdown ?? (metadata.createdAt ? formatDate(new Date(metadata.createdAt)) : "")}
               </span>
               <span className="mx-2 text-gray-400">|</span>
               <span>

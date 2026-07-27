@@ -92,18 +92,6 @@ export interface UploadMetadata {
   gallery?: boolean; // Optional: mark as gallery photo upload (not a real download)
 }
 
-export interface MonthlyStats {
-  month: string; // Format: "2025-12"
-  operations: {
-    listFiles: number;
-    getFile: number;
-    putFile: number;
-    deleteFile: number;
-  };
-  bandwidth: number; // bytes downloaded
-  storage: number; // average bytes stored
-}
-
 export async function uploadFile(
   file: Buffer,
   key: string,
@@ -377,6 +365,18 @@ export async function releaseZipLock(slug: string): Promise<void> {
   }
 }
 
+export async function isZipGenerationInProgress(slug: string): Promise<boolean> {
+  try {
+    const head = await r2Client.send(
+      new HeadObjectCommand({ Bucket: R2_BUCKET_NAME, Key: `zips/${slug}.generating` })
+    );
+    const age = Date.now() - (head.LastModified?.getTime() ?? 0);
+    return age < 10 * 60 * 1000;
+  } catch {
+    return false;
+  }
+}
+
 export async function createZipFile(slug: string): Promise<void> {
   const metadata = await getMetadata(slug);
   if (!metadata) {
@@ -426,10 +426,19 @@ export async function updateDownloadCount(
   ip?: string,
   userAgent?: string
 ): Promise<void> {
+  // Voorkeursroute: atomaire teller + historie in Vercel KV. De oude
+  // read-modify-write op het metadata-JSON verloor tellingen bij
+  // gelijktijdige downloads en liet het bestand onbeperkt groeien.
+  const { recordDownload } = await import("@/lib/downloadStats");
+  if (await recordDownload(slug, type, files, ip, userAgent)) {
+    return;
+  }
+
+  // Fallback zonder KV: het oude gedrag, maar met een historie-plafond.
   const metadata = await getMetadata(slug);
   if (metadata) {
     metadata.downloads = (metadata.downloads || 0) + 1;
-    
+
     // Add to download history
     if (!metadata.downloadHistory) {
       metadata.downloadHistory = [];
@@ -441,6 +450,9 @@ export async function updateDownloadCount(
       ...(ip && { ip }),
       ...(userAgent && { userAgent }),
     });
+    if (metadata.downloadHistory.length > 200) {
+      metadata.downloadHistory = metadata.downloadHistory.slice(-200);
+    }
     await saveMetadata(metadata);
   }
 }
@@ -552,6 +564,14 @@ export async function deleteUpload(slug: string): Promise<void> {
     }
   }
 
+  // KV-tellingen/historie opruimen (best-effort)
+  try {
+    const { deleteDownloadStats } = await import("@/lib/downloadStats");
+    await deleteDownloadStats(slug);
+  } catch {
+    // best-effort
+  }
+
   // Best-effort: remove any remaining objects under uploads/<slug>/
   try {
     await deleteFolder(`uploads/${slug}/`);
@@ -625,84 +645,4 @@ export async function findOrphanedUploads(): Promise<string[]> {
   }
 
   return orphaned;
-}
-
-// Monthly stats tracking
-export async function getMonthlyStats(): Promise<MonthlyStats> {
-  const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  
-  try {
-    const key = `stats/${currentMonth}.json`;
-    const buffer = await getFile(key);
-    return JSON.parse(buffer.toString('utf-8'));
-  } catch (error) {
-    // Return default stats if not found
-    return {
-      month: currentMonth,
-      operations: {
-        listFiles: 0,
-        getFile: 0,
-        putFile: 0,
-        deleteFile: 0,
-      },
-      bandwidth: 0,
-      storage: 0,
-    };
-  }
-}
-
-export async function saveMonthlyStats(stats: MonthlyStats): Promise<void> {
-  const key = `stats/${stats.month}.json`;
-  await uploadFile(
-    Buffer.from(JSON.stringify(stats, null, 2)),
-    key,
-    'application/json'
-  );
-}
-
-export async function trackOperation(operation: keyof MonthlyStats['operations'], count: number = 1): Promise<void> {
-  const stats = await getMonthlyStats();
-  stats.operations[operation] += count;
-  await saveMonthlyStats(stats);
-}
-
-export async function trackBandwidth(bytes: number): Promise<void> {
-  const stats = await getMonthlyStats();
-  stats.bandwidth += bytes;
-  await saveMonthlyStats(stats);
-}
-
-export async function calculateMonthlyCost(): Promise<{
-  storage: number;
-  operations: number;
-  bandwidth: number;
-  total: number;
-}> {
-  const stats = await getMonthlyStats();
-  const uploads = await listAllUploads();
-  
-  // Calculate current storage
-  const totalStorage = uploads.reduce((acc, u) => 
-    acc + u.files.reduce((sum, f) => sum + f.size, 0), 0
-  );
-  
-  // R2 Pricing (per maand)
-  const storageGB = totalStorage / (1024 * 1024 * 1024);
-  const storageCost = storageGB * 0.015; // $0.015 per GB/month
-  
-  // Operations cost
-  const classAOps = stats.operations.listFiles + stats.operations.putFile + stats.operations.deleteFile;
-  const classBOps = stats.operations.getFile;
-  const operationsCost = (classAOps / 1000000) * 4.50 + (classBOps / 1000000) * 0.36;
-  
-  // Bandwidth cost (egress is free for first 10TB/month with R2!)
-  const bandwidthCost = 0;
-  
-  return {
-    storage: storageGB,
-    operations: operationsCost,
-    bandwidth: bandwidthCost,
-    total: storageCost + operationsCost + bandwidthCost,
-  };
 }

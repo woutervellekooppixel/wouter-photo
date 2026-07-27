@@ -67,7 +67,6 @@ export default function AdminDashboard() {
   const [selectedUploads, setSelectedUploads] = useState<Set<string>>(new Set());
   const [recomputingExifSlug, setRecomputingExifSlug] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [monthlyCost, setMonthlyCost] = useState<any>(null);
     const [uploadsError, setUploadsError] = useState<string | null>(null);
   const [expandedUpload, setExpandedUpload] = useState<string | null>(null);
     const [manageFilesSlug, setManageFilesSlug] = useState<string | null>(null);
@@ -159,7 +158,6 @@ export default function AdminDashboard() {
   useEffect(() => {
     loadUploads();
     checkOrphanedUploads();
-    loadMonthlyCost();
   }, []);
 
   // Tijdens een upload: waarschuw bij wegklikken (upload zou afbreken) en
@@ -229,18 +227,6 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error("Failed to check orphaned uploads:", error);
-    }
-  };
-
-  const loadMonthlyCost = async () => {
-    try {
-      const res = await fetch("/api/admin/costs");
-      if (res.ok) {
-        const data = await res.json();
-        setMonthlyCost(data);
-      }
-    } catch (error) {
-      console.error("Failed to load monthly costs:", error);
     }
   };
 
@@ -771,27 +757,66 @@ export default function AdminDashboard() {
     }).catch((err) => console.error('ZIP generation failed:', err));
   };
 
-  // Toon de ZIP-status van een transfer (klaar / ontbreekt per map)
-  const checkZipStatus = async (uploadSlug: string) => {
+  // Live ZIP-status per transfer: 🟢 klaar, 🟡 bezig, 🔴 ontbreekt (deels).
+  // Automatisch ververst zolang er iets niet klaar is.
+  type ZipState = { state: 'ready' | 'generating' | 'missing' | 'checking'; missing: string[] };
+  const [zipStatuses, setZipStatuses] = useState<Record<string, ZipState>>({});
+  const zipStatusesRef = useRef<Record<string, ZipState>>({});
+  useEffect(() => {
+    zipStatusesRef.current = zipStatuses;
+  }, [zipStatuses]);
+
+  const refreshZipStatus = async (uploadSlug: string): Promise<ZipState> => {
     try {
       const res = await fetch(`/api/admin/uploads/${encodeURIComponent(uploadSlug)}/zips`);
-      if (!res.ok) throw new Error('Status ophalen mislukt');
+      if (!res.ok) throw new Error('status failed');
       const data = await res.json();
-      const entries = Object.entries<boolean>(data.status || {});
-      const ready = entries.filter(([, ok]) => ok).map(([k]) => (k === '_all' ? 'Alles' : k));
+      const entries = Object.entries(data.status || {}) as [string, boolean][];
       const missing = entries.filter(([, ok]) => !ok).map(([k]) => (k === '_all' ? 'Alles' : k));
-      toast({
-        title: `ZIP-status: ${uploadSlug}`,
-        description: `Klaar: ${ready.length ? ready.join(', ') : 'geen'}${missing.length ? ` — Ontbreekt: ${missing.join(', ')} (klik "ZIPs klaarzetten")` : ''}`,
-      });
-    } catch (err) {
-      toast({
-        title: 'Fout',
-        description: 'Kon ZIP-status niet ophalen',
-        variant: 'destructive',
-      });
+      const state: ZipState = data.generating
+        ? { state: 'generating', missing }
+        : { state: missing.length === 0 ? 'ready' : 'missing', missing };
+      setZipStatuses((prev) => ({ ...prev, [uploadSlug]: state }));
+      return state;
+    } catch {
+      const state: ZipState = { state: 'checking', missing: [] };
+      return state;
     }
   };
+
+  // Na het laden van de lijst: status ophalen (max 4 tegelijk), en daarna
+  // elke 20s verversen zolang er transfers zijn die nog niet 'ready' zijn.
+  useEffect(() => {
+    if (uploads.length === 0) return;
+    let cancelled = false;
+
+    const sweep = async () => {
+      const slugs = uploads.map((u) => u.slug);
+      let next = 0;
+      const worker = async () => {
+        while (!cancelled) {
+          const i = next++;
+          if (i >= slugs.length) return;
+          const prev = zipStatusesRef.current[slugs[i]];
+          // Alleen (her)checken wat niet al groen is
+          if (prev?.state === 'ready') continue;
+          await refreshZipStatus(slugs[i]);
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(4, slugs.length) }, () => worker()));
+    };
+
+    sweep();
+    const t = window.setInterval(() => {
+      const anyPending = uploads.some((u) => zipStatusesRef.current[u.slug]?.state !== 'ready');
+      if (anyPending) sweep();
+    }, 20000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(t);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uploads]);
 
   // Designlevering-vlag (standaard-hero) aan/uit zetten op een bestaande transfer
   const toggleDefaultHero = async (uploadSlug: string, next: boolean) => {
@@ -1695,23 +1720,38 @@ export default function AdminDashboard() {
                               {expandedUpload === upload.slug ? 'Verberg details' : 'Bekijk details'}
                             </button>
                           )}
-                          <button
-                            onClick={() => checkZipStatus(upload.slug)}
-                            className="text-blue-600 hover:text-blue-800 underline"
-                            title="Controleer of de kant-en-klare ZIPs in R2 staan"
-                          >
-                            ZIP-status
-                          </button>
-                          <button
-                            onClick={() => {
-                              generateZipsInBackground(upload.slug);
-                              toast({ title: 'ZIPs worden klaargezet', description: `Voor ${upload.slug} — check zo de ZIP-status.` });
-                            }}
-                            className="text-blue-600 hover:text-blue-800 underline"
-                            title="(Her)genereer de kant-en-klare ZIPs in R2"
-                          >
-                            ZIPs klaarzetten
-                          </button>
+                          {(() => {
+                            const zs = zipStatuses[upload.slug];
+                            const label = !zs || zs.state === 'checking'
+                              ? '⚪ ZIP…'
+                              : zs.state === 'ready'
+                              ? '🟢 ZIPs klaar'
+                              : zs.state === 'generating'
+                              ? '🟡 ZIPs bezig…'
+                              : `🔴 ZIP mist: ${zs.missing.slice(0, 2).join(', ')}${zs.missing.length > 2 ? '…' : ''}`;
+                            return (
+                              <span
+                                title={zs && zs.missing.length > 0 ? `Ontbreekt: ${zs.missing.join(', ')}` : 'Alle kant-en-klare ZIPs staan in R2'}
+                              >
+                                {label}
+                              </span>
+                            );
+                          })()}
+                          {zipStatuses[upload.slug]?.state === 'missing' && (
+                            <button
+                              onClick={() => {
+                                generateZipsInBackground(upload.slug);
+                                setZipStatuses((prev) => ({
+                                  ...prev,
+                                  [upload.slug]: { state: 'generating', missing: prev[upload.slug]?.missing || [] },
+                                }));
+                              }}
+                              className="text-blue-600 hover:text-blue-800 underline"
+                              title="(Her)genereer de kant-en-klare ZIPs in R2"
+                            >
+                              ZIPs klaarzetten
+                            </button>
+                          )}
                           <button
                             onClick={() => toggleDefaultHero(upload.slug, !upload.useDefaultHero)}
                             className="text-blue-600 hover:text-blue-800 underline"
@@ -2348,54 +2388,6 @@ export default function AdminDashboard() {
                   })()}
                 </div>
               </div>
-
-              {/* Monthly Costs */}
-              {monthlyCost && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">
-                    💰 Maandelijkse Kosten ({monthlyCost.month})
-                  </h3>
-                  <div className="grid gap-4 md:grid-cols-4">
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="text-2xl font-bold text-gray-900">
-                          ${monthlyCost.total.toFixed(4)}
-                        </div>
-                        <p className="text-xs text-gray-500">Totaal deze maand</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="text-lg font-semibold text-gray-800">
-                          {monthlyCost.storage.toFixed(2)} GB
-                        </div>
-                        <p className="text-xs text-gray-500">Storage</p>
-                        <p className="text-xs text-gray-400">${(monthlyCost.storage * 0.015).toFixed(4)}</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="text-lg font-semibold text-gray-800">
-                          {(monthlyCost.operations.listFiles + monthlyCost.operations.putFile + monthlyCost.operations.deleteFile).toLocaleString()}
-                        </div>
-                        <p className="text-xs text-gray-500">Class A Operations</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="text-lg font-semibold text-gray-800">
-                          {formatBytes(monthlyCost.bandwidth)}
-                        </div>
-                        <p className="text-xs text-gray-500">Bandwidth</p>
-                        <p className="text-xs text-green-600">gratis!</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-3">
-                    💡 Kosten resetten automatisch elke maand
-                  </p>
-                </div>
-              )}
 
               {/* Per Upload Stats */}
               <div>
