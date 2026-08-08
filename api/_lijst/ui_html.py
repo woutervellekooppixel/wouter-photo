@@ -77,12 +77,12 @@ UI = r"""<!doctype html>
 
   <section id="s-wachten" class="kaart verborgen">
     <div class="spinner"></div>
-    <div class="status">Renderen voor e-ink… (±20 sec)</div>
+    <div class="status">Renderen voor e-ink… (±10 sec)</div>
   </section>
 
   <section id="s-kies" class="kaart verborgen">
     <div class="previews" id="previews"></div>
-    <div class="status">Tik de versie die je het mooist vindt</div>
+    <div class="status">Zo komt hij op de lijst</div>
     <button id="b-plaats" disabled>Zet direct op de lijst</button>
     <button id="b-roulatie" disabled class="stil">Voeg toe aan de dagroulatie</button>
     <button class="stil" id="b-opnieuw-2">Andere foto</button>
@@ -193,6 +193,7 @@ $("b-kies-foto").onclick = () => $("file").click();
 $("file").onchange = async () => {
   const f = $("file").files[0];
   if (!f) return;
+  fotoId = null;  // nieuw bestand = oude upload vergeten (bugfix dubbele previews)
   // client-side verkleinen: max 2400px, JPEG 0.9 — snelle upload, onder serverlimiet
   const bmp = await createImageBitmap(f);
   const schaal = Math.min(1, 2400 / Math.max(bmp.width, bmp.height));
@@ -230,19 +231,12 @@ $("b-render").onclick = async () => {
     fd2.append("id", fotoId);
     fd2.append("crop_pos", $("crop-slider").value / 100);
     await api("/lijst/api/render", { method:"POST", body:fd2 });
-    const namen = { A: "Neutraal", B: "Punch", C: "Zacht" };
     $("previews").innerHTML = "";
-    for (const v of ["A","B","C"]) {
-      const fig = document.createElement("figure");
-      fig.innerHTML = `<img src="/lijst/api/preview/${fotoId}/${v}?t=${Date.now()}"><figcaption>${namen[v]}</figcaption>`;
-      fig.onclick = () => {
-        document.querySelectorAll(".previews figure").forEach(f => f.classList.remove("gekozen"));
-        fig.classList.add("gekozen");
-        gekozenVariant = v;
-        $("b-plaats").disabled = false; $("b-roulatie").disabled = false;
-      };
-      $("previews").appendChild(fig);
-    }
+    const fig = document.createElement("figure");
+    fig.innerHTML = `<img src="/lijst/api/preview/${fotoId}/C?t=${Date.now()}">`;
+    $("previews").appendChild(fig);
+    gekozenVariant = "C";
+    $("b-plaats").disabled = false; $("b-roulatie").disabled = false;
     toon("s-kies");
   } catch (e) {
     alert("Renderen mislukt: " + e.message);

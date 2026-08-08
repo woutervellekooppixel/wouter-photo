@@ -122,12 +122,14 @@ def render(request: Request, id: str = Form(...), crop_pos: float = Form(0.5)):
     if data is None:
         raise HTTPException(status_code=404, detail="foto onbekend")
     im = Image.open(io.BytesIO(data))
-    for variant, (panel, preview) in render_core.render_alle_varianten(im, crop_pos).items():
-        for naam, img in (("panel", panel), ("preview", preview)):
-            buf = io.BytesIO()
-            img.save(buf, format="PNG")
-            opslag.put(f"render/{id}_{variant}_{naam}.png", buf.getvalue(), "image/png")
-    return {"ok": True, "varianten": list(render_core.VARIANTEN)}
+    # Sinds 9 aug: altijd variant C ("zacht") — Wouters keuze, previews-keuze
+    # is uit de flow. Scheelt ook 2/3 rendertijd.
+    panel, preview = render_core.render_variant(im, "C", crop_pos)
+    for naam, img in (("panel", panel), ("preview", preview)):
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        opslag.put(f"render/{id}_C_{naam}.png", buf.getvalue(), "image/png")
+    return {"ok": True, "varianten": ["C"]}
 
 @app.get("/api/preview/{id}/{variant}")
 def preview(request: Request, id: str, variant: str):
