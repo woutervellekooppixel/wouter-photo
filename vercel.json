@@ -9,5 +9,21 @@
       "path": "/api/cron/cleanup",
       "schedule": "15 3 * * *"
     }
-  ]
+  ],
+  "rewrites": [
+    {
+      "source": "/lijst",
+      "destination": "/api/lijst"
+    },
+    {
+      "source": "/lijst/:pad*",
+      "destination": "/api/lijst"
+    }
+  ],
+  "functions": {
+    "api/lijst.py": {
+      "maxDuration": 60,
+      "memory": 1769
+    }
+  }
 }
