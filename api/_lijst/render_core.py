@@ -47,7 +47,8 @@ BREED, HOOG = 1600, 1200
 VARIANTEN = {
     "A": (1.05, 1.10, 80, 0.82),   # neutraal + lift
     "B": (1.15, 1.35, 130, 0.78),  # punch + stevige lift
-    "C": (0.95, 1.00, 60, 0.90),   # zacht, milde lift
+    "C": (0.95, 1.00, 60, 0.90),   # zacht, milde lift (standaard kleur)
+    "Z": (1.10, 1.00, 100, 0.85),  # zwart-wit: alleen zwart/wit-dither
 }
 
 # --- Oklab ---------------------------------------------------------------
@@ -74,15 +75,16 @@ GRID_N = 56
 L_LO, L_HI = -0.05, 1.05
 AB_LO, AB_HI = -0.45, 0.45
 
-def bouw_grid():
+def bouw_grid(pal_lab):
     ls = np.linspace(L_LO, L_HI, GRID_N)
     ab = np.linspace(AB_LO, AB_HI, GRID_N)
     gl, ga, gb = np.meshgrid(ls, ab, ab, indexing="ij")
     pts = np.stack([gl, ga, gb], axis=-1).reshape(-1, 3)
-    d = ((pts[:, None, :] - PAL_LAB[None, :, :]) ** 2).sum(axis=2)
+    d = ((pts[:, None, :] - pal_lab[None, :, :]) ** 2).sum(axis=2)
     return d.argmin(axis=1).astype(np.uint8).reshape(GRID_N, GRID_N, GRID_N)
 
-GRID = bouw_grid()
+GRID = bouw_grid(PAL_LAB)          # alle zes kleuren
+GRID_ZW = bouw_grid(PAL_LAB[:2])   # alleen zwart + wit (zwart-witstijl)
 
 # --- Crop & pre-processing ----------------------------------------------
 def crop_4op3(im, pos=0.5):
@@ -123,12 +125,12 @@ def naar_paneelbereik(lab):
     return lab
 
 # --- Floyd-Steinberg, serpentine, in Oklab -------------------------------
-def dither(lab):
+def dither(lab, pal_lab=None, grid=None):
     """lab: (H,W,3) Oklab -> (H,W) paletindices."""
     H, W = lab.shape[:2]
     uit = np.zeros((H, W), dtype=np.uint8)
-    pal = PAL_LAB.tolist()
-    grid = GRID
+    pal = (PAL_LAB if pal_lab is None else pal_lab).tolist()
+    grid = GRID if grid is None else grid
     sl = (GRID_N - 1) / (L_HI - L_LO)
     sab = (GRID_N - 1) / (AB_HI - AB_LO)
     KLEM = 0.30  # rem op doorgegeven fout, voorkomt wormen in vlakke delen
@@ -182,11 +184,14 @@ def render_variant(im, variant, crop_pos=0.5):
     from PIL import ImageOps
     im = ImageOps.exif_transpose(im).convert("RGB")
     im = crop_4op3(im, crop_pos)
+    zw = (variant == "Z")
+    if zw:
+        im = ImageOps.grayscale(im).convert("RGB")
     contrast, verz, us, gamma = VARIANTEN[variant]
     bewerkt = preprocess(im, contrast, verz, us, gamma)
     lab = srgb_naar_oklab(np.asarray(bewerkt))
     lab = naar_paneelbereik(lab)
-    idx = dither(lab)
+    idx = dither(lab, PAL_LAB[:2] if zw else None, GRID_ZW if zw else None)
     panel = Image.fromarray(NOMINAAL[idx])
     preview = Image.fromarray(WAARGENOMEN.astype(np.uint8)[idx])
     return panel, preview

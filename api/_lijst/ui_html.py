@@ -3,241 +3,381 @@ UI = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101010">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Fotolijst</title>
 <style>
-  :root { color-scheme: dark; }
-  * { box-sizing: border-box; margin: 0; }
-  body { background:#111; color:#eee; font:16px/1.5 -apple-system, system-ui, sans-serif;
-         min-height:100dvh; display:flex; flex-direction:column; align-items:center;
-         padding:max(20px, env(safe-area-inset-top)) 20px 40px; }
-  main { width:100%; max-width:440px; display:flex; flex-direction:column; gap:20px; }
-  h1 { font-size:20px; font-weight:600; letter-spacing:.02em; }
-  h1 small { color:#888; font-weight:400; font-size:13px; display:block; }
-  .kaart { background:#1b1b1b; border-radius:14px; padding:18px; display:flex;
-           flex-direction:column; gap:14px; }
-  button, .knop { background:#eee; color:#111; border:0; border-radius:10px; padding:14px;
-           font-size:16px; font-weight:600; width:100%; cursor:pointer; text-align:center; }
-  button.stil { background:#2a2a2a; color:#ccc; }
-  button:disabled { opacity:.4; }
-  input[type=password], input[type=text] { background:#000; color:#eee; border:1px solid #333;
-           border-radius:10px; padding:14px; font-size:18px; width:100%; text-align:center;
-           letter-spacing:.3em; }
-  input[type=range] { width:100%; }
-  canvas { width:100%; border-radius:10px; background:#000; display:block; }
-  .previews { display:flex; flex-direction:column; gap:14px; }
-  .previews figure { position:relative; cursor:pointer; border-radius:12px; overflow:hidden;
-           border:3px solid transparent; }
-  .previews figure.gekozen { border-color:#eee; }
-  .previews img { width:100%; display:block; }
-  .previews figcaption { position:absolute; left:10px; top:8px; background:#000a; color:#fff;
-           padding:2px 10px; border-radius:99px; font-size:13px; }
-  .status { color:#888; font-size:14px; text-align:center; min-height:1.4em; }
-  .bieb-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0; }
-  .bieb-grid .tegel { position:relative; border-radius:8px; overflow:hidden; border:2px solid transparent; }
-  .bieb-grid .tegel.actief { border-color:#2e7d32; }
-  .bieb-grid img { width:100%; display:block; }
-  .bieb-grid .weg { position:absolute; top:4px; right:4px; background:rgba(0,0,0,.55);
-    color:#fff; border:none; border-radius:50%; width:28px; height:28px; font-size:15px; }
-  .bieb-grid .wie { position:absolute; left:0; right:0; bottom:0; background:rgba(0,0,0,.45);
-    color:#fff; font-size:11px; padding:2px 6px; }
-  .toggle { display:flex; gap:10px; align-items:center; justify-content:center; margin:6px 0 2px; }
-  .toggle input { width:20px; height:20px; }
-  .verborgen { display:none !important; }
-  .spinner { margin:0 auto; width:28px; height:28px; border:3px solid #333;
-           border-top-color:#eee; border-radius:50%; animation:d 1s linear infinite; }
-  @keyframes d { to { transform:rotate(360deg); } }
+  :root {
+    color-scheme: dark;
+    --bg: #101010; --kaart: #1a1a19; --rand: #2a2a28;
+    --tekst: #edeae3; --dim: #8f8c85; --accent: #edeae3;
+    --groen: #7fae7f;
+  }
+  * { box-sizing: border-box; margin: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { background: var(--bg); color: var(--tekst);
+         font: 16px/1.5 -apple-system, system-ui, sans-serif;
+         display: flex; flex-direction: column; align-items: center;
+         padding: max(16px, env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom)); }
+  main { width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 16px; }
+
+  header { display: flex; align-items: baseline; justify-content: space-between; padding: 2px 4px; }
+  header h1 { font-size: 17px; font-weight: 650; letter-spacing: .04em; }
+  header .sub { color: var(--dim); font-size: 12.5px; }
+
+  .kaart { background: var(--kaart); border: 1px solid var(--rand); border-radius: 18px;
+           padding: 16px; display: flex; flex-direction: column; gap: 13px; }
+
+  button { font: inherit; border: 0; cursor: pointer; }
+  .knop { background: var(--tekst); color: #141414; border-radius: 12px; padding: 15px;
+          font-size: 16px; font-weight: 650; width: 100%; text-align: center; }
+  .knop.stil { background: #262624; color: #cfccc5; }
+  .knop.gevaar { background: #3a2523; color: #e8b3ac; }
+  .knop:disabled { opacity: .35; }
+
+  .status { color: var(--dim); font-size: 13.5px; text-align: center; min-height: 1.3em; }
+
+  /* --- hero: wat er nu hangt --- */
+  .hero { position: relative; border-radius: 14px; overflow: hidden; background: #000;
+          aspect-ratio: 4/3; }
+  .hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .hero .leeg { position: absolute; inset: 0; display: flex; flex-direction: column;
+                align-items: center; justify-content: center; gap: 6px; color: var(--dim); }
+  .hero .strook { position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 14px 10px;
+                  background: linear-gradient(transparent, rgba(0,0,0,.72));
+                  display: flex; justify-content: space-between; align-items: flex-end;
+                  font-size: 13px; color: #eee; }
+  .hangt-label { font-size: 11px; letter-spacing: .14em; color: var(--dim);
+                 text-transform: uppercase; }
+
+  /* --- roulatie-strip --- */
+  .strip-kop { display: flex; justify-content: space-between; align-items: baseline; padding: 0 2px; }
+  .strip-kop h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase;
+                  color: var(--dim); font-weight: 600; }
+  .strip { display: flex; gap: 10px; overflow-x: auto; padding: 2px;
+           scroll-snap-type: x proximity; scrollbar-width: none; }
+  .strip::-webkit-scrollbar { display: none; }
+  .tegel { position: relative; flex: 0 0 128px; border-radius: 10px; overflow: hidden;
+           scroll-snap-align: start; background: #000; border: 2px solid transparent; padding: 0; }
+  .tegel.nu { border-color: var(--groen); }
+  .tegel img { width: 128px; height: 96px; object-fit: cover; display: block; }
+  .tegel .dag { position: absolute; top: 5px; left: 5px; background: rgba(0,0,0,.62);
+                color: #fff; font-size: 10.5px; padding: 1px 7px; border-radius: 99px; }
+  .tegel.nu .dag { background: var(--groen); color: #10240f; font-weight: 650; }
+  .tegel .wie { position: absolute; left: 0; right: 0; bottom: 0; padding: 8px 6px 3px;
+                background: linear-gradient(transparent, rgba(0,0,0,.7));
+                color: #ddd; font-size: 10.5px; text-align: left; }
+
+  /* --- crop --- */
+  .cropvlak { position: relative; border-radius: 12px; overflow: hidden; touch-action: none; }
+  .cropvlak canvas { width: 100%; display: block; background: #000; }
+  .crophint { position: absolute; inset: 0; display: flex; align-items: center;
+              justify-content: center; pointer-events: none; opacity: 0; transition: opacity .3s; }
+  .crophint.zichtbaar { opacity: 1; }
+  .crophint span { background: rgba(0,0,0,.6); color: #fff; padding: 8px 16px;
+                   border-radius: 99px; font-size: 14px; }
+
+  .stijlkeuze { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stijlkeuze button { border-radius: 11px; padding: 12px; font-size: 15px; font-weight: 600;
+                       background: #262624; color: #cfccc5; border: 2px solid transparent; }
+  .stijlkeuze button.aan { background: var(--tekst); color: #141414; }
+
+  .resultaat { border-radius: 12px; overflow: hidden; }
+  .resultaat img { width: 100%; display: block; }
+
+  input[type=password] { background: #000; color: var(--tekst); border: 1px solid var(--rand);
+        border-radius: 12px; padding: 15px; font-size: 20px; width: 100%; text-align: center;
+        letter-spacing: .4em; }
+  .verborgen { display: none !important; }
+  .spinner { margin: 14px auto; width: 30px; height: 30px; border: 3px solid #2c2c2a;
+             border-top-color: var(--tekst); border-radius: 50%; animation: d 1s linear infinite; }
+  @keyframes d { to { transform: rotate(360deg); } }
+
+  /* --- actiemenu (sheet) --- */
+  .sheet-achter { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex;
+                  align-items: flex-end; justify-content: center; z-index: 20; }
+  .sheet { background: #1d1d1b; border-radius: 18px 18px 0 0; padding: 18px 16px
+           calc(18px + env(safe-area-inset-bottom)); width: 100%; max-width: 460px;
+           display: flex; flex-direction: column; gap: 10px; }
+  .sheet .peek { display: flex; gap: 12px; align-items: center; margin-bottom: 4px; }
+  .sheet .peek img { width: 84px; height: 63px; object-fit: cover; border-radius: 8px; }
+  .sheet .peek div { font-size: 13.5px; color: var(--dim); }
 </style>
 </head>
 <body>
 <main>
-  <h1>Fotolijst <small id="huidig"></small></h1>
-  <div class="status" id="apparaat"></div>
+  <header>
+    <h1>FOTOLIJST</h1>
+    <div class="sub" id="apparaat"></div>
+  </header>
 
+  <!-- PIN -->
   <section id="s-pin" class="kaart verborgen">
-    <p>Toegangscode</p>
+    <div class="status">Toegangscode</div>
     <input type="password" id="pin" inputmode="numeric" autocomplete="off">
-    <button id="b-login">Binnen</button>
+    <button class="knop" id="b-login">Binnen</button>
     <div class="status" id="pin-status"></div>
   </section>
 
-  <section id="s-upload" class="kaart verborgen">
-    <input type="file" id="file" accept="image/*" class="verborgen">
-    <button id="b-kies-foto">📷 Kies een foto</button>
-    <div class="status">JPG vanaf je camerarol; hij wordt liggend 4:3</div>
-    <button class="stil" id="b-naar-bieb-1">Bibliotheek &amp; roulatie</button>
+  <!-- HOME -->
+  <section id="s-home" class="verborgen" style="display:flex; flex-direction:column; gap:16px">
+    <div>
+      <div class="hangt-label" style="padding:0 4px 6px">Hangt nu</div>
+      <div class="hero" id="hero">
+        <div class="leeg" id="hero-leeg"><span style="font-size:34px">🖼️</span>
+          <span>Nog geen foto — voeg de eerste toe</span></div>
+        <img id="hero-img" class="verborgen" alt="">
+        <div class="strook verborgen" id="hero-strook">
+          <span id="hero-info"></span><span id="hero-volgende"></span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="strip-kop">
+        <h2>Roulatie</h2>
+        <span id="strip-info" style="color:var(--dim); font-size:12px"></span>
+      </div>
+      <div class="strip" id="strip"></div>
+    </div>
+
+    <input type="file" id="file" accept="image/*" multiple class="verborgen">
+    <button class="knop" id="b-toevoegen">＋ Foto's toevoegen</button>
+    <div class="status">Elke nacht om 4 uur wisselt de lijst vanzelf</div>
   </section>
 
+  <!-- CROP + STIJL (per foto) -->
   <section id="s-crop" class="kaart verborgen">
-    <canvas id="crop-canvas" width="800" height="600"></canvas>
-    <input type="range" id="crop-slider" min="0" max="100" value="50">
-    <div class="status">Schuif om de uitsnede te kiezen</div>
-    <button id="b-render">Maak drie versies →</button>
-    <button class="stil" id="b-opnieuw-1">Andere foto</button>
+    <div class="status" id="crop-teller"></div>
+    <div class="cropvlak" id="cropvlak">
+      <canvas id="crop-canvas" width="880" height="660"></canvas>
+      <div class="crophint" id="crophint"><span>← sleep om uit te snijden →</span></div>
+    </div>
+    <div class="stijlkeuze">
+      <button id="st-kleur" class="aan">Kleur</button>
+      <button id="st-zw">Zwart-wit</button>
+    </div>
+    <button class="knop" id="b-render">Maak 'm klaar →</button>
+    <button class="knop stil" id="b-crop-skip">Deze overslaan</button>
   </section>
 
+  <!-- WACHTEN -->
   <section id="s-wachten" class="kaart verborgen">
     <div class="spinner"></div>
-    <div class="status">Renderen voor e-ink… (±10 sec)</div>
+    <div class="status" id="wacht-status">Renderen voor e-ink…</div>
   </section>
 
-  <section id="s-kies" class="kaart verborgen">
-    <div class="previews" id="previews"></div>
+  <!-- RESULTAAT -->
+  <section id="s-result" class="kaart verborgen">
+    <div class="resultaat"><img id="result-img" alt=""></div>
     <div class="status">Zo komt hij op de lijst</div>
-    <button id="b-plaats" disabled>Zet direct op de lijst</button>
-    <button id="b-roulatie" disabled class="stil">Voeg toe aan de dagroulatie</button>
-    <button class="stil" id="b-opnieuw-2">Andere foto</button>
-  </section>
-
-  <section id="s-klaar" class="kaart verborgen">
-    <p style="text-align:center; font-size:40px">🖼️</p>
-    <div class="status" id="klaar-status"></div>
-    <button class="stil" id="b-opnieuw-3">Nog een foto</button>
-    <button class="stil" id="b-naar-bieb-2">Bibliotheek</button>
-  </section>
-
-  <section id="s-bieb" class="kaart verborgen">
-    <label class="toggle">
-      <input type="checkbox" id="t-roulatie">
-      <span>Elke dag automatisch wisselen</span>
-    </label>
-    <div class="status" id="bieb-status"></div>
-    <div id="bieb-grid" class="bieb-grid"></div>
-    <button class="stil" id="b-terug">← Terug</button>
+    <button class="knop" id="b-in-roulatie">In de roulatie</button>
+    <button class="knop stil" id="b-nu-tonen">Nu meteen tonen</button>
   </section>
 </main>
 
+<div id="sheet-achter" class="sheet-achter verborgen">
+  <div class="sheet">
+    <div class="peek"><img id="sheet-img" alt=""><div id="sheet-info"></div></div>
+    <button class="knop" id="sheet-nu">Nu op de lijst</button>
+    <button class="knop gevaar" id="sheet-weg">Verwijderen</button>
+    <button class="knop stil" id="sheet-sluit">Sluiten</button>
+  </div>
+</div>
+
 <script>
 const $ = id => document.getElementById(id);
-const secties = ["s-pin","s-upload","s-crop","s-wachten","s-kies","s-klaar","s-bieb"];
+const API = location.pathname.startsWith("/lijst") ? "/lijst" : "";
+const secties = ["s-pin","s-home","s-crop","s-wachten","s-result"];
 function toon(id) { secties.forEach(s => $(s).classList.toggle("verborgen", s !== id)); }
 
-let origBlob = null, fotoId = null, gekozenVariant = null;
-let origImg = null;
+// PWA: manifest + icoon via JS zodat het pad overal klopt
+for (const [rel, href] of [["manifest", API+"/manifest.json"],
+                           ["apple-touch-icon", API+"/icon.png"]]) {
+  const l = document.createElement("link"); l.rel = rel; l.href = href;
+  document.head.appendChild(l);
+}
 
 async function api(pad, opties) {
-  const r = await fetch(pad, opties);
+  const r = await fetch(API + pad, opties);
   if (r.status === 401) { toon("s-pin"); throw new Error("login"); }
   if (!r.ok) throw new Error(await r.text());
   return r;
 }
+const dagLabel = i => i === 0 ? "nu" : i === 1 ? "vannacht" : `over ${i} nachten`;
 
-async function start() {
+// ---------- home ----------
+async function laadHome() {
   try {
-    const r = await api("/lijst/api/current");
-    const meta = await r.json();
-    if (meta.tijd) {
-      const d = new Date(meta.tijd * 1000);
-      $("huidig").textContent = `nu: versie ${meta.variant} · door ${meta.door} · ${d.toLocaleDateString("nl-NL")}`;
+    const [cur, bieb] = await Promise.all([
+      (await api("/api/current")).json(),
+      (await api("/api/bibliotheek")).json(),
+    ]);
+    toon("s-home");
+    // hero
+    if (cur.id) {
+      $("hero-img").src = `${API}/api/preview/${cur.id}/${cur.variant}`;
+      $("hero-img").classList.remove("verborgen");
+      $("hero-leeg").classList.add("verborgen");
+      $("hero-strook").classList.remove("verborgen");
+      $("hero-info").textContent = `door ${cur.door}`;
+      $("hero-volgende").textContent = cur.volgende ? `vannacht → ${cur.volgende.door}` : "";
+    } else {
+      $("hero-img").classList.add("verborgen");
+      $("hero-leeg").classList.remove("verborgen");
+      $("hero-strook").classList.add("verborgen");
     }
-    toon("s-upload");
-  } catch (e) { /* pin-scherm staat al */ return; }
-  laadStatus();
+    // strip
+    $("strip").innerHTML = "";
+    $("strip-info").textContent = bieb.items.length ? `${bieb.items.length} foto's` : "";
+    bieb.items.forEach((it, i) => {
+      const t = document.createElement("button");
+      t.className = "tegel" + (i === 0 ? " nu" : "");
+      t.innerHTML = `<img src="${API}/api/preview/${it.id}/${it.variant}" loading="lazy">
+        <span class="dag">${dagLabel(i)}</span><span class="wie">${it.door}</span>`;
+      t.onclick = () => openSheet(it);
+      $("strip").appendChild(t);
+    });
+    laadStatus();
+  } catch (e) { /* pin-scherm staat al */ }
 }
 
 async function laadStatus() {
   try {
-    const s = await (await api("/lijst/api/status")).json();
+    const s = await (await api("/api/status")).json();
     if (s.pct != null) {
-      const ikoon = s.pct > 60 ? "\u{1F50B}" : s.pct > 25 ? "\u{1FAAB}" : "\u{26A0}\u{FE0F}";
-      const d = s.tijd ? new Date(s.tijd*1000).toLocaleDateString("nl-NL") : "";
-      $("apparaat").textContent = `${ikoon} accu ${s.pct}% (${s.vbat} V) \u00B7 lijst laatst gezien ${d}`;
+      const ik = s.pct > 60 ? "\u{1F50B}" : s.pct > 25 ? "\u{1FAAB}" : "⚠️";
+      $("apparaat").textContent = `${ik} ${s.pct}%`;
     } else if (s.tijd) {
-      $("apparaat").textContent = `\u{1F50C} netstroom \u00B7 lijst laatst gezien ${new Date(s.tijd*1000).toLocaleDateString("nl-NL")}`;
+      const d = new Date(s.tijd * 1000);
+      $("apparaat").textContent = `gezien ${d.toLocaleDateString("nl-NL",{day:"numeric",month:"short"})}`;
     }
   } catch (e) {}
 }
 
-async function laadBieb() {
-  const b = await (await api("/lijst/api/bibliotheek")).json();
-  $("t-roulatie").checked = b.mode === "roulatie";
-  $("bieb-status").textContent = b.items.length
-    ? (b.mode === "roulatie" ? `${b.items.length} foto's \u00B7 elke nacht de volgende` : "vaste foto \u00B7 wisselen staat uit")
-    : "Nog geen foto's \u2014 upload je eerste";
-  $("bieb-grid").innerHTML = "";
-  for (const it of b.items.slice().reverse()) {
-    const t = document.createElement("div");
-    t.className = "tegel" + (it.id === b.actueel_id ? " actief" : "");
-    t.innerHTML = `<img src="/lijst/api/preview/${it.id}/${it.variant}" loading="lazy">
-      <div class="wie">${it.door} \u00B7 versie ${it.variant}</div>
-      <button class="weg" title="verwijderen">\u2715</button>`;
-    t.querySelector(".weg").onclick = async () => {
-      if (!confirm("Deze foto uit de lijst halen?")) return;
-      const fd = new FormData(); fd.append("actie","verwijder"); fd.append("id", it.id);
-      await api("/lijst/api/bibliotheek", {method:"POST", body:fd});
-      laadBieb();
-    };
-    $("bieb-grid").appendChild(t);
-  }
+// ---------- actiemenu ----------
+let sheetItem = null;
+function openSheet(it) {
+  sheetItem = it;
+  $("sheet-img").src = `${API}/api/preview/${it.id}/${it.variant}`;
+  $("sheet-info").textContent = `door ${it.door} · ${it.variant === "Z" ? "zwart-wit" : "kleur"}`;
+  $("sheet-achter").classList.remove("verborgen");
 }
-
-$("b-naar-bieb-1").onclick = () => { toon("s-bieb"); laadBieb(); };
-$("b-naar-bieb-2").onclick = () => { toon("s-bieb"); laadBieb(); };
-$("b-terug").onclick = () => toon("s-upload");
-$("t-roulatie").onchange = async () => {
-  const fd = new FormData(); fd.append("actie","mode");
-  fd.append("mode", $("t-roulatie").checked ? "roulatie" : "vast");
-  await api("/lijst/api/bibliotheek", {method:"POST", body:fd});
-  laadBieb();
+$("sheet-sluit").onclick = () => $("sheet-achter").classList.add("verborgen");
+$("sheet-achter").onclick = e => { if (e.target === $("sheet-achter")) $("sheet-sluit").onclick(); };
+$("sheet-nu").onclick = async () => {
+  const fd = new FormData(); fd.append("actie", "nu"); fd.append("id", sheetItem.id);
+  await api("/api/bibliotheek", { method: "POST", body: fd });
+  $("sheet-sluit").onclick(); laadHome();
+};
+$("sheet-weg").onclick = async () => {
+  if (!confirm("Deze foto uit de roulatie halen?")) return;
+  const fd = new FormData(); fd.append("actie", "verwijder"); fd.append("id", sheetItem.id);
+  await api("/api/bibliotheek", { method: "POST", body: fd });
+  $("sheet-sluit").onclick(); laadHome();
 };
 
+// ---------- login ----------
 $("b-login").onclick = async () => {
   const fd = new FormData(); fd.append("pin", $("pin").value);
   try {
-    await api("/lijst/api/login", { method:"POST", body:fd });
+    await api("/api/login", { method: "POST", body: fd });
     $("pin-status").textContent = "";
-    start();
+    laadHome();
   } catch (e) { $("pin-status").textContent = "Die is niet goed"; }
 };
+$("pin").addEventListener("keydown", e => { if (e.key === "Enter") $("b-login").onclick(); });
 
-$("b-kies-foto").onclick = () => $("file").click();
-$("file").onchange = async () => {
-  const f = $("file").files[0];
-  if (!f) return;
-  fotoId = null;  // nieuw bestand = oude upload vergeten (bugfix dubbele previews)
-  // client-side verkleinen: max 2400px, JPEG 0.9 — snelle upload, onder serverlimiet
+// ---------- foto's toevoegen (meerdere tegelijk) ----------
+let wachtrij = [], wachtIndex = 0;
+let origImg = null, cropPos = 0.5, stijl = "kleur", fotoId = null;
+
+$("b-toevoegen").onclick = () => $("file").click();
+$("file").onchange = () => {
+  wachtrij = Array.from($("file").files);
+  $("file").value = "";
+  if (wachtrij.length) { wachtIndex = 0; volgendeFoto(); }
+};
+
+async function volgendeFoto() {
+  if (wachtIndex >= wachtrij.length) { laadHome(); return; }
+  const f = wachtrij[wachtIndex];
+  fotoId = null; cropPos = 0.5; stijl = "kleur";
+  zetStijlKnoppen();
   const bmp = await createImageBitmap(f);
   const schaal = Math.min(1, 2400 / Math.max(bmp.width, bmp.height));
   const c = document.createElement("canvas");
   c.width = Math.round(bmp.width * schaal);
   c.height = Math.round(bmp.height * schaal);
   c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
-  origBlob = await new Promise(res => c.toBlob(res, "image/jpeg", 0.9));
   origImg = c;
+  $("crop-teller").textContent = wachtrij.length > 1
+    ? `Foto ${wachtIndex + 1} van ${wachtrij.length}` : "Uitsnede";
   tekenCrop();
+  const kanSchuiven = Math.abs(origImg.width / origImg.height - 4/3) > 0.01;
+  $("crophint").classList.toggle("zichtbaar", kanSchuiven);
+  setTimeout(() => $("crophint").classList.remove("zichtbaar"), 2200);
   toon("s-crop");
-};
+}
 
 function tekenCrop() {
-  const pos = $("crop-slider").value / 100;
   const ctx = $("crop-canvas").getContext("2d");
-  const W = 800, H = 600, doel = 4/3;
+  const W = 880, H = 660, doel = 4/3;
   const w = origImg.width, h = origImg.height;
   let sx = 0, sy = 0, sw = w, sh = h;
-  if (w / h > doel) { sw = h * doel; sx = (w - sw) * pos; }
-  else { sh = w / doel; sy = (h - sh) * pos; }
+  if (w / h > doel) { sw = h * doel; sx = (w - sw) * cropPos; }
+  else { sh = w / doel; sy = (h - sh) * cropPos; }
+  ctx.filter = stijl === "zw" ? "grayscale(1)" : "none";
   ctx.drawImage(origImg, sx, sy, sw, sh, 0, 0, W, H);
+  ctx.filter = "none";
 }
-$("crop-slider").oninput = tekenCrop;
 
+// uitsnede kiezen door op het beeld zelf te slepen
+let sleep0 = null;
+$("cropvlak").addEventListener("pointerdown", e => {
+  sleep0 = { x: e.clientX, y: e.clientY, pos: cropPos };
+  $("cropvlak").setPointerCapture(e.pointerId);
+});
+$("cropvlak").addEventListener("pointermove", e => {
+  if (!sleep0 || !origImg) return;
+  const r = $("cropvlak").getBoundingClientRect();
+  const liggend = origImg.width / origImg.height > 4/3;
+  const frac = liggend ? (e.clientX - sleep0.x) / r.width : (e.clientY - sleep0.y) / r.height;
+  cropPos = Math.min(1, Math.max(0, sleep0.pos - frac * 1.6));
+  tekenCrop();
+});
+["pointerup", "pointercancel"].forEach(ev =>
+  $("cropvlak").addEventListener(ev, () => { sleep0 = null; }));
+
+function zetStijlKnoppen() {
+  $("st-kleur").classList.toggle("aan", stijl === "kleur");
+  $("st-zw").classList.toggle("aan", stijl === "zw");
+}
+$("st-kleur").onclick = () => { stijl = "kleur"; zetStijlKnoppen(); tekenCrop(); };
+$("st-zw").onclick = () => { stijl = "zw"; zetStijlKnoppen(); tekenCrop(); };
+$("b-crop-skip").onclick = () => { wachtIndex++; volgendeFoto(); };
+
+// ---------- renderen ----------
+let resultVariant = "C";
 $("b-render").onclick = async () => {
+  $("wacht-status").textContent = wachtrij.length > 1
+    ? `Renderen — foto ${wachtIndex + 1} van ${wachtrij.length} (±15 sec)`
+    : "Renderen voor e-ink… (±15 sec)";
   toon("s-wachten");
   try {
     if (!fotoId) {
-      const fd = new FormData(); fd.append("foto", origBlob, "foto.jpg");
-      const r = await api("/lijst/api/upload", { method:"POST", body:fd });
-      fotoId = (await r.json()).id;
+      const blob = await new Promise(res => origImg.toBlob(res, "image/jpeg", 0.9));
+      const fd = new FormData(); fd.append("foto", blob, "foto.jpg");
+      fotoId = (await (await api("/api/upload", { method: "POST", body: fd })).json()).id;
     }
     const fd2 = new FormData();
     fd2.append("id", fotoId);
-    fd2.append("crop_pos", $("crop-slider").value / 100);
-    await api("/lijst/api/render", { method:"POST", body:fd2 });
-    $("previews").innerHTML = "";
-    const fig = document.createElement("figure");
-    fig.innerHTML = `<img src="/lijst/api/preview/${fotoId}/C?t=${Date.now()}">`;
-    $("previews").appendChild(fig);
-    gekozenVariant = "C";
-    $("b-plaats").disabled = false; $("b-roulatie").disabled = false;
-    toon("s-kies");
+    fd2.append("crop_pos", cropPos);
+    fd2.append("stijl", stijl);
+    resultVariant = (await (await api("/api/render", { method: "POST", body: fd2 })).json()).variant;
+    $("result-img").src = `${API}/api/preview/${fotoId}/${resultVariant}?t=${Date.now()}`;
+    toon("s-result");
   } catch (e) {
     alert("Renderen mislukt: " + e.message);
     toon("s-crop");
@@ -247,30 +387,21 @@ $("b-render").onclick = async () => {
 async function plaats(modus) {
   let naam = localStorage.getItem("eink_naam");
   if (!naam) {
-    naam = prompt("Wie ben jij? (voor het lijstje)") || "?";
+    naam = prompt("Wie ben jij? (voor bij de foto)") || "?";
     localStorage.setItem("eink_naam", naam);
   }
   const fd = new FormData();
-  fd.append("id", fotoId);
-  fd.append("variant", gekozenVariant);
-  fd.append("door", naam);
-  fd.append("modus", modus);
-  await api("/lijst/api/kies", { method:"POST", body:fd });
-  $("klaar-status").textContent = modus === "direct"
-    ? "Staat klaar — de lijst pakt hem bij de volgende verversing."
-    : "In de roulatie — hij komt vanzelf voorbij.";
-  toon("s-klaar");
+  fd.append("id", fotoId); fd.append("variant", resultVariant);
+  fd.append("door", naam); fd.append("modus", modus);
+  await api("/api/kies", { method: "POST", body: fd });
+  wachtIndex++;
+  volgendeFoto();
 }
-$("b-plaats").onclick = () => plaats("direct");
-$("b-roulatie").onclick = () => plaats("roulatie");
-
-function reset() { origBlob = null; fotoId = null; gekozenVariant = null; $("file").value = ""; $("b-plaats").disabled = true; $("b-roulatie").disabled = true; toon("s-upload"); start(); }
-$("b-opnieuw-1").onclick = reset;
-$("b-opnieuw-2").onclick = reset;
-$("b-opnieuw-3").onclick = reset;
+$("b-in-roulatie").onclick = () => plaats("roulatie");
+$("b-nu-tonen").onclick = () => plaats("nu");
 
 toon("s-pin");
-start();
+laadHome();
 </script>
 </body>
 </html>

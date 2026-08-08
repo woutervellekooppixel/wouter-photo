@@ -116,20 +116,20 @@ async def upload(request: Request, foto: UploadFile):
     return {"id": foto_id}
 
 @app.post("/api/render")
-def render(request: Request, id: str = Form(...), crop_pos: float = Form(0.5)):
+def render(request: Request, id: str = Form(...), crop_pos: float = Form(0.5),
+           stijl: str = Form("kleur")):
     check_auth(request)
     data = opslag.get(f"orig/{id}.jpg")
     if data is None:
         raise HTTPException(status_code=404, detail="foto onbekend")
     im = Image.open(io.BytesIO(data))
-    # Sinds 9 aug: altijd variant C ("zacht") — Wouters keuze, previews-keuze
-    # is uit de flow. Scheelt ook 2/3 rendertijd.
-    panel, preview = render_core.render_variant(im, "C", crop_pos)
+    variant = "Z" if stijl == "zw" else "C"   # Z = zwart-wit, C = zacht kleur
+    panel, preview = render_core.render_variant(im, variant, crop_pos)
     for naam, img in (("panel", panel), ("preview", preview)):
         buf = io.BytesIO()
         img.save(buf, format="PNG")
-        opslag.put(f"render/{id}_C_{naam}.png", buf.getvalue(), "image/png")
-    return {"ok": True, "varianten": ["C"]}
+        opslag.put(f"render/{id}_{variant}_{naam}.png", buf.getvalue(), "image/png")
+    return {"ok": True, "variant": variant}
 
 @app.get("/api/preview/{id}/{variant}")
 def preview(request: Request, id: str, variant: str):
@@ -139,79 +139,118 @@ def preview(request: Request, id: str, variant: str):
         raise HTTPException(status_code=404)
     return Response(data, media_type="image/png")
 
-# --- Bibliotheek & dagroulatie -------------------------------------------
-# lijst.json: {"mode": "vast"|"roulatie", "vast": {...}|None,
-#              "items": [{id, variant, door, tijd}], "pointer": 0,
-#              "laatste_dag": "2026-08-08"}
+# --- Roulatie (altijd aan: dagelijks wisselen is het beste voor het paneel) --
+# lijst.json: {"items": [{id, variant, door, tijd}], "pointer": 0,
+#              "laatste_dag": "2026-08-09"}  (mode-veld uit oudere versies wordt genegeerd)
 def _lijst_laad():
     d = opslag.get("lijst.json")
-    return json.loads(d) if d else {"mode": "vast", "vast": None, "items": [],
-                                    "pointer": 0, "laatste_dag": ""}
+    l = json.loads(d) if d else {}
+    return {"items": l.get("items", []), "pointer": l.get("pointer", 0),
+            "laatste_dag": l.get("laatste_dag", "")}
 
 def _lijst_bewaar(l):
     opslag.put("lijst.json", json.dumps(l).encode(), "application/json")
 
 def _actueel_item(l, advance=False):
-    """Bepaal wat er op de lijst hoort. advance=True alleen bij device-fetch:
-    dan schuift de roulatie één plek op zodra er een nieuwe dag is."""
-    if l["mode"] == "roulatie" and l["items"]:
+    """advance=True alleen bij device-fetch: nieuwe dag = volgende foto."""
+    if not l["items"]:
+        return None
+    if advance:
         vandaag = time.strftime("%Y-%m-%d")
-        if advance and l["laatste_dag"] != vandaag:
-            l["pointer"] = (l["pointer"] + 1) % len(l["items"])
+        if l["laatste_dag"] != vandaag:
+            if l["laatste_dag"]:   # niet doorschuiven bij de allereerste fetch
+                l["pointer"] = (l["pointer"] + 1) % len(l["items"])
             l["laatste_dag"] = vandaag
             _lijst_bewaar(l)
-        return l["items"][l["pointer"] % len(l["items"])]
-    return l["vast"]
+    return l["items"][l["pointer"] % len(l["items"])]
+
+def _speelvolgorde(l):
+    n = len(l["items"])
+    if not n:
+        return []
+    p = l["pointer"] % n
+    return l["items"][p:] + l["items"][:p]
 
 @app.post("/api/kies")
 def kies(request: Request, id: str = Form(...), variant: str = Form(...),
-         door: str = Form("?"), modus: str = Form("direct")):
+         door: str = Form("?"), modus: str = Form("roulatie")):
     check_auth(request)
     panel = opslag.get(f"render/{id}_{variant}_panel.png")
     if panel is None:
         raise HTTPException(status_code=404, detail="render onbekend")
     item = {"id": id, "variant": variant, "door": door, "tijd": int(time.time())}
     l = _lijst_laad()
+    huidig = _actueel_item(l)
     l["items"] = [i for i in l["items"] if i["id"] != id] + [item]
-    if modus == "direct":
-        l["mode"] = "vast"
-        l["vast"] = item
-    else:  # roulatie
-        l["mode"] = "roulatie"
+    if modus == "nu":
+        l["pointer"] = len(l["items"]) - 1
+        l["laatste_dag"] = time.strftime("%Y-%m-%d")
+    else:
+        # de foto die nu hangt moet blijven hangen, ook al verschoof de lijst
+        l["pointer"] = next((i for i, it in enumerate(l["items"])
+                             if huidig and it["id"] == huidig["id"]), 0)
     _lijst_bewaar(l)
-    return {"ok": True, "mode": l["mode"]}
+    return {"ok": True}
 
 @app.get("/api/bibliotheek")
 def bibliotheek(request: Request):
     check_auth(request)
     l = _lijst_laad()
     actueel = _actueel_item(l)
-    return {"mode": l["mode"], "items": l["items"],
+    return {"items": _speelvolgorde(l),
             "actueel_id": actueel["id"] if actueel else None}
 
 @app.post("/api/bibliotheek")
-def bibliotheek_actie(request: Request, actie: str = Form(...),
-                      id: str = Form(""), mode: str = Form("")):
+def bibliotheek_actie(request: Request, actie: str = Form(...), id: str = Form("")):
     check_auth(request)
     l = _lijst_laad()
-    if actie == "verwijder" and id:
-        l["items"] = [i for i in l["items"] if i["id"] != id]
-        if l["vast"] and l["vast"]["id"] == id:
-            l["vast"] = l["items"][-1] if l["items"] else None
-        l["pointer"] = l["pointer"] % max(1, len(l["items"]))
-    elif actie == "mode" and mode in ("vast", "roulatie"):
-        l["mode"] = mode
-        if mode == "vast" and not l["vast"] and l["items"]:
-            l["vast"] = l["items"][l["pointer"] % len(l["items"])]
+    idx = next((i for i, it in enumerate(l["items"]) if it["id"] == id), None)
+    if actie == "verwijder" and idx is not None:
+        del l["items"][idx]
+        if idx < l["pointer"] or l["pointer"] >= len(l["items"]):
+            l["pointer"] = max(0, l["pointer"] - 1) % max(1, len(l["items"]))
+    elif actie == "nu" and idx is not None:
+        l["pointer"] = idx
+        l["laatste_dag"] = time.strftime("%Y-%m-%d")
     _lijst_bewaar(l)
-    return {"ok": True, "mode": l["mode"], "items": l["items"]}
+    return {"ok": True}
 
 @app.get("/api/current")
 def current(request: Request):
     check_auth(request)
     l = _lijst_laad()
     item = _actueel_item(l)
-    return {**(item or {}), "mode": l["mode"], "aantal": len(l["items"])}
+    volgorde = _speelvolgorde(l)
+    return {**(item or {}), "aantal": len(l["items"]),
+            "volgende": volgorde[1] if len(volgorde) > 1 else None}
+
+# --- PWA: manifest + icoon -------------------------------------------------
+@app.get("/manifest.json")
+def manifest():
+    return JSONResponse({
+        "name": "Fotolijst", "short_name": "Fotolijst",
+        "start_url": "/lijst", "scope": "/lijst", "display": "standalone",
+        "background_color": "#101010", "theme_color": "#101010",
+        "icons": [{"src": "/lijst/icon.png", "sizes": "512x512", "type": "image/png"}],
+    })
+
+_ICOON_CACHE = None
+
+@app.get("/icon.png")
+def icoon():
+    global _ICOON_CACHE
+    if _ICOON_CACHE is None:
+        from PIL import ImageDraw
+        im = Image.new("RGB", (512, 512), (16, 16, 16))
+        d = ImageDraw.Draw(im)
+        d.rounded_rectangle((96, 128, 416, 384), radius=18, outline=(238, 235, 228), width=14)
+        kleuren = [(30,30,32),(215,213,205),(200,175,60),(150,55,50),(55,65,115),(75,110,75)]
+        for i, k in enumerate(kleuren):
+            x = 136 + i * 42
+            d.ellipse((x, 412, x + 26, 438), fill=k)
+        buf = io.BytesIO(); im.save(buf, format="PNG")
+        _ICOON_CACHE = buf.getvalue()
+    return Response(_ICOON_CACHE, media_type="image/png")
 
 # --- Accustatus -----------------------------------------------------------
 # LiPo-ontlaadcurve (open-klem, rustend): spanning -> procent, lineair
