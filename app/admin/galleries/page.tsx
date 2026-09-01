@@ -163,11 +163,11 @@ export default function AdminGalleries() {
           opacity: isDragging ? 0.5 : 1,
           zIndex: isDragging ? 10 : undefined
         }}
-        className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded shadow-sm px-2 py-1 border border-gray-200 dark:border-gray-700"
+        className="flex items-center gap-3 bg-white dark:bg-neutral-900 rounded shadow-sm px-2 py-1 border border-neutral-200 dark:border-neutral-700"
         {...attributes}
         {...listeners}
       >
-        <div className="h-20 min-w-0 flex-shrink-0 flex items-center justify-center overflow-hidden rounded bg-gray-100 dark:bg-gray-800">
+        <div className="h-20 min-w-0 flex-shrink-0 flex items-center justify-center overflow-hidden rounded bg-neutral-100 dark:bg-neutral-800">
           <Image
             src={photo.src}
             alt={photo.alt}
@@ -180,8 +180,8 @@ export default function AdminGalleries() {
         <span className="flex-1 truncate text-xs">{photo.alt}</span>
         <div className="flex flex-col gap-1">
           {/* Chevron up/down als visuele drag handle, optioneel interactief */}
-          <ChevronUp className="w-4 h-4 text-gray-400" aria-label="Sleep omhoog" />
-          <ChevronDown className="w-4 h-4 text-gray-400" aria-label="Sleep omlaag" />
+          <ChevronUp className="w-4 h-4 text-neutral-400" aria-label="Sleep omhoog" />
+          <ChevronDown className="w-4 h-4 text-neutral-400" aria-label="Sleep omlaag" />
           <Button size="icon" variant="destructive" onClick={() => deletePhoto(cat, idx)} title="Verwijder foto">
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -226,9 +226,9 @@ export default function AdminGalleries() {
     <div className="p-4">
       <AdminTabs />
       <h1 className="text-2xl font-bold mb-6">Galleries beheer</h1>
-      {deleteError && <div className="mb-4 text-red-600 text-sm font-semibold">{deleteError}</div>}
-      {uploadError && <div className="mb-4 text-red-600 text-sm font-semibold">{uploadError}</div>}
-      {uploadSuccess && <div className="mb-4 text-green-600 text-sm font-semibold">{uploadSuccess}</div>}
+      {deleteError && <div className="mb-4 text-red-600 dark:text-red-400 text-sm font-semibold">{deleteError}</div>}
+      {uploadError && <div className="mb-4 text-red-600 dark:text-red-400 text-sm font-semibold">{uploadError}</div>}
+      {uploadSuccess && <div className="mb-4 text-green-600 dark:text-green-400 text-sm font-semibold">{uploadSuccess}</div>}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Drag & drop voor alle categorieën met dnd-kit */}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -238,7 +238,7 @@ export default function AdminGalleries() {
                 <CardTitle>{cat.charAt(0).toUpperCase() + cat.slice(1)}</CardTitle>
                 {/* Dropzone bovenaan */}
                 <div
-                  className="my-2 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800/50 text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  className="my-2 p-4 border-2 border-dashed border-neutral-300 dark:border-neutral-600 rounded bg-neutral-50 dark:bg-neutral-800/50 text-center cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800 transition"
                   onClick={() => fileInputRefs.current[cat]?.click()}
                   onDragOver={e => { e.preventDefault(); e.stopPropagation(); }}
                   onDrop={e => {
@@ -257,8 +257,8 @@ export default function AdminGalleries() {
                     }
                   }}
                 >
-                  <Upload className="mx-auto mb-1 w-6 h-6 text-gray-400" />
-                  <div className="text-xs text-gray-600 dark:text-gray-300">Sleep een foto hierheen of klik om te uploaden</div>
+                  <Upload className="mx-auto mb-1 w-6 h-6 text-neutral-400" />
+                  <div className="text-xs text-neutral-600 dark:text-neutral-300">Sleep een foto hierheen of klik om te uploaden</div>
                   <input
                     ref={el => { fileInputRefs.current[cat] = el; }}
                     type="file"
@@ -267,13 +267,13 @@ export default function AdminGalleries() {
                     onChange={e => handleFileChange(e, cat)}
                     disabled={!!uploadingCat}
                   />
-                  {uploadingCat === cat && <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">Bezig met uploaden...</span>}
+                  {uploadingCat === cat && <span className="text-xs text-neutral-500 dark:text-neutral-400 ml-2">Bezig met uploaden...</span>}
                 </div>
               </CardHeader>
               <CardContent>
                 <SortableContext items={photos[cat].map(p => p.id)} strategy={verticalListSortingStrategy}>
                   <div className="flex flex-col gap-4 min-h-[60px]">
-                    {photos[cat].length === 0 && <div className="text-gray-400">Geen foto's</div>}
+                    {photos[cat].length === 0 && <div className="text-neutral-400">Geen foto's</div>}
                     {photos[cat].map((photo, idx) => (
                       <SortablePhoto key={photo.id} photo={photo} idx={idx} cat={cat} />
                     ))}

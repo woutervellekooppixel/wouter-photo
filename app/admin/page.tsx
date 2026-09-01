@@ -30,11 +30,11 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 flex items-center justify-center p-4">
+    <main className="min-h-screen bg-white dark:bg-black flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <Camera className="h-12 w-12 text-gray-700 dark:text-gray-300" />
+            <Camera className="h-12 w-12 text-neutral-700 dark:text-neutral-300" />
           </div>
           <CardTitle>Admin Login</CardTitle>
           <CardDescription>Wouter.Download</CardDescription>

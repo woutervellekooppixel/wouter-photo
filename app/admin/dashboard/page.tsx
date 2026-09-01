@@ -1288,12 +1288,12 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-white dark:bg-black">
       <div className="container mx-auto p-6 max-w-6xl">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-gray-600">Upload en beheer je foto downloads</p>
+            <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">Admin Dashboard</h1>
+            <p className="text-neutral-600 dark:text-neutral-300">Upload en beheer je foto downloads</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setShowStatisticsDialog(true)}>
@@ -1315,16 +1315,15 @@ export default function AdminDashboard() {
 
         {/* Compact Summary */}
         {uploads.length > 0 && (
-          <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200">
+          <div className="mb-6 p-4 bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-700">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">
+              <span className="text-neutral-600 dark:text-neutral-300">
                 {uploads.length} uploads • {uploads.reduce((acc, u) => acc + u.files.length, 0)} bestanden • {uploads.reduce((acc, u) => acc + u.downloads, 0)} downloads
               </span>
               <Button 
                 variant="link" 
                 size="sm"
                 onClick={() => setShowStatisticsDialog(true)}
-                className="text-blue-600"
               >
                 Zie alle statistieken →
               </Button>
@@ -1388,7 +1387,7 @@ export default function AdminDashboard() {
                   }}
                 />
                 {slug && (
-                  <p className="text-xs text-blue-600 mt-1">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
                     → download.wouter.photo/{slug}
                   </p>
                 )}
@@ -1409,7 +1408,7 @@ export default function AdminDashboard() {
                   }}
                   className="w-28"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
                   Daarna wordt de transfer automatisch opgeruimd (later te verlengen).
                 </p>
               </div>
@@ -1419,11 +1418,11 @@ export default function AdminDashboard() {
                   type="checkbox"
                   checked={useDefaultHero}
                   onChange={(e) => setUseDefaultHero(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded border-gray-300 cursor-pointer"
+                  className="mt-0.5 w-4 h-4 rounded border-neutral-300 dark:border-neutral-600 accent-black dark:accent-white cursor-pointer"
                 />
                 <span>
                   <span className="text-sm font-medium block">Fotofunctie uit</span>
-                  <span className="text-xs text-gray-500 block">
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400 block">
                     Voor design-opleveringen: altijd de standaard-hero, en
                     afbeeldingen (logo&apos;s, PNG&apos;s) verschijnen als gewone
                     bestanden in de lijst — niet als fotogalerij.
@@ -1432,7 +1431,7 @@ export default function AdminDashboard() {
               </label>
 
               <div
-                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer select-none ${isDropzoneDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-white"}`}
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer select-none ${isDropzoneDragActive ? "border-black bg-neutral-100 dark:bg-neutral-800 dark:border-white" : "border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-900"}`}
                 onDragEnter={handleDropzoneDragEnter}
                 onDragLeave={handleDropzoneDragLeave}
                 onDragOver={handleDropzoneDragOver}
@@ -1458,15 +1457,15 @@ export default function AdminDashboard() {
                   onChange={handleFolderSelect}
                   className="hidden"
                 />
-                <Upload className="h-10 w-10 mx-auto mb-3 text-gray-400" />
-                <p className="text-sm text-gray-600 mb-3">
+                <Upload className="h-10 w-10 mx-auto mb-3 text-neutral-400 dark:text-neutral-500" />
+                <p className="text-sm text-neutral-600 dark:text-neutral-300 mb-3">
                   Sleep bestanden of een map hierheen
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-neutral-400 dark:text-neutral-500">
                   Klik om te kiezen (Shift/⌥ = folder)
                 </p>
                 {isDropzoneDragActive && (
-                  <p className="text-xs text-blue-600 mb-3">
+                  <p className="text-xs text-neutral-600 dark:text-neutral-300 mb-3">
                     Submappen worden automatisch meegenomen
                   </p>
                 )}
@@ -1476,17 +1475,17 @@ export default function AdminDashboard() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="font-medium">{files.length} bestanden</span>
-                    <span className="text-gray-600">{formatBytes(totalSize)}</span>
+                    <span className="text-neutral-600 dark:text-neutral-300">{formatBytes(totalSize)}</span>
                   </div>
                   <div className="max-h-40 overflow-y-auto space-y-1">
                     {files.map((file, index) => (
                       <div
                         key={index}
-                        className="flex items-center justify-between bg-gray-50 p-2 rounded text-sm"
+                        className="flex items-center justify-between bg-neutral-50 dark:bg-neutral-800 p-2 rounded text-sm"
                       >
                         <span className="truncate flex-1">{file.name}</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-gray-500 text-xs">
+                          <span className="text-neutral-500 dark:text-neutral-400 text-xs">
                             {formatBytes(file.size)}
                           </span>
                           <button
@@ -1514,26 +1513,26 @@ export default function AdminDashboard() {
                 </Button>
               ) : (
                 <div className="w-full space-y-2">
-                  <div className="relative w-full h-10 bg-gray-100 rounded-md overflow-hidden border border-gray-200">
+                  <div className="relative w-full h-10 bg-neutral-100 dark:bg-neutral-800 rounded-md overflow-hidden border border-neutral-200 dark:border-neutral-700">
                     <div
-                      className="absolute inset-0 bg-gradient-to-r from-gray-800 to-gray-900 transition-all duration-300 ease-out flex items-center justify-center"
+                      className="absolute inset-0 bg-gradient-to-r from-neutral-800 to-neutral-900 dark:from-white dark:to-neutral-200 transition-all duration-300 ease-out flex items-center justify-center"
                       style={{ width: `${uploadProgress}%` }}
                     >
                       {uploadProgress > 10 && (
-                        <span className="text-white text-sm font-semibold">
+                        <span className="text-white dark:text-black text-sm font-semibold">
                           {uploadProgress}%
                         </span>
                       )}
                     </div>
                     {uploadProgress <= 10 && (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-gray-600 text-sm font-semibold">
+                        <span className="text-neutral-600 dark:text-neutral-300 text-sm font-semibold">
                           {uploadProgress}%
                         </span>
                       </div>
                     )}
                   </div>
-                  <p className="text-xs text-center text-gray-500">
+                  <p className="text-xs text-center text-neutral-500 dark:text-neutral-400">
                     Bestanden uploaden...
                   </p>
                 </div>
@@ -1598,7 +1597,7 @@ export default function AdminDashboard() {
                 {uploadsError ? (
                   <p className="text-center text-red-500 py-8 font-semibold">Fout: {uploadsError}</p>
                 ) : uploads.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">Nog geen uploads</p>
+                  <p className="text-center text-neutral-500 dark:text-neutral-400 py-8">Nog geen uploads</p>
                 ) : (
                   uploads.map((upload) => {
                     const imageFiles = upload.files.filter(f => isImage(f.name));
@@ -1614,16 +1613,16 @@ export default function AdminDashboard() {
                           type="checkbox"
                           checked={selectedUploads.has(upload.slug)}
                           onChange={() => toggleSelectUpload(upload.slug)}
-                          className="mt-1 h-4 w-4 rounded border-gray-300"
+                          className="mt-1 h-4 w-4 rounded border-neutral-300 dark:border-neutral-600 accent-black dark:accent-white"
                         />
                         <div className="flex-1">
                           {upload.title && (
                             <h3 className="font-semibold text-base">{upload.title}</h3>
                           )}
-                          <p className={`text-sm ${upload.title ? 'text-gray-500' : 'font-semibold'}`}>
+                          <p className={`text-sm ${upload.title ? 'text-neutral-500 dark:text-neutral-400' : 'font-semibold'}`}>
                             {upload.slug}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400">
                             {upload.files.length} bestand(en) •{" "}
                             {formatBytes(
                               upload.files.reduce((acc, f) => acc + f.size, 0)
@@ -1690,7 +1689,7 @@ export default function AdminDashboard() {
                           </Button>
                         </div>
                       </div>
-                      <div className="text-xs text-gray-600 space-y-1">
+                      <div className="text-xs text-neutral-600 dark:text-neutral-300 space-y-1">
                         <p>Aangemaakt: {formatDate(new Date(upload.createdAt))}</p>
                         {(() => {
                           const expiresAt = getExpiresAt(upload);
@@ -1702,7 +1701,7 @@ export default function AdminDashboard() {
                               {' '}
                               <button
                                 onClick={() => extendExpiry(upload.slug, 31)}
-                                className="text-blue-600 hover:text-blue-800 underline"
+                                className="text-neutral-600 dark:text-neutral-300 hover:text-black dark:hover:text-white underline"
                                 title="Verleng de vervaldatum met 31 dagen"
                               >
                                 +31 dagen
@@ -1715,7 +1714,7 @@ export default function AdminDashboard() {
                           {upload.downloadHistory && upload.downloadHistory.length > 0 && (
                             <button
                               onClick={() => setExpandedUpload(expandedUpload === upload.slug ? null : upload.slug)}
-                              className="text-blue-600 hover:text-blue-800 underline"
+                              className="text-neutral-600 dark:text-neutral-300 hover:text-black dark:hover:text-white underline"
                             >
                               {expandedUpload === upload.slug ? 'Verberg details' : 'Bekijk details'}
                             </button>
@@ -1746,7 +1745,7 @@ export default function AdminDashboard() {
                                   [upload.slug]: { state: 'generating', missing: prev[upload.slug]?.missing || [] },
                                 }));
                               }}
-                              className="text-blue-600 hover:text-blue-800 underline"
+                              className="text-neutral-600 dark:text-neutral-300 hover:text-black dark:hover:text-white underline"
                               title="(Her)genereer de kant-en-klare ZIPs in R2"
                             >
                               ZIPs klaarzetten
@@ -1754,7 +1753,7 @@ export default function AdminDashboard() {
                           )}
                           <button
                             onClick={() => toggleDefaultHero(upload.slug, !upload.useDefaultHero)}
-                            className="text-blue-600 hover:text-blue-800 underline"
+                            className="text-neutral-600 dark:text-neutral-300 hover:text-black dark:hover:text-white underline"
                             title="Fotofunctie uit = standaard-hero en afbeeldingen als gewone bestanden (voor design-opleveringen)"
                           >
                             {upload.useDefaultHero ? 'Fotofunctie: uit' : 'Fotofunctie: aan'}
@@ -1779,7 +1778,7 @@ export default function AdminDashboard() {
                           <div className="flex items-center justify-between gap-3">
                             <div>
                               <p className="text-sm font-semibold">Bestanden beheren</p>
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs text-neutral-500 dark:text-neutral-400">
                                 Voeg bestanden toe of verwijder bestaande bestanden voor deze download.
                               </p>
                             </div>
@@ -1795,7 +1794,7 @@ export default function AdminDashboard() {
                               onChange={(e) => setManageSearch(e.target.value)}
                               placeholder="Zoek op bestandsnaam…"
                             />
-                            <div className="border rounded-md max-h-64 overflow-y-auto bg-white">
+                            <div className="border rounded-md max-h-64 overflow-y-auto bg-white dark:bg-neutral-900">
                               {(() => {
                                 const q = manageSearch.trim().toLowerCase();
                                 const filtered = q
@@ -1808,13 +1807,13 @@ export default function AdminDashboard() {
 
                                 if (filtered.length === 0) {
                                   return (
-                                    <p className="text-xs text-gray-500 p-3">Geen resultaten</p>
+                                    <p className="text-xs text-neutral-500 dark:text-neutral-400 p-3">Geen resultaten</p>
                                   );
                                 }
 
                                 return (
                                   <div className="divide-y">
-                                    <div className="flex items-center justify-between gap-3 p-2 bg-gray-50">
+                                    <div className="flex items-center justify-between gap-3 p-2 bg-neutral-50 dark:bg-neutral-800">
                                       <div className="flex items-center gap-3">
                                         <input
                                           type="checkbox"
@@ -1828,10 +1827,10 @@ export default function AdminDashboard() {
                                               setManageSelectedKeysFor(Array.from(next));
                                             }
                                           }}
-                                          className="h-4 w-4 rounded border-gray-300"
+                                          className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-600 accent-black dark:accent-white"
                                           aria-label="Selecteer alle zichtbare bestanden"
                                         />
-                                        <span className="text-xs text-gray-600">
+                                        <span className="text-xs text-neutral-600 dark:text-neutral-300">
                                           {manageSelectedKeys.size} geselecteerd
                                         </span>
                                       </div>
@@ -1868,12 +1867,12 @@ export default function AdminDashboard() {
                                             type="checkbox"
                                             checked={manageSelectedKeys.has(f.key)}
                                             onChange={() => toggleManageSelectedKey(f.key)}
-                                            className="h-4 w-4 rounded border-gray-300"
+                                            className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-600 accent-black dark:accent-white"
                                             aria-label={`Selecteer ${f.name}`}
                                           />
                                           <div className="min-w-0">
                                             <p className="text-sm truncate">{f.name}</p>
-                                            <p className="text-xs text-gray-500">{formatBytes(f.size)}</p>
+                                            <p className="text-xs text-neutral-500 dark:text-neutral-400">{formatBytes(f.size)}</p>
                                           </div>
                                         </div>
                                         <Button
@@ -1892,7 +1891,7 @@ export default function AdminDashboard() {
                                       </div>
                                     ))}
                                     {filtered.length > capped.length && (
-                                      <p className="text-xs text-gray-500 p-2">
+                                      <p className="text-xs text-neutral-500 dark:text-neutral-400 p-2">
                                         Toon eerste {capped.length} van {filtered.length} bestanden (gebruik zoek om te filteren)
                                       </p>
                                     )}
@@ -1906,7 +1905,7 @@ export default function AdminDashboard() {
                             <label className="text-sm font-medium block">Bestanden toevoegen</label>
 
                             <div
-                              className="border-2 border-dashed rounded-lg p-4 text-center transition-colors bg-white border-gray-300"
+                              className="border-2 border-dashed rounded-lg p-4 text-center transition-colors bg-white dark:bg-neutral-900 border-neutral-300 dark:border-neutral-600"
                               onDragOver={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -1936,7 +1935,7 @@ export default function AdminDashboard() {
                                 className="hidden"
                               />
 
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-neutral-600 dark:text-neutral-300">
                                 Sleep bestanden/map hierheen, of klik om te kiezen
                               </p>
                               <div className="mt-2 flex justify-center gap-2">
@@ -1971,7 +1970,7 @@ export default function AdminDashboard() {
                               <div className="space-y-2">
                                 <div className="flex items-center justify-between text-sm">
                                   <span className="font-medium">{manageFilesToAdd.length} geselecteerd</span>
-                                  <span className="text-gray-600">
+                                  <span className="text-neutral-600 dark:text-neutral-300">
                                     {formatBytes(manageFilesToAdd.reduce((acc, f) => acc + f.size, 0))}
                                   </span>
                                 </div>
@@ -1979,11 +1978,11 @@ export default function AdminDashboard() {
                                   {manageFilesToAdd.map((file, index) => (
                                     <div
                                       key={`${file.name}-${file.size}-${index}`}
-                                      className="flex items-center justify-between bg-gray-50 p-2 rounded text-sm"
+                                      className="flex items-center justify-between bg-neutral-50 dark:bg-neutral-800 p-2 rounded text-sm"
                                     >
                                       <span className="truncate flex-1">{file.name}</span>
                                       <div className="flex items-center gap-2">
-                                        <span className="text-gray-500 text-xs">{formatBytes(file.size)}</span>
+                                        <span className="text-neutral-500 dark:text-neutral-400 text-xs">{formatBytes(file.size)}</span>
                                         <button
                                           type="button"
                                           onClick={() => removeManageFile(index)}
@@ -2000,22 +1999,22 @@ export default function AdminDashboard() {
 
                                 {manageUploading ? (
                                   <div className="w-full space-y-2">
-                                    <div className="relative w-full h-10 bg-gray-100 rounded-md overflow-hidden border border-gray-200">
+                                    <div className="relative w-full h-10 bg-neutral-100 dark:bg-neutral-800 rounded-md overflow-hidden border border-neutral-200 dark:border-neutral-700">
                                       <div
-                                        className="absolute inset-0 bg-gradient-to-r from-gray-800 to-gray-900 transition-all duration-300 ease-out flex items-center justify-center"
+                                        className="absolute inset-0 bg-gradient-to-r from-neutral-800 to-neutral-900 dark:from-white dark:to-neutral-200 transition-all duration-300 ease-out flex items-center justify-center"
                                         style={{ width: `${manageUploadProgress}%` }}
                                       >
                                         {manageUploadProgress > 10 && (
-                                          <span className="text-white text-sm font-semibold">{manageUploadProgress}%</span>
+                                          <span className="text-white dark:text-black text-sm font-semibold">{manageUploadProgress}%</span>
                                         )}
                                       </div>
                                       {manageUploadProgress <= 10 && (
                                         <div className="absolute inset-0 flex items-center justify-center">
-                                          <span className="text-gray-600 text-sm font-semibold">{manageUploadProgress}%</span>
+                                          <span className="text-neutral-600 dark:text-neutral-300 text-sm font-semibold">{manageUploadProgress}%</span>
                                         </div>
                                       )}
                                     </div>
-                                    <p className="text-xs text-center text-gray-500">Bestanden uploaden…</p>
+                                    <p className="text-xs text-center text-neutral-500 dark:text-neutral-400">Bestanden uploaden…</p>
                                   </div>
                                 ) : (
                                   <Button
@@ -2047,9 +2046,9 @@ export default function AdminDashboard() {
                                   key={file.key}
                                   onClick={() => updatePreviewImage(upload.slug, file.key)}
                                   className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                                    isPreview 
-                                      ? 'border-blue-500 ring-2 ring-blue-500 ring-offset-2' 
-                                      : 'border-gray-200 hover:border-blue-300'
+                                    isPreview
+                                      ? 'border-black ring-2 ring-black ring-offset-2 dark:border-white dark:ring-white dark:ring-offset-neutral-900'
+                                      : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-400'
                                   }`}
                                   title={file.name}
                                 >
@@ -2080,12 +2079,12 @@ export default function AdminDashboard() {
                                       }}
                                     />
                                   ) : (
-                                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
+                                    <div className="w-full h-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-400"></div>
                                     </div>
                                   )}
                                   {isPreview && (
-                                    <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
+                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                                       <Check className="h-8 w-8 text-white drop-shadow" />
                                     </div>
                                   )}
@@ -2109,14 +2108,14 @@ export default function AdminDashboard() {
 
         {/* Orphaned Uploads Warning */}
         {orphanedUploads.length > 0 && (
-          <Card className="mt-6 border-orange-200 bg-orange-50">
+          <Card className="mt-6 border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/30">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-orange-900">
+                  <CardTitle className="text-orange-900 dark:text-orange-300">
                     ⚠️ Incomplete Uploads ({orphanedUploads.length})
                   </CardTitle>
-                  <CardDescription className="text-orange-700">
+                  <CardDescription className="text-orange-700 dark:text-orange-400">
                     Deze uploads zijn niet afgerond maar staan wel op de server
                   </CardDescription>
                 </div>
@@ -2135,11 +2134,11 @@ export default function AdminDashboard() {
                   {orphanedUploads.map((slug) => (
                     <div
                       key={slug}
-                      className="flex items-center justify-between bg-white p-3 rounded border border-orange-200"
+                      className="flex items-center justify-between bg-white dark:bg-neutral-900 p-3 rounded border border-orange-200 dark:border-orange-900"
                     >
                       <div>
-                        <p className="font-medium text-gray-900">{slug}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="font-medium text-neutral-900 dark:text-white">{slug}</p>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400">
                           Upload gestopt voordat metadata kon worden opgeslagen
                         </p>
                       </div>
@@ -2164,13 +2163,13 @@ export default function AdminDashboard() {
       {/* Settings Dialog */}
       {showSettingsDialog && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-neutral-900 rounded-lg max-w-xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold">Instellingen</h2>
                 <button
                   onClick={() => setShowSettingsDialog(false)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -2181,14 +2180,14 @@ export default function AdminDashboard() {
               {/* Default Background */}
               <div>
                 <h3 className="text-lg font-semibold mb-3">Standaard Achtergrond</h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-neutral-600 dark:text-neutral-300 mb-4">
                   Upload een afbeelding die als standaard achtergrond wordt gebruikt op alle download pagina's.
                 </p>
                 
                 {/* Current Background Preview */}
                 <div className="mb-4">
                   <p className="text-sm font-medium mb-2">Huidige achtergrond:</p>
-                  <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-gray-200">
+                  <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-neutral-200 dark:border-neutral-700">
                     <img
                       src={defaultBackgroundPreview}
                       alt="Huidige achtergrond"
@@ -2216,9 +2215,9 @@ export default function AdminDashboard() {
                         reader.readAsDataURL(file);
                       }
                     }}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                    className="block w-full text-sm text-neutral-500 dark:text-neutral-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-neutral-100 file:text-neutral-700 hover:file:bg-neutral-200 dark:file:bg-neutral-800 dark:file:text-neutral-200 dark:hover:file:bg-neutral-700"
                   />
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-2">
                     💡 Aanbevolen: minimaal 1920x1080px voor beste resultaat
                   </p>
                 </div>
@@ -2265,7 +2264,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="p-4 border-t bg-gray-50 flex gap-3">
+            <div className="p-4 border-t bg-neutral-50 dark:bg-neutral-800 flex gap-3">
               <Button
                 variant="outline"
                 onClick={() => {
@@ -2284,13 +2283,13 @@ export default function AdminDashboard() {
       {/* Statistics Dialog */}
       {showStatisticsDialog && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b sticky top-0 bg-white z-10">
+          <div className="bg-white dark:bg-neutral-900 rounded-lg max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b sticky top-0 bg-white dark:bg-neutral-900 z-10">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold">📊 Statistieken</h2>
                 <button
                   onClick={() => setShowStatisticsDialog(false)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -2307,7 +2306,7 @@ export default function AdminDashboard() {
                       <div className="text-2xl font-bold">
                         {uploads.length}
                       </div>
-                      <p className="text-xs text-gray-500">Actieve Uploads</p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">Actieve Uploads</p>
                     </CardContent>
                   </Card>
                   <Card>
@@ -2315,7 +2314,7 @@ export default function AdminDashboard() {
                       <div className="text-2xl font-bold">
                         {uploads.reduce((acc, u) => acc + u.files.length, 0)}
                       </div>
-                      <p className="text-xs text-gray-500">Totaal Bestanden</p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">Totaal Bestanden</p>
                     </CardContent>
                   </Card>
                   <Card>
@@ -2323,8 +2322,8 @@ export default function AdminDashboard() {
                       <div className="text-2xl font-bold">
                         {uploads.reduce((acc, u) => acc + u.downloads, 0)}
                       </div>
-                      <p className="text-xs text-gray-500">Totaal Downloads</p>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">Totaal Downloads</p>
+                      <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">
                         {uploads.reduce((acc, u) => acc + (u.downloadHistory?.length || 0), 0)} events
                       </p>
                     </CardContent>
@@ -2336,7 +2335,7 @@ export default function AdminDashboard() {
                           acc + u.files.reduce((sum, f) => sum + f.size, 0), 0
                         ))}
                       </div>
-                      <p className="text-xs text-gray-500">Totale Storage</p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">Totale Storage</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -2367,20 +2366,20 @@ export default function AdminDashboard() {
                       <>
                         <Card>
                           <CardContent className="pt-6">
-                            <div className="text-xl font-bold text-gray-900">📦 {last7Days.all}</div>
-                            <p className="text-xs text-gray-500">Alle bestanden downloads</p>
+                            <div className="text-xl font-bold text-neutral-900 dark:text-white">📦 {last7Days.all}</div>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400">Alle bestanden downloads</p>
                           </CardContent>
                         </Card>
                         <Card>
                           <CardContent className="pt-6">
-                            <div className="text-xl font-bold text-gray-900">📄 {last7Days.single}</div>
-                            <p className="text-xs text-gray-500">Enkele foto downloads</p>
+                            <div className="text-xl font-bold text-neutral-900 dark:text-white">📄 {last7Days.single}</div>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400">Enkele foto downloads</p>
                           </CardContent>
                         </Card>
                         <Card>
                           <CardContent className="pt-6">
-                            <div className="text-xl font-bold text-gray-900">📋 {last7Days.selected}</div>
-                            <p className="text-xs text-gray-500">Selectie downloads</p>
+                            <div className="text-xl font-bold text-neutral-900 dark:text-white">📋 {last7Days.selected}</div>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400">Selectie downloads</p>
                           </CardContent>
                         </Card>
                       </>
@@ -2399,30 +2398,30 @@ export default function AdminDashboard() {
                         <div className="flex items-center justify-between mb-3">
                           <div>
                             <h4 className="font-semibold">{upload.title || upload.slug}</h4>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400">
                               {upload.files.length} bestanden • {formatBytes(upload.files.reduce((acc, f) => acc + f.size, 0))}
                             </p>
                           </div>
                           <div className="text-right">
                             <div className="text-2xl font-bold">{upload.downloads}</div>
-                            <p className="text-xs text-gray-500">downloads</p>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400">downloads</p>
                           </div>
                         </div>
 
                         {upload.downloadHistory && upload.downloadHistory.length > 0 && (
                           <div className="pt-3 border-t">
-                            <p className="text-xs font-medium text-gray-600 mb-2">
+                            <p className="text-xs font-medium text-neutral-600 dark:text-neutral-300 mb-2">
                               Recente downloads:
                             </p>
                             <div className="space-y-1 max-h-32 overflow-y-auto">
                               {upload.downloadHistory.slice().reverse().slice(0, 5).map((download, idx) => (
-                                <div key={idx} className="text-xs text-gray-600 flex items-center justify-between">
+                                <div key={idx} className="text-xs text-neutral-600 dark:text-neutral-300 flex items-center justify-between">
                                   <span>
                                     {download.type === 'all' && '📦 Alle bestanden'}
                                     {download.type === 'single' && '📄 Enkel bestand'}
                                     {download.type === 'selected' && `📋 ${download.files?.length || 0} geselecteerd`}
                                   </span>
-                                  <span className="text-gray-400">
+                                  <span className="text-neutral-400 dark:text-neutral-500">
                                     {new Date(download.timestamp).toLocaleString('nl-NL', {
                                       day: '2-digit',
                                       month: 'short',
@@ -2442,7 +2441,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="p-4 border-t bg-gray-50 sticky bottom-0">
+            <div className="p-4 border-t bg-neutral-50 dark:bg-neutral-800 sticky bottom-0">
               <Button
                 variant="outline"
                 onClick={() => setShowStatisticsDialog(false)}

@@ -14,7 +14,7 @@ export default function Header() {
   // Alle hooks altijd aanroepen!
   const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
-  const { theme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
   // const [showSocial, setShowSocial] = useState<null | 'instagram' | 'linkedin'>(null) (verwijderd)
 
   const isHome = pathname === '/'
@@ -162,11 +162,11 @@ export default function Header() {
 
         {/* Theme toggle button */}
         <button 
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
           className={`${isHome ? 'hover:text-white/80' : 'hover:text-gray-600 dark:hover:text-gray-300'} transition-colors`}
           aria-label="Toggle theme"
         >
-          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          {mounted && resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
         </button>
       </nav>
 

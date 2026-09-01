@@ -13,7 +13,7 @@ import WheelSuffix from './WheelSuffix'
 export default function MobileMenu() {
     // const [showSocial, setShowSocial] = useState<null | 'instagram' | 'linkedin'>(null) (verwijderd)
   const [open, setOpen] = useState(false)
-  const { theme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
   const pathname = usePathname()
   const [mounted, setMounted] = useState(false)
   const isHome = pathname === '/'
@@ -113,12 +113,12 @@ export default function MobileMenu() {
           
           {/* Theme toggle button for mobile */}
           <button 
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
             className="flex items-center gap-2 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             aria-label="Toggle theme"
           >
-            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            <span className="text-base">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+            {resolvedTheme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            <span className="text-base">{resolvedTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
           </button>
           
           <div className="flex space-x-6 pt-4">
