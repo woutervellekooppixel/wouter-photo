@@ -47,7 +47,7 @@ export default function HeroWordmark({
 
   useEffect(() => {
     if (!mounted) return
-    if (shouldReduceMotion) {
+    if (shouldReduceMotion || isMobile) {
       setIndex(suffixes.length - 1)
       return
     }
@@ -93,9 +93,10 @@ export default function HeroWordmark({
       }}
     >
       <span className={wordClassName}>WOUTER</span>
+      <span className={`sm:hidden ${suffixClassName ?? ''}`}>.PHOTO</span>
       {/* Wheel window (no whitespace between WOUTER and .SUFFIX) */}
       <span
-        className="inline-block overflow-hidden align-baseline text-left"
+        className="hidden sm:inline-block overflow-hidden align-baseline text-left"
         style={{
           height: '1em',
           lineHeight: '1em',
@@ -104,8 +105,9 @@ export default function HeroWordmark({
       >
         <MotionDiv
           className="will-change-transform"
+          initial={false}
           animate={{ y: `${-index}em` }}
-          transition={{ type: 'spring', stiffness: isMobile ? 120 : 140, damping: isMobile ? 24 : 22, mass: 0.7 }}
+          transition={shouldReduceMotion ? { duration: 0 } : { type: 'spring', stiffness: isMobile ? 120 : 140, damping: isMobile ? 24 : 22, mass: 0.7 }}
         >
           {suffixes.map((s) => (
             <div key={s} style={{ height: '1em', lineHeight: '1em' }}>

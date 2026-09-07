@@ -51,7 +51,7 @@ export default function WheelSuffix({ cycle, intervalMs = 450, className }: Prop
   useEffect(() => {
     if (!mounted) return
 
-    if (shouldReduceMotion) {
+    if (shouldReduceMotion || isMobile) {
       setIndex(normalized.length - 1)
       return
     }
@@ -89,15 +89,17 @@ export default function WheelSuffix({ cycle, intervalMs = 450, className }: Prop
         height: '1em',
         lineHeight: '1em',
         verticalAlign: 'baseline',
-        minWidth: `${maxLen + 1.5}ch`,
         textAlign: 'left',
       }}
       aria-hidden
     >
+      <span className="sm:hidden">.{normalized[normalized.length - 1]}</span>
       <MotionDiv
-        className="will-change-transform"
+        className="hidden sm:block will-change-transform"
+        style={{ minWidth: `${maxLen + 1.5}ch` }}
+        initial={false}
         animate={{ y: `${-index}em` }}
-        transition={{ type: 'spring', stiffness: isMobile ? 130 : 150, damping: isMobile ? 26 : 24, mass: 0.7 }}
+        transition={shouldReduceMotion ? { duration: 0 } : { type: 'spring', stiffness: isMobile ? 130 : 150, damping: isMobile ? 26 : 24, mass: 0.7 }}
       >
         {normalized.map((s) => (
           <div key={s} style={{ height: '1em', lineHeight: '1em' }}>

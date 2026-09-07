@@ -104,7 +104,7 @@ export async function generateMetadata({
     },
     all: {
       title: 'Portfolio',
-      description: 'Portfolio of concert, event and commercial photography by Wouter Vellekoop (NL/EN).',
+      description: 'Portfolio of concert, event and commercial photography by Wouter Vellekoop.',
       keywords: [
         // NL
         'portfolio fotograaf',
@@ -140,8 +140,7 @@ export async function generateMetadata({
           alt: `${data.title} by Wouter Vellekoop`,
         }
       ],
-      locale: 'nl_NL',
-      alternateLocale: ['en_US'],
+      locale: 'en_US',
       type: 'website',
     },
     twitter: {

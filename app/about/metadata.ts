@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'About',
-  description: 'Over Wouter Vellekoop: concert- en eventfotograaf in Nederland (NL/EN). Beschikbaar voor boekingen wereldwijd.',
+  description: 'Meet Wouter Vellekoop, a concert and event photographer based in the Netherlands and available for bookings worldwide.',
   keywords: [
     'Wouter Vellekoop',
     'concertfotograaf',
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: 'About Wouter Vellekoop',
-    description: 'Over Wouter Vellekoop: concert- en eventfotograaf in Nederland (NL/EN). Beschikbaar voor boekingen wereldwijd.',
+    description: 'Meet Wouter Vellekoop, a concert and event photographer based in the Netherlands and available for bookings worldwide.',
     url: 'https://www.wouter.photo/about',
     siteName: 'Wouter.Photo',
     images: [
@@ -33,8 +33,7 @@ export const metadata: Metadata = {
         alt: 'Wouter Vellekoop',
       }
     ],
-    locale: 'nl_NL',
-    alternateLocale: ['en_US'],
+    locale: 'en_US',
     type: 'profile',
   },
   twitter: {

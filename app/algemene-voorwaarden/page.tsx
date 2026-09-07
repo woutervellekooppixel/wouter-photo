@@ -4,7 +4,7 @@ export const metadata = pageMetadata
 
 export default function AlgemeneVoorwaardenPage() {
   return (
-    <main className="min-h-dvh bg-white dark:bg-black text-black dark:text-white">
+    <main lang="nl" className="min-h-dvh bg-white dark:bg-black text-black dark:text-white">
       <div className="py-20 px-6 max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold mb-4">Algemene voorwaarden fotografie – wouter.photo</h1>
 

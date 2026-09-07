@@ -35,8 +35,7 @@ export const metadata: Metadata = {
 				alt: "Export Every X Photoshop plugin preview (export 1080px carousel slices)",
 			},
 		],
-		locale: "nl_NL",
-		alternateLocale: ["en_US"],
+		locale: "en_US",
 		type: "website",
 	},
 	twitter: {

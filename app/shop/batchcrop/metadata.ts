@@ -31,8 +31,7 @@ export const metadata: Metadata = {
 				alt: "BatchCrop Photoshop plugin preview (batch crop multiple photos)",
 			},
 		],
-		locale: "nl_NL",
-		alternateLocale: ["en_US"],
+		locale: "en_US",
 		type: "website",
 	},
 	twitter: {

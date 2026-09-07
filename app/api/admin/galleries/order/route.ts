@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getGalleryOrder, setGalleryOrder } from '@/lib/r2';
 import { requireAdminAuth } from '@/lib/auth';
+import { revalidatePortfolio } from '@/lib/portfolioCache';
 
 const CATEGORIES = ['concerts', 'events', 'misc'];
 
@@ -16,5 +17,6 @@ export async function POST(req: Request) {
   let data = await getGalleryOrder();
   data[category] = order;
   await setGalleryOrder(data);
+  revalidatePortfolio();
   return NextResponse.json({ success: true });
 }

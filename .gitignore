@@ -13,3 +13,4 @@ allfiles.txt
 /public/sitemap.xml
 /public/sitemap-*.xml
 /public/robots.txt
+.vercel

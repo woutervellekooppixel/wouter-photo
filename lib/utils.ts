@@ -137,11 +137,11 @@ export function seededShuffleFirstN<T>(items: T[], n: number, seed: string): T[]
 
 // ── Gallery alt-text ─────────────────────────────────────────────────────────
 
-const CATEGORY_LABEL_NL: Record<string, string> = {
-  concerts: 'concertfotografie',
-  events: 'eventfotografie',
-  commercial: 'commerciële fotografie',
-  misc: 'fotografie',
+const CATEGORY_LABEL_EN: Record<string, string> = {
+  concerts: 'concert photography',
+  events: 'event photography',
+  commercial: 'commercial photography',
+  misc: 'photography',
 }
 
 // Build human-readable alt text from a gallery filename. Filenames look like:
@@ -150,8 +150,8 @@ const CATEGORY_LABEL_NL: Record<string, string> = {
 // version/number noise, and fall back to a generic category label when nothing
 // usable remains (e.g. portfolio-concerts1.webp).
 export function photoAltFromFilename(filename: string, category: string): string {
-  const label = CATEGORY_LABEL_NL[category] ?? 'fotografie'
-  const generic = `${label[0].toUpperCase()}${label.slice(1)} door Wouter Vellekoop`
+  const label = CATEGORY_LABEL_EN[category] ?? 'photography'
+  const generic = `${label[0].toUpperCase()}${label.slice(1)} by Wouter Vellekoop`
 
   let base = filename.replace(/\.[a-z0-9]+$/i, '')
   const year = base.match(/20\d{2}/)?.[0] ?? null
@@ -177,7 +177,7 @@ export function photoAltFromFilename(filename: string, category: string): string
   }
 
   const withYear = year ? `${subject}, ${year}` : subject
-  return `${withYear} — ${label} door Wouter Vellekoop`
+  return `${withYear} — ${label} by Wouter Vellekoop`
 }
 
 // ── Shared file-type helpers ─────────────────────────────────────────────────

@@ -1,15 +1,10 @@
-import { headers } from "next/headers";
 import NotFoundClient from "@/components/NotFoundClient";
 
-export default async function NotFound() {
-  const h = await headers();
-  const host = (h.get("x-forwarded-host") ?? h.get("host") ?? "").toLowerCase();
-
-  const isDownloadHost = host.startsWith("download.");
-
+export default function NotFound() {
+  // Keep the shared not-found boundary static so public pages can use ISR.
+  // Download-host branding is resolved by the client after hydration.
   return (
     <NotFoundClient
-      variant={isDownloadHost ? "download" : "site"}
       redirectTo="https://www.wouter.photo"
       redirectDelaySeconds={30}
     />

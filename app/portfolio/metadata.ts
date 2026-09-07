@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Portfolio – Professional Photography Gallery',
-  description: 'Bekijk het portfolio van Wouter Vellekoop: concertfotografie, eventfotografie en creatief werk (NL/EN).',
+  description: 'Explore concert photography, event photography and creative work by Netherlands-based photographer Wouter Vellekoop.',
   keywords: [
     // NL
     'portfolio fotograaf',
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: 'Photography Portfolio – Wouter Vellekoop',
-    description: 'Portfolio met concertfotografie, eventfotografie en meer (NL/EN).',
+    description: 'Concert photography, event photography and creative work by Wouter Vellekoop.',
     url: 'https://www.wouter.photo/portfolio',
     siteName: 'Wouter.Photo',
     images: [
@@ -38,8 +38,7 @@ export const metadata: Metadata = {
         alt: 'Photography Portfolio by Wouter Vellekoop',
       }
     ],
-    locale: 'nl_NL',
-    alternateLocale: ['en_US'],
+    locale: 'en_US',
     type: 'website',
   },
   twitter: {

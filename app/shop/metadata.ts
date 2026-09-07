@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
 	title: "Shop",
 	description:
-		"Presets en tools van Wouter Vellekoop. Stage Fix v6 (Lightroom/ACR) en Photoshop plugins.",
+		"Presets and tools by Wouter Vellekoop: Stage Fix v6 for Lightroom and Adobe Camera Raw, plus Photoshop plugins.",
 	keywords: [
 		"Lightroom presets",
 		"Adobe Camera Raw presets",
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 	openGraph: {
 		title: "Shop – Wouter.Photo",
 		description:
-			"Presets en tools van Wouter Vellekoop. Stage Fix v6 (Lightroom/ACR) en Photoshop plugins.",
+			"Presets and tools by Wouter Vellekoop: Stage Fix v6 for Lightroom and Adobe Camera Raw, plus Photoshop plugins.",
 		url: "https://www.wouter.photo/shop",
 		siteName: "Wouter.Photo",
 		images: [
@@ -24,18 +24,17 @@ export const metadata: Metadata = {
 				url: "https://www.wouter.photo/batchcrop.png",
 				width: 1360,
 				height: 800,
-				alt: "Shop – presets en tools",
+				alt: "Shop – presets and tools",
 			},
 		],
-		locale: "nl_NL",
-		alternateLocale: ["en_US"],
+		locale: "en_US",
 		type: "website",
 	},
 	twitter: {
 		card: "summary_large_image",
 		title: "Shop – Wouter.Photo",
 		description:
-			"Presets en tools van Wouter Vellekoop. Stage Fix v6 (Lightroom/ACR) en Photoshop plugins.",
+			"Presets and tools by Wouter Vellekoop: Stage Fix v6 for Lightroom and Adobe Camera Raw, plus Photoshop plugins.",
 		images: ["https://www.wouter.photo/batchcrop.png"],
 	},
 	alternates: {

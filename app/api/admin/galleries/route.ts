@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
 import { getPortfolioGalleryData } from '@/lib/portfolioGallery';
 import { requireAdminAuth } from '@/lib/auth';
+import { revalidatePortfolio } from '@/lib/portfolioCache';
 
 
 export const dynamic = 'force-dynamic';
@@ -101,6 +102,7 @@ export async function DELETE(req: NextRequest) {
       console.error('Kon galleries-order.json niet bijwerken:', e);
     }
     if (deleted) {
+      revalidatePortfolio();
       return withCORS(NextResponse.json({ success: true, fallback: triedFallback }));
     } else {
       return withCORS(NextResponse.json({ error: 'Delete failed (geen metadata en geen fysiek bestand gevonden)', debug: { slug, id, category, triedFallback, metadata, ...debug } }, { status: 404 }));

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadFile } from "@/lib/r2";
 import { requireAdminAuth } from "@/lib/auth";
+import { revalidatePortfolio } from '@/lib/portfolioCache';
 import { MAX_UPLOAD_FILE_SIZE_BYTES } from "@/lib/validation";
 
 export const runtime = "nodejs";
@@ -65,6 +66,7 @@ export async function POST(req: NextRequest) {
     };
     const { saveMetadata } = await import('@/lib/r2');
     await saveMetadata(metadata);
+    revalidatePortfolio();
 
     return NextResponse.json({ success: true, key: uploadedKey });
   } catch (e: any) {

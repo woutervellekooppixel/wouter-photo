@@ -89,6 +89,7 @@ export default async function PortfolioPage({ params }: any) {
   } else {
     photos = dataApi[category] || [];
   }
+  if (photos.length === 0) notFound();
 
   // Roteer dagelijks de eerste 5 foto's: seeded shuffle op datum + categorie,
   // zodat elke bezoeker die dag dezelfde volgorde ziet en die de volgende dag
@@ -105,10 +106,10 @@ export default async function PortfolioPage({ params }: any) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
       )}
-      <div className="min-h-screen bg-white dark:bg-black py-6">
+      <main className="min-h-screen bg-white dark:bg-black py-6">
         <h1 className="sr-only">{categoryTitles[category]} by Wouter Vellekoop</h1>
         <GalleryScroller category={category as string} photos={photos} />
-      </div>
+      </main>
     </>
   );
 }

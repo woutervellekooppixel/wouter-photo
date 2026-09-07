@@ -23,20 +23,16 @@ async function getCategories(): Promise<string[]> {
 }
 
 export async function getPortfolioGalleryData(): Promise<GalleryData> {
-  const orderData = await getGalleryOrder();
+  const [orderData, categories] = await Promise.all([getGalleryOrder(), getCategories()]);
   const result: GalleryData = {};
+  // Preserve storage/category ordering even when requests finish out of order.
+  for (const category of categories) result[category] = [];
 
-  const categories = await getCategories();
-  for (const cat of categories) {
-    let files: string[] = [];
-    try {
-      files = (await listFiles(`${cat}/`))
+  await Promise.all(categories.map(async (cat) => {
+    // Let storage failures propagate so ISR retains the last successful page.
+    const files = (await listFiles(`${cat}/`))
         .map((f) => f.split('/').pop()!)
         .filter(Boolean);
-    } catch {
-      result[cat] = [];
-      continue;
-    }
 
     const allPhotos: Photo[] = files
       .filter(
@@ -54,8 +50,9 @@ export async function getPortfolioGalleryData(): Promise<GalleryData> {
 
     let photos: Photo[] = [];
     if (orderData[cat] && orderData[cat].length > 0) {
+      const byId = new Map(allPhotos.map((photo) => [photo.id, photo]));
       photos = orderData[cat]
-        .map((fname) => allPhotos.find((p) => p.id === fname))
+        .map((fname) => byId.get(fname))
         .filter(Boolean) as Photo[];
 
       const orderedSet = new Set(orderData[cat]);
@@ -66,7 +63,7 @@ export async function getPortfolioGalleryData(): Promise<GalleryData> {
     }
 
     result[cat] = photos;
-  }
+  }));
 
   return result;
 }

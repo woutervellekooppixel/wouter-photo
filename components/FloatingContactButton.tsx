@@ -80,7 +80,7 @@ export default function FloatingContactButton({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md w-full flex flex-col items-center gap-4">
           <DialogPrimitive.Title asChild>
-            <VisuallyHidden>Contactformulier</VisuallyHidden>
+            <VisuallyHidden>Contact form</VisuallyHidden>
           </DialogPrimitive.Title>
           <div className="w-full flex flex-col items-center gap-2 mb-2">
             <div className="flex gap-4 mt-1">

@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { getPortfolioGalleryData } from '@/lib/portfolioGallery'
+import { getCachedPortfolioGalleryData } from '@/lib/portfolioCache'
 import DisableBodyScroll from '@/components/DisableBodyScroll'
 import HeroWordmark from '@/components/HeroWordmark'
 
@@ -11,14 +11,14 @@ export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: { absolute: 'Wouter Vellekoop — Concert & Event Photographer' },
-  description: 'Portfolio — Concerts, Events en Misc.',
+  description: 'Concert and event photography by Wouter Vellekoop. Explore live music, festivals, events and creative work from the Netherlands and beyond.',
   alternates: {
     canonical: 'https://www.wouter.photo',
   },
 }
 
 export default async function HomePage() {
-  const gallery = await getPortfolioGalleryData()
+  const gallery = await getCachedPortfolioGalleryData()
 
   const hero = gallery.concerts?.[0]
   const heroSrc = hero?.src ?? null
@@ -51,7 +51,7 @@ export default async function HomePage() {
             <div className="animate-in fade-in zoom-in-95 duration-700">
               <div className="inline-flex flex-col items-center gap-2">
                 <HeroWordmark
-                  className="text-white tracking-tight leading-none text-5xl sm:text-6xl md:text-7xl"
+                  className="text-white tracking-tight leading-none text-[clamp(2rem,10vw,3rem)] sm:text-5xl md:text-6xl lg:text-7xl"
                   wordClassName="font-extrabold"
                   suffixClassName="font-light opacity-90"
                   intervalMs={380}

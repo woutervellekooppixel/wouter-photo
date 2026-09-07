@@ -47,7 +47,6 @@ export const metadata: Metadata = {
 			},
 		],
 		locale: "en_US",
-		alternateLocale: ["nl_NL"],
 		type: "website",
 	},
 	twitter: {

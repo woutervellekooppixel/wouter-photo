@@ -1,10 +1,14 @@
 import type { MetadataRoute } from 'next'
+import { getCachedPortfolioGalleryData } from '@/lib/portfolioCache'
 
 const BASE = 'https://www.wouter.photo'
 
 // Next-native sitemap (served at /sitemap.xml). Replaces next-sitemap, which
 // relied on a `postbuild` hook that does not run in Vercel's `next build`.
-export default function sitemap(): MetadataRoute.Sitemap {
+export const revalidate = 3600
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const gallery = await getCachedPortfolioGalleryData()
   const lastModified = new Date()
 
   const entries: Array<{
@@ -27,7 +31,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/algemene-voorwaarden', priority: 0.3, changeFrequency: 'yearly' },
   ]
 
-  return entries.map((e) => ({
+  return entries.filter((entry) => {
+    if (!entry.path.startsWith('/portfolio/')) return true
+    const category = entry.path.split('/').pop()!
+    return category === 'all'
+      ? Object.values(gallery).some((photos) => photos.length > 0)
+      : (gallery[category]?.length ?? 0) > 0
+  }).map((e) => ({
     url: `${BASE}${e.path}`,
     lastModified,
     changeFrequency: e.changeFrequency,

@@ -10,11 +10,16 @@ export default function NotFoundClient({
   redirectTo = "https://wouter.photo",
   redirectDelaySeconds = 30,
 }: {
-  variant: NotFoundVariant;
+  variant?: NotFoundVariant;
   redirectTo?: string;
   redirectDelaySeconds?: number;
 }) {
-  const shouldRedirect = variant === "download";
+  const [hostVariant, setHostVariant] = useState<NotFoundVariant>('site');
+  useEffect(() => {
+    setHostVariant(window.location.hostname.toLowerCase().startsWith('download.') ? 'download' : 'site');
+  }, []);
+  const resolvedVariant = variant ?? hostVariant;
+  const shouldRedirect = resolvedVariant === "download";
   const [countdown, setCountdown] = useState(redirectDelaySeconds);
 
   const redirectHost = useMemo(() => {
@@ -41,7 +46,7 @@ export default function NotFoundClient({
     return () => window.clearInterval(timer);
   }, [redirectTo, shouldRedirect]);
 
-  if (variant === "site") {
+  if (resolvedVariant === "site") {
     return (
       <div className="min-h-[70vh] flex items-center justify-center px-6 py-16">
         <div className="max-w-xl w-full rounded-2xl border border-border bg-card p-8 text-center">
