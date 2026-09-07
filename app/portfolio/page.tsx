@@ -68,7 +68,7 @@ export default async function PortfolioPage() {
                     fill
                     priority={idx === 0}
                     sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                    className="object-cover transition-transform duration-200 ease-out motion-safe:group-hover:scale-[1.02] motion-reduce:transition-none"
                   />
                   )}
 
@@ -78,14 +78,14 @@ export default async function PortfolioPage() {
                   {/* Big label bottom-left (smaller + animated on hover) */}
                   <div className="absolute left-6 bottom-6 md:left-8 md:bottom-8">
                     <div
-                      className="text-white text-[clamp(1.25rem,1.9vw,2.5rem)] font-light tracking-[-0.02em] leading-[0.9] drop-shadow-[0_18px_40px_rgba(0,0,0,0.55)] will-change-transform transition-all duration-500 ease-out group-hover:-translate-y-2 group-hover:scale-[1.02] group-hover:tracking-[0.06em]"
+                      className="text-white text-[clamp(1.25rem,1.9vw,2.5rem)] font-light tracking-[-0.02em] leading-[0.9] drop-shadow-[0_18px_40px_rgba(0,0,0,0.55)] transition-transform duration-200 ease-out motion-safe:group-hover:-translate-y-0.5 motion-reduce:transition-none"
                     >
                       {cat.bigLabel}
                     </div>
                   </div>
 
                   {/* Hover affordance */}
-                  <div className="absolute right-6 bottom-6 md:right-8 md:bottom-8 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                  <div className="absolute right-6 bottom-6 md:right-8 md:bottom-8 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
                     <div className="text-white text-xs font-light tracking-[0.35em] drop-shadow-[0_12px_30px_rgba(0,0,0,0.55)]">
                       OPEN ↗
                     </div>

@@ -109,7 +109,7 @@ export default function GalleryScroller({ category, photos }: Props) {
                 priority={index < 2}
                 loading={index < 2 ? 'eager' : 'lazy'}
                 {...(photo.blurDataURL ? { placeholder: 'blur' as const, blurDataURL: photo.blurDataURL } : {})}
-                className="absolute inset-0 h-full w-full object-contain xl:static xl:w-auto xl:max-w-full transition-opacity duration-500 motion-reduce:transition-none opacity-0 data-[loaded=true]:opacity-100"
+                className="absolute inset-0 h-full w-full object-contain xl:static xl:w-auto xl:max-w-full transition-opacity duration-200 motion-reduce:transition-none opacity-0 data-[loaded=true]:opacity-100"
                 sizes="(min-width: 1280px) 90vw, (min-width: 640px) 50vw, 100vw"
                 onLoad={(event) => { event.currentTarget.dataset.loaded = 'true' }}
                 unoptimized

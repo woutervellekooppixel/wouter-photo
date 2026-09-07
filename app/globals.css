@@ -76,6 +76,27 @@
 }
 
 @layer utilities {
+  @keyframes mobile-menu-enter {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .mobile-menu-enter {
+    animation: mobile-menu-enter 180ms ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mobile-menu-enter {
+      animation: none;
+    }
+  }
+
   .line-clamp-3 {
     display: -webkit-box;
     -webkit-line-clamp: 3;

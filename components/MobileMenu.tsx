@@ -62,7 +62,7 @@ export default function MobileMenu() {
       </div>
 
       {open && (
-        <div className="fixed inset-0 bg-white dark:bg-black z-[80] flex flex-col items-center justify-center space-y-8 text-xl text-black dark:text-white">
+        <div className="mobile-menu-enter fixed inset-0 bg-white dark:bg-black z-[80] flex flex-col items-center justify-center space-y-8 text-xl text-black dark:text-white">
           <button
             onClick={() => setOpen(false)}
             className="absolute top-6 right-6 text-black dark:text-white"
