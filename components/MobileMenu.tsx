@@ -53,8 +53,8 @@ export default function MobileMenu() {
           aria-label="Open menu"
           className={
             isHome
-              ? 'text-white rounded-md p-2 bg-black/25 hover:bg-black/35 active:bg-black/40 transition-colors'
-              : 'text-black dark:text-white rounded-md p-2 hover:bg-black/5 dark:hover:bg-white/10 transition-colors'
+              ? 'press-feedback text-white rounded-md p-2 bg-black/25 hover:bg-black/35 active:bg-black/40 transition-colors'
+              : 'press-feedback text-black dark:text-white rounded-md p-2 hover:bg-black/5 dark:hover:bg-white/10 transition-colors'
           }
         >
           <Menu size={24} />
@@ -65,7 +65,7 @@ export default function MobileMenu() {
         <div className="mobile-menu-enter fixed inset-0 bg-white dark:bg-black z-[80] flex flex-col items-center justify-center space-y-8 text-xl text-black dark:text-white">
           <button
             onClick={() => setOpen(false)}
-            className="absolute top-6 right-6 text-black dark:text-white"
+            className="press-feedback absolute top-6 right-6 text-black dark:text-white"
             aria-label="Close menu"
           >
             <X size={28} />
@@ -114,7 +114,7 @@ export default function MobileMenu() {
           {/* Theme toggle button for mobile */}
           <button 
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            className="flex items-center gap-2 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            className="press-feedback flex items-center gap-2 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             aria-label="Toggle theme"
           >
             {resolvedTheme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}

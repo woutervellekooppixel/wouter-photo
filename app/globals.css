@@ -76,6 +76,61 @@
 }
 
 @layer utilities {
+  .portfolio-focus-frame {
+    position: absolute;
+    inset: 16px;
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0.985);
+    transition: opacity 180ms ease-out, transform 180ms ease-out;
+  }
+
+  .portfolio-focus-frame > span {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border: solid rgb(255 255 255 / 0.8);
+    border-width: 0;
+  }
+
+  .portfolio-focus-frame > span:nth-child(1) { top: 0; left: 0; border-top-width: 1px; border-left-width: 1px; }
+  .portfolio-focus-frame > span:nth-child(2) { top: 0; right: 0; border-top-width: 1px; border-right-width: 1px; }
+  .portfolio-focus-frame > span:nth-child(3) { bottom: 0; left: 0; border-bottom-width: 1px; border-left-width: 1px; }
+  .portfolio-focus-frame > span:nth-child(4) { bottom: 0; right: 0; border-bottom-width: 1px; border-right-width: 1px; }
+
+  .portfolio-tile:focus-visible .portfolio-focus-frame {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .portfolio-tile:hover .portfolio-focus-frame {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .press-feedback {
+    transition: scale 140ms ease-out, color 150ms ease-out, background-color 150ms ease-out, border-color 150ms ease-out;
+  }
+
+  .press-feedback:not(:disabled):not([aria-disabled="true"]):active {
+    scale: 0.98;
+    transition-duration: 90ms;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .portfolio-focus-frame {
+      transform: none;
+      transition: none;
+    }
+    .press-feedback,
+    .press-feedback:not(:disabled):not([aria-disabled="true"]):active {
+      scale: none;
+      transition: none;
+    }
+  }
+
   @keyframes mobile-menu-enter {
     from {
       opacity: 0;

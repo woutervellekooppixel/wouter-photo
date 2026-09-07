@@ -64,14 +64,14 @@ export default function FloatingContactButton({
         onClick={() => setOpen(true)}
         className={(() => {
           if (mobile) {
-            return "w-full max-w-xs bg-black text-white dark:bg-white dark:text-black px-5 py-2.5 rounded-full shadow flex items-center justify-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors text-base"
+            return "press-feedback w-full max-w-xs bg-black text-white dark:bg-white dark:text-black px-5 py-2.5 rounded-full shadow flex items-center justify-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors text-base"
           }
 
           if (variant === 'home') {
-            return 'bg-white text-black px-5 py-2 rounded-full shadow flex items-center gap-2 hover:bg-white/90 transition-colors ml-2 text-sm font-medium'
+            return 'press-feedback bg-white text-black px-5 py-2 rounded-full shadow flex items-center gap-2 hover:bg-white/90 transition-colors ml-2 text-sm font-medium'
           }
 
-          return 'bg-black text-white dark:bg-white dark:text-black px-5 py-2 rounded-full shadow flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors ml-2 text-sm font-medium'
+          return 'press-feedback bg-black text-white dark:bg-white dark:text-black px-5 py-2 rounded-full shadow flex items-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors ml-2 text-sm font-medium'
         })()}
         aria-label="Contact"
       >

@@ -57,7 +57,7 @@ export default async function PortfolioPage() {
               <Link
                 key={cat.key}
                 href={cat.href}
-                className="group relative overflow-hidden bg-gray-100 dark:bg-white/5"
+                className="portfolio-tile group relative overflow-hidden bg-gray-100 dark:bg-white/5"
                 aria-label={`Open ${cat.label} portfolio`}
               >
                 <div className="relative h-full">
@@ -74,6 +74,10 @@ export default async function PortfolioPage() {
 
                   {/* Readability overlay */}
                   <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/15 to-black/20" />
+
+                  <span className="portfolio-focus-frame" aria-hidden="true">
+                    <span /><span /><span /><span />
+                  </span>
 
                   {/* Big label bottom-left (smaller + animated on hover) */}
                   <div className="absolute left-6 bottom-6 md:left-8 md:bottom-8">

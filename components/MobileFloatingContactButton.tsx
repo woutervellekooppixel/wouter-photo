@@ -52,7 +52,7 @@ export default function MobileFloatingContactButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed z-50 bottom-6 right-6 bg-black text-white rounded-full shadow-lg p-4 flex items-center justify-center md:hidden hover:bg-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-black"
+        className="press-feedback fixed z-50 bottom-6 right-6 bg-black text-white rounded-full shadow-lg p-4 flex items-center justify-center md:hidden hover:bg-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-black"
         aria-label="Contact"
         style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.18)' }}
       >

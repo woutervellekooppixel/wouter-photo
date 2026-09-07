@@ -163,7 +163,7 @@ export default function Header() {
         {/* Theme toggle button */}
         <button 
           onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          className={`${isHome ? 'hover:text-white/80' : 'hover:text-gray-600 dark:hover:text-gray-300'} transition-colors`}
+          className={`press-feedback ${isHome ? 'hover:text-white/80' : 'hover:text-gray-600 dark:hover:text-gray-300'} transition-colors`}
           aria-label="Toggle theme"
         >
           {mounted && resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}

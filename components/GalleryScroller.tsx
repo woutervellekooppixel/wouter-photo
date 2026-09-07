@@ -72,11 +72,11 @@ export default function GalleryScroller({ category, photos }: Props) {
   return (
     <section aria-label="Photo gallery" className="relative w-full bg-white dark:bg-black xl:h-screen xl:fixed xl:inset-0 xl:flex xl:items-center xl:pt-16">
       <button onClick={() => scrollPhoto(-1)} aria-label="Previous photo"
-        className="hidden xl:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-black bg-opacity-80 dark:bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 dark:hover:bg-opacity-100 text-black dark:text-white">
+        className="press-feedback hidden xl:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-black bg-opacity-80 dark:bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 dark:hover:bg-opacity-100 text-black dark:text-white">
         <ChevronLeft />
       </button>
       <button onClick={() => scrollPhoto(1)} aria-label="Next photo"
-        className="hidden xl:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-black bg-opacity-80 dark:bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 dark:hover:bg-opacity-100 text-black dark:text-white">
+        className="press-feedback hidden xl:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-black bg-opacity-80 dark:bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 dark:hover:bg-opacity-100 text-black dark:text-white">
         <ChevronRight />
       </button>
       {/* One image tree for all breakpoints: a mobile column, tablet grid,

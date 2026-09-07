@@ -91,7 +91,7 @@ export default function AboutPage() {
               <div className="flex flex-wrap gap-3 pt-2">
                 <Link
                   href="/portfolio"
-                  className="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-700 px-5 py-2.5 text-sm font-semibold hover:border-gray-500 dark:hover:border-gray-500 transition-colors"
+                  className="press-feedback inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-700 px-5 py-2.5 text-sm font-semibold hover:border-gray-500 dark:hover:border-gray-500 transition-colors"
                 >
                   View portfolio
                 </Link>
