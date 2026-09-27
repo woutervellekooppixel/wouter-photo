@@ -14,14 +14,9 @@ export default function AboutPage() {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             '@context': 'https://schema.org',
-            '@type': 'Person',
-            name: 'Wouter Vellekoop',
-            jobTitle: 'Photographer',
-            url: 'https://www.wouter.photo',
-            sameAs: [
-              'https://instagram.com/woutervellekoop',
-              'https://linkedin.com/in/woutervellekoop',
-            ],
+            '@type': 'ProfilePage',
+            url: 'https://www.wouter.photo/about',
+            mainEntity: { '@id': 'https://www.wouter.photo/#person' },
           }),
         }}
       />
@@ -71,6 +66,18 @@ export default function AboutPage() {
                 <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                   MOJO, Radio 538, North Sea Jazz, Ahoy', Talpa, BNN VARA, Residentie Orkest,
                   UNICEF Nederland, and many more.
+                </p>
+              </div>
+
+              {/* Diensten (NL) */}
+              <div>
+                <h2 className="text-lg font-semibold mb-2 tracking-tight">Services</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                  <Link href="/concertfotograaf" className="underline underline-offset-4 hover:text-black dark:hover:text-white transition-colors">Concertfotograaf</Link>
+                  {' · '}
+                  <Link href="/eventfotograaf" className="underline underline-offset-4 hover:text-black dark:hover:text-white transition-colors">Eventfotograaf</Link>
+                  {' · '}
+                  <Link href="/portretfotograaf" className="underline underline-offset-4 hover:text-black dark:hover:text-white transition-colors">Portret- en setfotograaf</Link>
                 </p>
               </div>
 

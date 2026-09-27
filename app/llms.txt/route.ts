@@ -4,13 +4,16 @@ export const revalidate = 3600
 
 const BASE = 'https://www.wouter.photo'
 
-const body = `# Wouter Vellekoop — Concert & Event Photographer
+const body = `# Wouter Vellekoop — Concertfotograaf, eventfotograaf & portretfotograaf
 
-> Wouter Vellekoop is a concert- en eventfotograaf (concert & event photographer) based in the Netherlands, working in Dutch and English. He shoots concert photography, event photography, live music, festivals and advertising/commercial work — for managers, marketing teams, production and agencies — with fast delivery and consistent quality. Credits include MOJO, Radio 538, North Sea Jazz, Ahoy, Talpa, BNN VARA, Residentie Orkest and UNICEF Nederland. Available for bookings worldwide.
+> Wouter Vellekoop is a concertfotograaf, eventfotograaf and portret- en setfotograaf (concert, event, portrait and set photographer) working throughout the Netherlands (door heel Nederland), in Dutch and English. He shoots concerts, festivals, events, portraits of artists and well-known Dutch personalities (BN'ers), set photography for TV, radio and campaign productions, and advertising work — for artists, managements, venues, production companies, brands, agencies and media. He focuses on high-end commissions rather than volume work, with fast delivery via his own download portal. Credits include MOJO, Radio 538, North Sea Jazz, Ahoy, Talpa, BNN VARA, Residentie Orkest and UNICEF Nederland. Available for bookings worldwide.
 
 ## Belangrijkste pagina's
 
 - [Home](${BASE}): Overzicht en hero-portfolio van Wouter Vellekoop.
+- [Concertfotograaf](${BASE}/concertfotograaf): Concertfotografie voor artiesten, podia, festivals en media door heel Nederland.
+- [Eventfotograaf](${BASE}/eventfotograaf): Eventfotografie voor productiebureaus, merken en organisaties door heel Nederland.
+- [Portret- en setfotograaf](${BASE}/portretfotograaf): Portretten van artiesten en BN'ers, setfotografie voor tv, radio en campagnes.
 - [About](${BASE}/about): Over Wouter Vellekoop, achtergrond en diensten; beschikbaar voor boekingen wereldwijd.
 - [Portfolio](${BASE}/portfolio): Volledige fotografie-galerij — concerten, events en creatief werk.
 - [Portfolio — Concerts](${BASE}/portfolio/concerts): Concert- en live-muziekfotografie.

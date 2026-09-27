@@ -18,6 +18,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }> = [
     { path: '', priority: 1.0, changeFrequency: 'weekly' },
     { path: '/about', priority: 0.9, changeFrequency: 'monthly' },
+    { path: '/concertfotograaf', priority: 0.9, changeFrequency: 'monthly' },
+    { path: '/eventfotograaf', priority: 0.9, changeFrequency: 'monthly' },
+    { path: '/portretfotograaf', priority: 0.9, changeFrequency: 'monthly' },
     { path: '/portfolio', priority: 0.8, changeFrequency: 'monthly' },
     { path: '/portfolio/concerts', priority: 0.8, changeFrequency: 'monthly' },
     { path: '/portfolio/events', priority: 0.8, changeFrequency: 'monthly' },

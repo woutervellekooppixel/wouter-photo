@@ -85,46 +85,60 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // Gebruik Next.js usePathname hook voor correcte route-detectie (client-side)
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Person',
-    name: 'Wouter Vellekoop',
-    jobTitle: 'Photographer',
-    description: 'Concert, event, and advertising photographer based in the Netherlands',
-    url: 'https://www.wouter.photo',
-    image: 'https://www.wouter.photo/2022_NSJF-Fri_1179.jpg',
-    address: {
-      '@type': 'PostalAddress',
-      addressCountry: 'NL',
-      addressLocality: 'Netherlands'
-    },
-    contactPoint: {
-      '@type': 'ContactPoint',
-      email: 'hello@wouter.photo',
-      contactType: 'Business Inquiries'
-    },
-    sameAs: [
-      'https://instagram.com/woutervellekoop',
-      'https://linkedin.com/in/woutervellekoop'
-    ],
-    knowsAbout: [
-      'Concert Photography',
-      'Event Photography', 
-      'Live Music Photography',
-      'Corporate Events',
-      'Advertising Photography',
-      'Festival Photography'
-    ],
-    hasCredential: [
-      'MOJO',
-      'Radio 538', 
-      'North Sea Jazz',
-      'Ahoy',
-      'Talpa',
-      'BNN VARA',
-      'Residentie Orkest',
-      'UNICEF Nederland'
+    '@graph': [
+      {
+        '@type': 'Person',
+        '@id': 'https://www.wouter.photo/#person',
+        name: 'Wouter Vellekoop',
+        jobTitle: 'Concertfotograaf, eventfotograaf en portretfotograaf',
+        description: 'Concert-, event-, portret- en setfotograaf uit Nederland, werkzaam door heel Nederland',
+        url: 'https://www.wouter.photo',
+        image: 'https://www.wouter.photo/2022_NSJF-Fri_1179.jpg',
+        worksFor: { '@id': 'https://www.wouter.photo/#business' },
+        sameAs: [
+          'https://instagram.com/woutervellekoop',
+          'https://linkedin.com/in/woutervellekoop'
+        ],
+        knowsAbout: [
+          'Concertfotografie',
+          'Eventfotografie',
+          'Portretfotografie',
+          'Setfotografie',
+          'Festivalfotografie',
+          'Concert Photography',
+          'Event Photography',
+          'Portrait Photography',
+          'Advertising Photography'
+        ]
+      },
+      {
+        '@type': 'ProfessionalService',
+        '@id': 'https://www.wouter.photo/#business',
+        name: 'Wouter Vellekoop Photography',
+        description: 'Concertfotografie, eventfotografie, portretfotografie en setfotografie voor artiesten, podia, festivals, merken en media — door heel Nederland.',
+        url: 'https://www.wouter.photo',
+        image: 'https://www.wouter.photo/2022_NSJF-Fri_1179.jpg',
+        email: 'hello@wouter.photo',
+        founder: { '@id': 'https://www.wouter.photo/#person' },
+        address: { '@type': 'PostalAddress', addressCountry: 'NL' },
+        areaServed: { '@type': 'Country', name: 'Nederland' },
+        knowsLanguage: ['nl', 'en'],
+        sameAs: [
+          'https://instagram.com/woutervellekoop',
+          'https://linkedin.com/in/woutervellekoop'
+        ],
+        hasOfferCatalog: {
+          '@type': 'OfferCatalog',
+          name: 'Fotografie',
+          itemListElement: [
+            { '@type': 'Offer', itemOffered: { '@id': 'https://www.wouter.photo/concertfotograaf#service' } },
+            { '@type': 'Offer', itemOffered: { '@id': 'https://www.wouter.photo/eventfotograaf#service' } },
+            { '@type': 'Offer', itemOffered: { '@id': 'https://www.wouter.photo/portretfotograaf#service' } }
+          ]
+        }
+      }
     ]
   }
 
