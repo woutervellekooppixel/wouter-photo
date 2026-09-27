@@ -8,13 +8,15 @@ const PATH = '/portretfotograaf'
 const DESCRIPTION =
   'Wouter Vellekoop maakt portretten van artiesten en bekende Nederlanders, en werkt als setfotograaf bij tv-, radio- en campagneproducties — door heel Nederland.'
 
-export const metadata: Metadata = serviceMetadata(PATH, 'Portret- en setfotograaf', DESCRIPTION)
+export const metadata: Metadata = serviceMetadata('nl', { nl: PATH, en: '/portrait-photographer' }, 'Portret- en setfotograaf', DESCRIPTION)
 
 export default async function PortretfotograafPage() {
   const gallery = await getCachedPortfolioGalleryData()
 
   return (
     <ServicePage
+      locale="nl"
+      translation={{ href: '/portrait-photographer', label: 'In English' }}
       path={PATH}
       title="Portret- en setfotograaf"
       serviceType="Portretfotografie en setfotografie"

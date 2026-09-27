@@ -7,9 +7,19 @@ const BASE = 'https://www.wouter.photo'
 
 export type ServiceLink = { href: string; label: string }
 
-// Nederlandstalige dienstpagina (concert-/event-/portretfotograaf). Zelfde opbouw
-// als /about: foto links, tekst rechts. Geen FAQ — bewuste keuze van Wouter.
+// Dienstpagina (concert-/event-/portretfotograaf), in het Nederlands of Engels.
+// Zelfde opbouw als /about: foto links, tekst rechts. Geen FAQ — bewuste keuze van Wouter.
+
+type Locale = 'nl' | 'en'
+
+const COPY = {
+  nl: { also: 'Ook:', inLanguage: 'nl-NL', country: 'Nederland', ogLocale: 'nl_NL', suffix: 'heel Nederland' },
+  en: { also: 'Also:', inLanguage: 'en', country: 'Netherlands', ogLocale: 'en_US', suffix: 'the Netherlands' },
+} as const
+
 export default function ServicePage({
+  locale,
+  translation,
   path,
   title,
   serviceType,
@@ -20,6 +30,8 @@ export default function ServicePage({
   portfolio,
   related,
 }: {
+  locale: Locale
+  translation: ServiceLink
   path: string
   title: string
   serviceType: string
@@ -30,6 +42,7 @@ export default function ServicePage({
   portfolio: ServiceLink
   related: ServiceLink[]
 }) {
+  const copy = COPY[locale]
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Service',
@@ -38,9 +51,9 @@ export default function ServicePage({
     serviceType,
     description,
     url: `${BASE}${path}`,
-    inLanguage: 'nl-NL',
+    inLanguage: copy.inLanguage,
     provider: { '@id': `${BASE}/#business` },
-    areaServed: { '@type': 'Country', name: 'Nederland' },
+    areaServed: { '@type': 'Country', name: copy.country },
   }
 
   return (
@@ -50,7 +63,7 @@ export default function ServicePage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <main lang="nl" className="min-h-dvh bg-white dark:bg-black text-black dark:text-white">
+      <main lang={locale} className="min-h-dvh bg-white dark:bg-black text-black dark:text-white">
         <section className="py-20 px-6 max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
             {photo && (
@@ -85,7 +98,7 @@ export default function ServicePage({
 
               <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800">
                 <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                  Ook:{' '}
+                  {copy.also}{' '}
                   {related.map((r, i) => (
                     <span key={r.href}>
                       {i > 0 && ' · '}
@@ -97,6 +110,14 @@ export default function ServicePage({
                       </Link>
                     </span>
                   ))}
+                  {' · '}
+                  <Link
+                    href={translation.href}
+                    hrefLang={locale === 'nl' ? 'en' : 'nl'}
+                    className="underline underline-offset-4 hover:text-black dark:hover:text-white transition-colors"
+                  >
+                    {translation.label}
+                  </Link>
                 </p>
               </div>
 
@@ -122,18 +143,28 @@ export function pickServicePhoto(photos: Photo[] | undefined): Photo | undefined
   return photos?.find((p) => p.alt.includes(', 20')) ?? photos?.[0]
 }
 
-export function serviceMetadata(path: string, title: string, description: string) {
-  const url = `${BASE}${path}`
+// nlPath/enPath: de twee taalversies van dezelfde dienst, voor hreflang.
+export function serviceMetadata(
+  locale: Locale,
+  paths: { nl: string; en: string },
+  title: string,
+  description: string,
+) {
+  const copy = COPY[locale]
+  const url = `${BASE}${paths[locale]}`
   return {
-    title: { absolute: `${title} Wouter Vellekoop – heel Nederland` },
+    title: { absolute: `${title} Wouter Vellekoop – ${copy.suffix}` },
     description,
-    alternates: { canonical: url },
+    alternates: {
+      canonical: url,
+      languages: { nl: `${BASE}${paths.nl}`, en: `${BASE}${paths.en}` },
+    },
     openGraph: {
       title: `${title} Wouter Vellekoop`,
       description,
       url,
       siteName: 'Wouter.Photo',
-      locale: 'nl_NL',
+      locale: copy.ogLocale,
       type: 'website' as const,
       images: [{ url: `${BASE}/2022_NSJF-Fri_1179.jpg`, width: 1200, height: 800, alt: `${title} Wouter Vellekoop` }],
     },

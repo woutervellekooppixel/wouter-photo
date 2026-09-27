@@ -8,13 +8,15 @@ const PATH = '/eventfotograaf'
 const DESCRIPTION =
   'Wouter Vellekoop is eventfotograaf voor productiebureaus, merken en organisaties door heel Nederland — van TwitchCon in Ahoy tot Luminiscence in de Nieuwe Kerk.'
 
-export const metadata: Metadata = serviceMetadata(PATH, 'Eventfotograaf', DESCRIPTION)
+export const metadata: Metadata = serviceMetadata('nl', { nl: PATH, en: '/event-photographer' }, 'Eventfotograaf', DESCRIPTION)
 
 export default async function EventfotograafPage() {
   const gallery = await getCachedPortfolioGalleryData()
 
   return (
     <ServicePage
+      locale="nl"
+      translation={{ href: '/event-photographer', label: 'In English' }}
       path={PATH}
       title="Eventfotograaf"
       serviceType="Eventfotografie"

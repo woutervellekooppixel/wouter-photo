@@ -14,6 +14,9 @@ const body = `# Wouter Vellekoop — Concertfotograaf, eventfotograaf & portretf
 - [Concertfotograaf](${BASE}/concertfotograaf): Concertfotografie voor artiesten, podia, festivals en media door heel Nederland.
 - [Eventfotograaf](${BASE}/eventfotograaf): Eventfotografie voor productiebureaus, merken en organisaties door heel Nederland.
 - [Portret- en setfotograaf](${BASE}/portretfotograaf): Portretten van artiesten en BN'ers, setfotografie voor tv, radio en campagnes.
+- [Concert photographer (EN)](${BASE}/concert-photographer): English version of the concert photography page.
+- [Event photographer (EN)](${BASE}/event-photographer): English version of the event photography page.
+- [Portrait & set photographer (EN)](${BASE}/portrait-photographer): English version of the portrait and set photography page.
 - [About](${BASE}/about): Over Wouter Vellekoop, achtergrond en diensten; beschikbaar voor boekingen wereldwijd.
 - [Portfolio](${BASE}/portfolio): Volledige fotografie-galerij — concerten, events en creatief werk.
 - [Portfolio — Concerts](${BASE}/portfolio/concerts): Concert- en live-muziekfotografie.

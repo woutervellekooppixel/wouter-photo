@@ -8,13 +8,15 @@ const PATH = '/concertfotograaf'
 const DESCRIPTION =
   'Wouter Vellekoop is concertfotograaf voor artiesten, podia, festivals en media door heel Nederland — van clubshows tot Ziggo Dome, Carré, Ahoy en North Sea Jazz.'
 
-export const metadata: Metadata = serviceMetadata(PATH, 'Concertfotograaf', DESCRIPTION)
+export const metadata: Metadata = serviceMetadata('nl', { nl: PATH, en: '/concert-photographer' }, 'Concertfotograaf', DESCRIPTION)
 
 export default async function ConcertfotograafPage() {
   const gallery = await getCachedPortfolioGalleryData()
 
   return (
     <ServicePage
+      locale="nl"
+      translation={{ href: '/concert-photographer', label: 'In English' }}
       path={PATH}
       title="Concertfotograaf"
       serviceType="Concertfotografie"

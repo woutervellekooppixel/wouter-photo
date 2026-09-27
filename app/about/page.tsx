@@ -69,15 +69,15 @@ export default function AboutPage() {
                 </p>
               </div>
 
-              {/* Diensten (NL) */}
+              {/* Diensten (EN; elke pagina linkt door naar de NL-versie) */}
               <div>
                 <h2 className="text-lg font-semibold mb-2 tracking-tight">Services</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                  <Link href="/concertfotograaf" className="underline underline-offset-4 hover:text-black dark:hover:text-white transition-colors">Concertfotograaf</Link>
+                  <Link href="/concert-photographer" className="underline underline-offset-4 hover:text-black dark:hover:text-white transition-colors">Concert photographer</Link>
                   {' · '}
-                  <Link href="/eventfotograaf" className="underline underline-offset-4 hover:text-black dark:hover:text-white transition-colors">Eventfotograaf</Link>
+                  <Link href="/event-photographer" className="underline underline-offset-4 hover:text-black dark:hover:text-white transition-colors">Event photographer</Link>
                   {' · '}
-                  <Link href="/portretfotograaf" className="underline underline-offset-4 hover:text-black dark:hover:text-white transition-colors">Portret- en setfotograaf</Link>
+                  <Link href="/portrait-photographer" className="underline underline-offset-4 hover:text-black dark:hover:text-white transition-colors">Portrait &amp; set photographer</Link>
                 </p>
               </div>
 
