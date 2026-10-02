@@ -10,7 +10,7 @@
     "deploy": "vercel --prod"
   },
   "engines": {
-    "node": ">=20 <21"
+    "node": "24.x"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1095.0",
