@@ -111,14 +111,9 @@ export default async function DownloadPage({ params }: PageProps) {
     slug: metadata.slug,
     title: metadata.title,
     createdAt: metadata.createdAt,
-    expiresAt: metadata.expiresAt,
     files: metadata.files,
     previewImageKey: metadata.previewImageKey,
-    backgroundImageKey: metadata.backgroundImageKey,
-    ratings: metadata.ratings,
-    ratingsEnabled: metadata.ratingsEnabled,
     useDefaultHero: metadata.useDefaultHero,
-    downloads: 0,
   };
 
   return <DownloadGallery metadata={clientMetadata} expiresAt={expiresAt} />;

@@ -7,7 +7,6 @@ import {
   Download,
   Image as ImageIcon,
   ChevronDown,
-  ChevronRight,
   FileText,
   File as FileIcon,
   FileArchive,
@@ -15,15 +14,12 @@ import {
   FileSpreadsheet,
   Video,
   Music,
-  Heart,
   AlertCircle,
   X,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Lightbox, LightboxImage } from "@/components/Lightbox";
-import { formatBytes, formatDate, sortFilesChronological, shouldFilterFile, isImageFile, isZipFile } from "@/lib/utils";
+import { formatBytes, sortFilesChronological, shouldFilterFile, isImageFile } from "@/lib/utils";
 
-/** ====== Minimaal benodigde types (vervang door je projecttypes indien gewenst) ====== */
 type UploadFile = {
   key: string;
   name: string;
@@ -38,35 +34,33 @@ type UploadMetadata = {
   createdAt?: string;
   previewImageKey?: string;
   files: UploadFile[];
-  ratingsEnabled?: boolean;
-  ratings?: Record<string, boolean>;
   useDefaultHero?: boolean;
 };
-/** ===================================================================================== */
+
+// Blokkeer opslaan via long-press (iOS) en slepen; downloads lopen altijd
+// via de downloadknoppen zodat de klant het échte bestand krijgt i.p.v.
+// een verkleinde preview.
+const NO_SAVE_STYLE = {
+  WebkitTouchCallout: "none",
+  WebkitUserSelect: "none",
+  userSelect: "none",
+} as React.CSSProperties;
 
 export default function DownloadGallery({ metadata, expiresAt }: { metadata: UploadMetadata; expiresAt?: string }) {
   // Lightbox state
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Per-thumbnail aspect ratio (width / height). Used to render each tile in its original proportion.
+  // Per-thumbnail aspect ratio (width / height); tegels behouden hun verhouding.
   const [thumbAspectRatios, setThumbAspectRatios] = useState<Record<string, number>>({});
 
   const [downloading, setDownloading] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadingFile, setDownloadingFile] = useState<string | null>(null);
-  const [fileDownloadProgress, setFileDownloadProgress] = useState(0);
-  const [fileDownloadPhase, setFileDownloadPhase] = useState<"idle" | "downloading" | "resetting">("idle");
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
-  const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>({});
   const [loadingThumbnails, setLoadingThumbnails] = useState(true);
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(true);
   const [thumbnailsLoaded, setThumbnailsLoaded] = useState(0);
   const [previewLoaded, setPreviewLoaded] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
-  const [isSelectMode, setIsSelectMode] = useState(false);
-  const [ratings, setRatings] = useState<Record<string, boolean>>({});
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
@@ -74,7 +68,20 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
   const [heroUrl, setHeroUrl] = useState<string | null>(null);
   const [heroObjectPosition, setHeroObjectPosition] = useState<string>("50% 35%");
 
-  // Fake loader percentage voor hero (kan gebruikt worden voor animaties)
+  // Sticky actiebalk zodra de cover-hero uit beeld is
+  const [showBar, setShowBar] = useState(false);
+  const heroSectionRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const onScroll = () => {
+      const bottom = heroSectionRef.current?.getBoundingClientRect().bottom ?? 0;
+      setShowBar(bottom < 56);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Fake loader percentage voor de intro (bewust behouden)
   const [fakePercent, setFakePercent] = useState(0);
 
   const introCompletedRef = useRef(false);
@@ -83,11 +90,6 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
   useEffect(() => {
     previewLoadedRef.current = previewLoaded;
   }, [previewLoaded]);
-
-  const hasImagesForIntro = useMemo(() => {
-    if (metadata.useDefaultHero) return false;
-    return (metadata.files || []).some((f) => !shouldFilterFile(f.name) && isImageFile(f.name));
-  }, [metadata.files, metadata.useDefaultHero]);
 
   useEffect(() => {
     if (!loadingThumbnails) {
@@ -108,7 +110,6 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
     const animate = () => {
       const elapsed = performance.now() - start;
       const t = Math.min(1, elapsed / duration);
-      // Easing for a more premium / less linear feel
       const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
       const percent = Math.min(100, eased * 100);
       setFakePercent(percent);
@@ -118,7 +119,8 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
     };
     raf = requestAnimationFrame(animate) as unknown as number;
     return () => cancelAnimationFrame(raf as unknown as number);
-  }, [loadingThumbnails, previewLoaded, hasImagesForIntro]);
+  }, [loadingThumbnails, previewLoaded]);
+
   // Houd overlay kort in DOM voor fade-out animatie
   useEffect(() => {
     if (loadingThumbnails) {
@@ -127,8 +129,6 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
       }
       return;
     }
-
-    // Once the intro completed, never show it again for this page instance.
     introCompletedRef.current = true;
     const t = window.setTimeout(() => setShowLoadingOverlay(false), 900);
     return () => window.clearTimeout(t);
@@ -139,8 +139,7 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
     () => sortFilesChronological(metadata.files).filter((f) => !shouldFilterFile(f.name)),
     [metadata.files]
   );
-  // Fotofunctie uit (useDefaultHero): álle bestanden — ook afbeeldingen —
-  // worden als gewone bestanden in de lijst getoond i.p.v. als fotogalerij.
+  // Fotofunctie uit (useDefaultHero): álle bestanden als gewone bestanden tonen.
   const imageFiles = useMemo(
     () => (metadata.useDefaultHero ? [] : visibleFiles.filter((f) => isImageFile(f.name))),
     [visibleFiles, metadata.useDefaultHero]
@@ -151,43 +150,27 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
   );
   const totalSize = useMemo(() => visibleFiles.reduce((sum, f) => sum + (f.size || 0), 0), [visibleFiles]);
 
-  const favoriteImageFiles = useMemo(
-    () => imageFiles.filter((f) => !!ratings[f.key]),
-    [imageFiles, ratings]
-  );
-  const displayedImageFiles = useMemo(
-    () => (showFavoritesOnly ? favoriteImageFiles : imageFiles),
-    [showFavoritesOnly, favoriteImageFiles, imageFiles]
-  );
-  const favoriteCount = favoriteImageFiles.length;
-
   const ROOT_FILES_FOLDER = "__ROOT__";
 
-  // These images are already resized/optimized (sharp -> webp) by our own API,
-  // so running them through Next/Vercel Image Optimization again just burns
-  // Image Optimization "Transformations" without improving quality.
+  // Al verkleind/geoptimaliseerd door onze eigen API — niet nóg eens door
+  // Vercel Image Optimization halen.
   const isPreOptimizedApiImage = (src?: string | null) => {
     if (!src) return false;
     return src.startsWith("/api/thumbnail/");
   };
 
   const getThumbUrl = (key: string) => {
-    // Serve real resized thumbnails (webp) to keep the page light.
     return `/api/thumbnail/${metadata.slug}?key=${encodeURIComponent(key)}&w=640`;
   };
 
   const getLightboxUrl = (key: string) => {
-    // Bewust een verkleinde webp (géén origineel): wie via rechtermuisknop
-    // of dev-tools opslaat, krijgt hooguit deze preview. Het origineel is
-    // alleen via de downloadknop (/api/download/.../file) bereikbaar.
-    // Let op: w moet < 2000 blijven, anders redirect de thumbnail-route
-    // naar het origineel in R2.
+    // Bewust een verkleinde webp (géén origineel) — wie dit opslaat heeft
+    // hooguit een preview. Het origineel is alleen via de downloadknop
+    // bereikbaar. w moet < 2000 blijven (daarboven redirect naar origineel).
     return `/api/thumbnail/${metadata.slug}?key=${encodeURIComponent(key)}&w=1920`;
   };
 
   const getHeroUrl = (key: string) => {
-    // Hero is full-bleed op de meeste schermen; grotere renditie dan de grid-
-    // thumbnails, maar bewust een verkleinde webp — nooit het origineel.
     return `/api/thumbnail/${metadata.slug}?key=${encodeURIComponent(key)}&w=2560&v=3`;
   };
 
@@ -218,13 +201,10 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
     });
   };
 
-  // Auto-choose hero if admin hasn't picked one.
-    // Rule: first (chronological) photo that is ~3:2 becomes hero.
+  // Auto-choose hero if admin hasn't picked one: eerste ~3:2 foto wint.
   useEffect(() => {
     let cancelled = false;
 
-    // Designlevering: nooit een bestand uit de transfer als hero gebruiken —
-    // altijd de standaard-achtergrond (backgroundUrl-fallback pakt het op).
     if (metadata.useDefaultHero) {
       setHeroKey(null);
       setHeroUrl(null);
@@ -237,7 +217,6 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
       .filter((f) => !shouldFilterFile(f.name) && isImageFile(f.name))
       .map((f) => f.key);
 
-    // Manual override from /admin always wins.
     if (metadata.previewImageKey) {
       setHeroKey(metadata.previewImageKey);
       setHeroUrl(getHeroUrl(metadata.previewImageKey));
@@ -254,7 +233,6 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
       };
     }
 
-    // Start with the first image so the overlay has something immediately.
     const fallbackKey = imgs[0];
     setHeroKey(fallbackKey);
     setHeroUrl(getHeroUrl(fallbackKey));
@@ -267,13 +245,11 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
         let firstPortraitMatch: string | null = null;
         for (const key of imgs) {
           if (cancelled) return;
-          // Probe using the small thumbnail for speed; aspect ratio is preserved.
           const src = `${getThumbUrl(key)}&probe=1`;
           const { width, height } = await probeImageSize(src);
           if (!width || !height) continue;
           const r = width / height;
 
-          // Prefer landscape 3:2.
           if (isClose(r, 3 / 2)) {
             if (!cancelled) {
               setHeroKey(key);
@@ -282,7 +258,6 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
             return;
           }
 
-          // Keep a portrait 2:3 as a secondary option.
           if (!firstPortraitMatch && isClose(r, 2 / 3)) {
             firstPortraitMatch = key;
           }
@@ -303,11 +278,9 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [metadata.slug, metadata.previewImageKey, metadata.files, metadata.useDefaultHero]);
 
-  // Thumbnails "opbouwen" (geen echte fetch nodig; URLs naar je API)
+  // Thumbnails opbouwen + intro-timing (6s vanaf geladen hero — bewust zo)
   useEffect(() => {
     if (!metadata || !metadata.files) return;
-    // Fotofunctie uit: afbeeldingen worden als gewone bestanden behandeld,
-    // dus ook geen thumbnails/fotogalerij-intro voorbereiden.
     const imgs = metadata.useDefaultHero
       ? []
       : metadata.files.filter((f) => !shouldFilterFile(f.name) && isImageFile(f.name));
@@ -315,7 +288,6 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
       setThumbnailUrls({});
       setThumbnailsLoaded(0);
 
-      // Truly empty gallery (no files at all) — skip the intro overlay entirely.
       const allVisible = metadata.files.filter((f) => !shouldFilterFile(f.name));
       if (allVisible.length === 0) {
         setPreviewLoaded(true);
@@ -323,22 +295,16 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
         return () => {};
       }
 
-      // Files-only (no images): keep the hero intro overlay visible briefly.
-      // previewLoaded wordt pas gezet zodra de standaard-hero geladen is
-      // (onLoad van de achtergrond-Image), zodat de animatie én de 6s-klok
-      // niet starten op een lege/zwarte achtergrond.
       setPreviewLoaded(false);
       setLoadingThumbnails(true);
 
       let cancelled = false;
       (async () => {
-        // Wacht tot de hero geladen is (met vangnet als dat nooit gebeurt)
         const graceMs = 5000;
         const t0 = Date.now();
         while (!cancelled && !previewLoadedRef.current && Date.now() - t0 < graceMs) {
           await new Promise((res) => setTimeout(res, 75));
         }
-        // Vanaf nu pas de intro-duur laten lopen
         const minDelay = 6000;
         await new Promise((res) => setTimeout(res, minDelay));
         if (!cancelled) setLoadingThumbnails(false);
@@ -365,9 +331,6 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
       }
       if (!cancelled) setThumbnailUrls(urls);
 
-      // Eerst wachten tot de hero echt geladen is (de vulanimatie start dan
-      // pas — die wacht op previewLoaded), en dáárna de 6s intro-duur laten
-      // lopen. Vangnet: als de hero nooit laadt, gaan we na 4s toch verder.
       const finish = async () => {
         const graceMs = 4000;
         const t0 = Date.now();
@@ -388,48 +351,7 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
     };
   }, [metadata]);
 
-  // Ratings laden
-  useEffect(() => {
-    if (metadata.ratings) setRatings(metadata.ratings);
-  }, [metadata.ratings]);
-
-  // Live countdown tot de vervaldatum in de statistiekbalk — tikt per
-  // seconde weg ("Expires in 31 days 10 hours 10 minutes and 21 seconds").
-  const [expiryCountdown, setExpiryCountdown] = useState<string | null>(null);
-  useEffect(() => {
-    if (!expiresAt) {
-      setExpiryCountdown(null);
-      return;
-    }
-    const expires = new Date(expiresAt).getTime();
-    if (!Number.isFinite(expires)) {
-      setExpiryCountdown(null);
-      return;
-    }
-    const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
-    const update = () => {
-      const ms = expires - Date.now();
-      if (ms <= 0) {
-        setExpiryCountdown("Expired");
-        return;
-      }
-      const s = Math.floor(ms / 1000);
-      const days = Math.floor(s / 86400);
-      const hours = Math.floor((s % 86400) / 3600);
-      const minutes = Math.floor((s % 3600) / 60);
-      const seconds = s % 60;
-      const parts: string[] = [];
-      if (days > 0) parts.push(plural(days, "day"));
-      if (days > 0 || hours > 0) parts.push(plural(hours, "hour"));
-      parts.push(plural(minutes, "minute"));
-      setExpiryCountdown(`Expires in ${parts.join(" ")} and ${plural(seconds, "second")}`);
-    };
-    update();
-    const t = window.setInterval(update, 1000);
-    return () => window.clearInterval(t);
-  }, [expiresAt]);
-
-  // Achtergrond (fallback) laden als geen preview
+  // Achtergrond (fallback) laden als geen hero-foto
   useEffect(() => {
     if (heroKey) return;
     const checkBackground = async () => {
@@ -443,48 +365,33 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
       } catch {
         // ignore
       }
-      const localUrl = "/default-background.svg";
-      setBackgroundUrl(localUrl);
+      setBackgroundUrl("/default-background.svg");
     };
     checkBackground();
   }, [heroKey]);
 
+  // Vervaldatum: rustige vaste tekst; urgentie via de banner.
+  const expiryInfo = useMemo(() => {
+    if (!expiresAt) return null;
+    const expires = new Date(expiresAt);
+    if (!Number.isFinite(expires.getTime())) return null;
+    const msLeft = expires.getTime() - Date.now();
+    const hoursLeft = msLeft / (1000 * 60 * 60);
+    const daysLeft = Math.ceil(hoursLeft / 24);
+    return { expires, hoursLeft, daysLeft };
+  }, [expiresAt]);
+
   const getFileIcon = (filename: string) => {
     const ext = filename.toLowerCase().split(".").pop();
-
-    if (["zip", "rar", "7z", "tar", "gz"].includes(ext || "")) {
-      return <FileArchive className="h-5 w-5 text-purple-600 flex-shrink-0" />;
-    }
-    if (["js", "ts", "jsx", "tsx", "html", "css", "scss", "php", "py", "java", "c", "cpp", "json"].includes(ext || "")) {
-      return <FileCode className="h-5 w-5 text-green-600 flex-shrink-0" />;
-    }
-    if (["pdf", "doc", "docx", "txt", "rtf", "odt"].includes(ext || "")) {
-      return <FileText className="h-5 w-5 text-red-600 flex-shrink-0" />;
-    }
-    if (["xls", "xlsx", "csv", "ods"].includes(ext || "")) {
-      return <FileSpreadsheet className="h-5 w-5 text-green-600 flex-shrink-0" />;
-    }
-    if (["mp4", "mov", "avi", "mkv", "wmv", "flv", "webm"].includes(ext || "")) {
-      return <Video className="h-5 w-5 text-pink-600 flex-shrink-0" />;
-    }
-    if (["mp3", "wav", "flac", "aac", "ogg", "m4a"].includes(ext || "")) {
-      return <Music className="h-5 w-5 text-blue-600 flex-shrink-0" />;
-    }
-    return <FileIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />;
-  };
-
-  const toggleSelectFile = (fileKey: string) => {
-    setSelectedFiles((prev) => {
-      const ns = new Set(prev);
-      if (ns.has(fileKey)) ns.delete(fileKey);
-      else ns.add(fileKey);
-      return ns;
-    });
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedFiles.size === displayedImageFiles.length) setSelectedFiles(new Set());
-    else setSelectedFiles(new Set(displayedImageFiles.map((f) => f.key)));
+    const cls = "h-5 w-5 flex-shrink-0 text-neutral-400 dark:text-neutral-500";
+    if (["zip", "rar", "7z", "tar", "gz"].includes(ext || "")) return <FileArchive className={cls} />;
+    if (["js", "ts", "jsx", "tsx", "html", "css", "scss", "php", "py", "java", "c", "cpp", "json"].includes(ext || ""))
+      return <FileCode className={cls} />;
+    if (["pdf", "doc", "docx", "txt", "rtf", "odt"].includes(ext || "")) return <FileText className={cls} />;
+    if (["xls", "xlsx", "csv", "ods"].includes(ext || "")) return <FileSpreadsheet className={cls} />;
+    if (["mp4", "mov", "avi", "mkv", "wmv", "flv", "webm"].includes(ext || "")) return <Video className={cls} />;
+    if (["mp3", "wav", "flac", "aac", "ogg", "m4a"].includes(ext || "")) return <Music className={cls} />;
+    return <FileIcon className={cls} />;
   };
 
   const triggerDownloadAnchor = (href: string, downloadName?: string) => {
@@ -497,26 +404,18 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
   };
 
   // Vraagt de downloadroute eerst om JSON (zelfde origin, dus fouten zijn
-  // leesbaar — een anchor-navigatie zou een 429/410-JSON-body als "foto"
-  // opslaan) en navigeert daarna pas naar de echte download-URL.
-  const requestManagedDownload = async (
-    apiPath: string,
-    downloadName?: string
-  ): Promise<boolean> => {
+  // leesbaar) en navigeert daarna pas naar de echte download-URL.
+  const requestManagedDownload = async (apiPath: string, downloadName?: string): Promise<boolean> => {
     try {
       const sep = apiPath.includes("?") ? "&" : "?";
       const res = await fetch(`${apiPath}${sep}mode=json`);
       if (res.status === 429) {
         const data = await res.json().catch(() => ({} as any));
-        setDownloadError(
-          `Too many downloads. Please wait ${data.retryAfter || 60} seconds and try again.`
-        );
+        setDownloadError(`Too many downloads. Please wait ${data.retryAfter || 60} seconds and try again.`);
         return false;
       }
       if (res.status === 202) {
-        setDownloadError(
-          "Your ZIP is being prepared — please try again in a few minutes."
-        );
+        setDownloadError("Your ZIP is being prepared — please try again in a few minutes.");
         return false;
       }
       if (res.status === 410) {
@@ -533,7 +432,6 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
         return true;
       }
       if (data?.stream) {
-        // Klein genoeg om te streamen; skipcount voorkomt dubbele telling/mail.
         triggerDownloadAnchor(`${apiPath}${sep}skipcount=1`, downloadName);
         return true;
       }
@@ -546,9 +444,7 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
     }
   };
 
-  // Wachtrij voor losse downloads: 30 snelle klikken worden netjes één voor
-  // één afgehandeld i.p.v. 30 gelijktijdige navigaties (waar iOS Safari en
-  // de rate limiter op stukliepen).
+  // Wachtrij voor losse downloads: snelle klikken één voor één afhandelen.
   const downloadQueueRef = useRef<Promise<void>>(Promise.resolve());
   const enqueueDownload = (fn: () => Promise<void>) => {
     downloadQueueRef.current = downloadQueueRef.current
@@ -557,8 +453,8 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
       .catch(() => {});
   };
 
-  // Boven deze grens geen selectie-zip via de browser bufferen (RAM!),
-  // maar de kant-en-klare map-/alles-zips gebruiken.
+  // Root-foto's ("Main") hebben geen map-pad in R2; die map-download loopt
+  // via de selectie-zip-route. Boven deze grens verwijzen we naar Download all.
   const MAX_SELECTION_ZIP_BYTES = 800 * 1024 * 1024;
 
   const downloadKeysAsZip = async (fileKeys: string[], zipFileName: string) => {
@@ -568,23 +464,11 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
       return acc + (f?.size || 0);
     }, 0);
     if (totalBytes > MAX_SELECTION_ZIP_BYTES) {
-      setDownloadError(
-        "This selection is too large to zip in the browser. Please use the folder download buttons or Download All instead."
-      );
+      setDownloadError("This folder is too large to zip in the browser — please use Download all instead.");
       return;
     }
     setDownloading(true);
-    setDownloadProgress(0);
     setDownloadError(null);
-    const progressInterval = setInterval(() => {
-      setDownloadProgress((p) => {
-        if (p >= 90) {
-          clearInterval(progressInterval);
-          return 90;
-        }
-        return p + 3;
-      });
-    }, 200);
 
     try {
       const response = await fetch(`/api/download/${metadata.slug}/selected`, {
@@ -597,16 +481,12 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
         const data = await response.json().catch(() => ({}));
         const wait = data.retryAfter || 60;
         setDownloadError(`Too many downloads. Please wait ${wait} seconds before trying again.`);
-        clearInterval(progressInterval);
         setDownloading(false);
-        setDownloadProgress(0);
         return;
       }
       if (!response.ok) {
         setDownloadError("Download failed. Please try again.");
-        clearInterval(progressInterval);
         setDownloading(false);
-        setDownloadProgress(0);
         return;
       }
 
@@ -619,191 +499,41 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-
-      setDownloadProgress(100);
-      setTimeout(() => {
-        clearInterval(progressInterval);
-        setDownloading(false);
-        setTimeout(() => setDownloadProgress(0), 0);
-      }, 500);
+      setDownloading(false);
     } catch (error) {
       console.error("Download failed:", error);
       setDownloadError("Download failed. Please try again.");
-      clearInterval(progressInterval);
       setDownloading(false);
-      setDownloadProgress(0);
     }
-  };
-
-  const toggleRatingByKey = async (fileKey: string) => {
-    const newRating = !ratings[fileKey];
-    setRatings((prev) => ({ ...prev, [fileKey]: newRating }));
-    try {
-      await fetch(`/api/rate/${metadata.slug}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileKey, rated: newRating }),
-      });
-    } catch (error) {
-      console.error("Failed to save rating:", error);
-      setRatings((prev) => ({ ...prev, [fileKey]: !newRating }));
-    }
-  };
-
-  const toggleRating = async (fileKey: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    await toggleRatingByKey(fileKey);
   };
 
   const downloadAll = () => {
+    if (downloading) return;
     setDownloading(true);
-    setDownloadProgress(0);
     setDownloadError(null);
-    const progressInterval = setInterval(() => {
-      setDownloadProgress((p) => {
-        if (p >= 90) {
-          clearInterval(progressInterval);
-          return 90;
-        }
-        return p + 3;
-      });
-    }, 200);
 
-    requestManagedDownload(
-      `/api/download/${metadata.slug}/all`,
-      `${metadata.slug}.zip`
-    ).then((started) => {
+    requestManagedDownload(`/api/download/${metadata.slug}/all`, `${metadata.slug}.zip`).then((started) => {
       if (!started) {
-        clearInterval(progressInterval);
         setDownloading(false);
-        setDownloadProgress(0);
         return;
       }
-      // The browser takes over from here; reset UI after a short delay.
-      setTimeout(() => {
-        setDownloadProgress(100);
-        setTimeout(() => {
-          clearInterval(progressInterval);
-          setDownloading(false);
-          setTimeout(() => setDownloadProgress(0), 0);
-        }, 500);
-      }, 2000);
+      // Browser neemt het over; knop na korte tijd weer vrijgeven.
+      setTimeout(() => setDownloading(false), 2500);
     });
   };
 
-  const handlePrimaryDownload = () => {
-    if (downloading) return;
-    if (isSelectMode && selectedFiles.size > 0) {
-      downloadSelected();
-      return;
-    }
-
-    if (showFavoritesOnly) {
-      if (favoriteCount > 0) {
-        downloadKeysAsZip(
-          favoriteImageFiles.map((f) => f.key),
-          `${metadata.slug}-favorites.zip`
-        );
-      }
-      return;
-    }
-
-    downloadAll();
-  };
-
-  const downloadSingle = async (fileKey: string, fileName: string, animateProgress = false) => {
+  const downloadSingle = async (fileKey: string, fileName: string) => {
     if (downloadingFile === fileKey) return;
-
     setDownloadingFile(fileKey);
-
-    let progressInterval: number | null = null;
-    if (animateProgress) {
-      setFileDownloadPhase("downloading");
-      setFileDownloadProgress(0);
-      progressInterval = window.setInterval(() => {
-        setFileDownloadProgress((p) => {
-          if (p >= 95) {
-            if (progressInterval) window.clearInterval(progressInterval);
-            return 95;
-          }
-          return p + 5;
-        });
-      }, 150);
-    }
-
     try {
-      // Via de wachtrij + JSON-modus: fouten (429/verlopen) worden getoond
-      // i.p.v. als kapot bestand opgeslagen, en snelle klikken worden
-      // één voor één afgehandeld.
       enqueueDownload(async () => {
         await requestManagedDownload(
           `/api/download/${metadata.slug}/file?key=${encodeURIComponent(fileKey)}`,
           fileName
         );
       });
-
-      if (animateProgress) {
-        // Finish strong, then hide the progress UI before resetting state
-        // (prevents a visible 100->0 flash right before the browser save dialog appears).
-        setFileDownloadProgress(100);
-        setFileDownloadPhase("resetting");
-        window.setTimeout(() => {
-          setFileDownloadPhase("idle");
-          setDownloadingFile(null);
-          // Reset after hiding (row overlay is only shown when phase !== "idle").
-          window.setTimeout(() => setFileDownloadProgress(0), 0);
-        }, 420);
-      }
-    } catch (error) {
-      console.error("Download failed:", error);
-      if (animateProgress) {
-        setFileDownloadProgress(0);
-        setFileDownloadPhase("idle");
-      }
-      setDownloadingFile(null);
     } finally {
-      if (progressInterval) window.clearInterval(progressInterval);
-      if (!animateProgress) {
-        setDownloadingFile(null);
-      }
-    }
-  };
-
-  const downloadSelected = async () => {
-    if (selectedFiles.size === 0) return;
-    setDownloading(true);
-    setDownloadProgress(0);
-    const progressInterval = setInterval(() => {
-      setDownloadProgress((p) => {
-        if (p >= 95) {
-          clearInterval(progressInterval);
-          return 95;
-        }
-        return p + 5;
-      });
-    }, 150);
-
-    try {
-      if (selectedFiles.size === 1) {
-        const fileKey = Array.from(selectedFiles)[0];
-        const file = metadata.files.find((f) => f.key === fileKey);
-        if (file) {
-          const displayName = file.name.split("/").pop() || file.name;
-          clearInterval(progressInterval);
-          setDownloading(false);
-          setDownloadProgress(0);
-          await downloadSingle(file.key, displayName);
-        }
-      } else {
-        // Delegate to shared helper (also used by favorites/folders)
-        clearInterval(progressInterval);
-        await downloadKeysAsZip(Array.from(selectedFiles), `${metadata.slug}-selected.zip`);
-      }
-    } catch (error) {
-      console.error("Download failed:", error);
-      clearInterval(progressInterval);
-      setDownloading(false);
-      setDownloadProgress(0);
+      window.setTimeout(() => setDownloadingFile(null), 800);
     }
   };
 
@@ -817,30 +547,16 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
 
   // Groeperen per map
   const imagesByFolder = useMemo(() => {
-    return displayedImageFiles.reduce((acc, file) => {
+    return imageFiles.reduce((acc, file) => {
       const parts = file.name.split("/");
       const folder = parts.length > 1 ? parts[0] : "Main";
       if (!acc[folder]) acc[folder] = [];
       acc[folder].push(file);
       return acc;
     }, {} as Record<string, typeof imageFiles>);
-  }, [displayedImageFiles]);
+  }, [imageFiles]);
   const imageFolders = Object.keys(imagesByFolder);
   const hasImageFolders = imageFolders.length > 1 || !imagesByFolder["Main"];
-  // Mappenteller over ÁLLE zichtbare bestanden (foto's én andere bestanden),
-  // anders staat er "0 folders" bij een designlevering met mappen vol PDF's.
-  // Root-foto's tellen als de "Main"-groep mee zodra er foto's zijn.
-  const folderCount = Object.keys(
-    visibleFiles.reduce((acc, file) => {
-      const parts = file.name.split("/");
-      if (parts.length > 1) {
-        acc[parts[0]] = true;
-      } else if (!metadata.useDefaultHero && isImageFile(file.name)) {
-        acc["Main"] = true;
-      }
-      return acc;
-    }, {} as Record<string, boolean>)
-  ).length;
 
   const otherFilesByFolder = useMemo(() => {
     return otherFiles.reduce((acc, file) => {
@@ -857,29 +573,24 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
     return [ROOT_FILES_FOLDER, ...folders.filter((f) => f !== ROOT_FILES_FOLDER)];
   }, [otherFilesByFolder]);
 
-  const toggleFolder = (folder: string) => {
-    setCollapsedFolders((prev) => ({ ...prev, [folder]: !prev[folder] }));
-  };
-
   /** ===== Lightbox integratie ===== */
 
-  // Grote preview in Lightbox (bewust niet het origineel — zie getLightboxUrl)
   const lightboxImages: LightboxImage[] = useMemo(
     () =>
-      displayedImageFiles.map((f) => ({
+      imageFiles.map((f) => ({
         src: getLightboxUrl(f.key),
         alt: f.name.split("/").pop() || f.name,
         thumb: thumbnailUrls[f.key] || getThumbUrl(f.key),
       })),
-    [displayedImageFiles, thumbnailUrls]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [imageFiles, thumbnailUrls]
   );
 
-  // Map van fileKey -> index (handig bij klikken op thumb)
   const keyToIndex = useMemo(() => {
     const m = new Map<string, number>();
-    displayedImageFiles.forEach((f, idx) => m.set(f.key, idx));
+    imageFiles.forEach((f, idx) => m.set(f.key, idx));
     return m;
-  }, [displayedImageFiles]);
+  }, [imageFiles]);
 
   const openLightboxAt = (fileKey: string) => {
     const idx = keyToIndex.get(fileKey);
@@ -888,17 +599,49 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
     setLightboxOpen(true);
   };
 
+  const statsLine = [
+    imageFiles.length > 0 ? `${imageFiles.length} photo${imageFiles.length === 1 ? "" : "s"}` : null,
+    otherFiles.length > 0 ? `${otherFiles.length} file${otherFiles.length === 1 ? "" : "s"}` : null,
+    totalSize > 0 ? formatBytes(totalSize) : null,
+    expiryInfo
+      ? `Available until ${expiryInfo.expires.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`
+      : null,
+  ].filter(Boolean);
+
+  const title = metadata.title || metadata.slug.replace(/-/g, " ");
+
+  const downloadAllButton = (compact = false) => (
+    <button
+      onClick={downloadAll}
+      disabled={downloading || visibleFiles.length === 0}
+      className={`inline-flex items-center justify-center gap-2 font-medium rounded-full transition-opacity disabled:opacity-60 ${
+        compact
+          ? "h-9 px-4 text-sm bg-black text-white dark:bg-white dark:text-black hover:opacity-85"
+          : "h-11 px-6 bg-white text-black hover:bg-white/90"
+      }`}
+    >
+      <Download className="h-4 w-4" />
+      {downloading ? "Preparing…" : "Download all"}
+    </button>
+  );
+
   return (
-    <div className="min-h-screen relative bg-[hsl(var(--background))] text-[hsl(var(--foreground))]">
-      {/* Content wrapper */}
+    <div
+      className="min-h-screen relative bg-white text-black dark:bg-black dark:text-white"
+      onContextMenu={(e) => e.preventDefault()}
+      onDragStart={(e) => e.preventDefault()}
+      style={NO_SAVE_STYLE}
+    >
+      {/* Eigen top op de downloadpagina: site-header verbergen */}
+      <style>{`body > header { display: none !important; }`}</style>
+
       <div className="relative z-10">
-        {/* Fullscreen loading overlay */}
+        {/* ===== Intro-overlay (bewust ongewijzigd) ===== */}
         {showLoadingOverlay && (
           <div
             className="fixed inset-0 z-[100] transition-opacity duration-1000"
             style={{ opacity: loadingThumbnails ? 1 : 0 }}
           >
-            {/* Fullscreen hero image — zwarte basis, geen blauwige placeholder */}
             <div className="absolute inset-0 bg-black">
               {heroKey && heroUrl ? (
                 <Image
@@ -911,7 +654,6 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
                   priority
                   onLoadingComplete={(img) => {
                     setPreviewLoaded(true);
-                    // Keep 'spread' but bias crop slightly upwards for portraits
                     const isPortrait = img.naturalHeight > img.naturalWidth;
                     setHeroObjectPosition(isPortrait ? "50% 25%" : "50% 35%");
                   }}
@@ -947,22 +689,18 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
               )}
             </div>
 
-            {/* Subtle label */}
             <div className="absolute left-5 top-5 sm:left-6 sm:top-6">
               <p className="text-[11px] tracking-[0.18em] text-white/70">WOUTER.DOWNLOAD</p>
             </div>
 
-            {/* Center logo/wordmark with fill animation */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="relative">
-                {/* Base wordmark (subtle) */}
                 <div className="select-none text-2xl sm:text-3xl md:text-4xl tracking-tight text-white/25" aria-hidden>
                   <span className="font-bold">WOUTER</span>
                   <span className="font-bold">.</span>
                   <span className="font-normal">DOWNLOAD</span>
                 </div>
 
-                {/* Fill (reveals from left to right) */}
                 <div className="absolute inset-0 overflow-hidden" aria-hidden>
                   <div className="absolute left-0 top-0 bottom-0 overflow-hidden" style={{ width: `${fakePercent}%` }}>
                     <div className="select-none text-2xl sm:text-3xl md:text-4xl tracking-tight text-white drop-shadow-[0_6px_20px_rgba(0,0,0,0.35)]">
@@ -975,7 +713,6 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
               </div>
             </div>
 
-            {/* Thin progress line at the bottom */}
             <div className="absolute left-0 right-0 bottom-0 p-4 sm:p-5">
               <div className="h-[3px] w-full rounded-full bg-white/20 overflow-hidden">
                 <div
@@ -993,9 +730,9 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
           </div>
         )}
 
-        {/* Error toast (fixed, bottom-right) */}
+        {/* ===== Error toast ===== */}
         {downloadError && (
-          <div className="fixed bottom-5 right-5 z-50 max-w-sm bg-white dark:bg-gray-900 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 text-sm flex items-start gap-3 shadow-xl">
+          <div className="fixed bottom-20 sm:bottom-5 right-5 z-[60] max-w-sm bg-white dark:bg-neutral-900 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 text-sm flex items-start gap-3 shadow-xl">
             <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
             <span className="flex-1">{downloadError}</span>
             <button
@@ -1008,239 +745,105 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
           </div>
         )}
 
+        {/* ===== Sticky actiebalk (na de hero) ===== */}
         <div
-          className={`container mx-auto p-6 max-w-6xl transition-opacity duration-1000 ${
+          className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
+            showBar ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
+          }`}
+        >
+          <div className="border-b border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-black/85 backdrop-blur-md">
+            <div className="mx-auto max-w-[1800px] px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
+              <p className="truncate font-semibold">{title}</p>
+              <div className="hidden sm:block flex-shrink-0">{downloadAllButton(true)}</div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          className={`transition-opacity duration-1000 ${
             loadingThumbnails ? "opacity-0 pointer-events-none" : "opacity-100"
           }`}
         >
-          {/* Expiry banner (shown when link expires within 14 days) */}
-          {expiresAt && (() => {
-            const expires = new Date(expiresAt);
-            const msLeft = expires.getTime() - Date.now();
-            const hoursLeft = msLeft / (1000 * 60 * 60);
-            const daysLeft = Math.ceil(hoursLeft / 24);
-            if (daysLeft > 14) return null;
-            const urgent = daysLeft <= 3;
-            // Vervaldatum is een exact tijdstip: onder de 24 uur tonen we het
-            // tijdstip (in de tijdzone van de kijker) i.p.v. "tomorrow".
-            const label = hoursLeft <= 0
-              ? "This link has expired"
-              : hoursLeft <= 24
-              ? `This link expires today at ${expires.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
-              : daysLeft === 1
-              ? "This link expires tomorrow"
-              : `This link expires in ${daysLeft} days`;
-            return (
-              <div className={`mb-6 rounded-xl px-4 py-3 text-sm flex items-center gap-2.5 border ${urgent ? "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800" : "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800"}`}>
-                <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                <span>{label} — {expires.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}. Download your files before then.</span>
-              </div>
-            );
-          })()}
+          {/* ===== Cover-hero: zelfde beeld als de intro, vloeit erin over ===== */}
+          <div ref={heroSectionRef} className="relative h-[86svh] min-h-[420px] w-full overflow-hidden bg-black">
+            {(heroUrl || backgroundUrl) && (
+              <Image
+                src={(heroUrl || backgroundUrl)!}
+                alt={title}
+                fill
+                className="object-cover"
+                style={{ objectPosition: heroObjectPosition }}
+                sizes="100vw"
+                priority
+                unoptimized
+                draggable={false}
+              />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/30" />
 
-          {/* Titel + stats */}
-          <div className="mb-8 mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex flex-col items-start gap-3">
-              <h1 className="text-3xl font-bold text-[hsl(var(--foreground))] text-left">
-                {metadata.title || metadata.slug.replace(/-/g, " ")}
-              </h1>
-
-              {/* For ZIP-only / files-only downloads, keep primary download under the title. */}
-              {imageFiles.length === 0 && (
-                <>
-                  {!downloading ? (
-                    <Button
-                      onClick={handlePrimaryDownload}
-                      variant="outline"
-                      size="sm"
-                      disabled={
-                        visibleFiles.length === 0 ||
-                        (isSelectMode && selectedFiles.size === 0) ||
-                        (showFavoritesOnly && favoriteCount === 0)
-                      }
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      {isSelectMode && selectedFiles.size > 0 ? (
-                        <>
-                          <span className="hidden sm:inline">Download {selectedFiles.size}</span>
-                          <span className="sm:hidden">Download {selectedFiles.size}</span>
-                        </>
-                      ) : showFavoritesOnly ? (
-                        <>
-                          <span className="hidden sm:inline">Download favorites ({favoriteCount})</span>
-                          <span className="sm:hidden">Favorites ({favoriteCount})</span>
-                        </>
-                      ) : imageFiles.length === 0 &&
-                        otherFiles.length === 1 &&
-                        isZipFile(otherFiles[0].name, otherFiles[0].type) ? (
-                        <>
-                          <span className="hidden sm:inline">Download ZIP</span>
-                          <span className="sm:hidden">Download</span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="hidden sm:inline">Download All</span>
-                          <span className="sm:hidden">Download</span>
-                        </>
-                      )}
-                    </Button>
-                  ) : (
-                    <div className="relative w-40 h-9 bg-foreground/5 rounded-md overflow-hidden border border-border">
-                      <div
-                        className="absolute left-0 top-0 h-full bg-foreground/12 transition-[width] duration-200 ease-out overflow-hidden"
-                        style={{ width: `${downloadProgress}%` }}
-                      >
-                        <div className="absolute inset-y-0 left-0 w-20 animate-shimmer-bar bg-white/30 dark:bg-white/12" />
-                      </div>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-muted-foreground text-xs font-medium">Downloading…</span>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
+            <div className="absolute left-5 top-5 sm:left-8 sm:top-7">
+              <p className="text-[11px] tracking-[0.2em] text-white/80 select-none">
+                <span className="font-bold">WOUTER</span>.DOWNLOAD
+              </p>
             </div>
 
-            <div className="text-xs sm:text-sm text-gray-600 sm:text-right whitespace-nowrap">
-              <span>
-                {expiryCountdown ?? (metadata.createdAt ? formatDate(new Date(metadata.createdAt)) : "")}
-              </span>
-              <span className="mx-2 text-gray-400">|</span>
-              <span>
-                {imageFiles.length} photo{imageFiles.length === 1 ? "" : "s"}
-              </span>
-              <span className="mx-2 text-gray-400">|</span>
-              <span>
-                {folderCount} folder{folderCount === 1 ? "" : "s"}
-              </span>
-              <span className="mx-2 text-gray-400">|</span>
-              <span>
-                {otherFiles.length} file{otherFiles.length === 1 ? "" : "s"}
-              </span>
-              {totalSize > 0 && (
-                <>
-                  <span className="mx-2 text-gray-400">|</span>
-                  <span>{formatBytes(totalSize)}</span>
-                </>
-              )}
+            <div className="absolute inset-x-0 bottom-0 p-5 sm:p-10">
+              <div className="mx-auto max-w-[1800px] flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5">
+                <div className="min-w-0">
+                  <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-white break-words">{title}</h1>
+                  {statsLine.length > 0 && (
+                    <p className="mt-3 text-sm sm:text-base text-white/75">{statsLine.join(" · ")}</p>
+                  )}
+                </div>
+                <div className="hidden sm:block flex-shrink-0">{downloadAllButton()}</div>
+              </div>
+            </div>
+
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-white/50 animate-bounce">
+              <ChevronDown className="h-5 w-5" />
             </div>
           </div>
 
-          {/* Foto’s */}
-          {imageFiles.length > 0 && (
-            <div className="mb-12">
-              <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
-                {/* Primary download action aligned with toolbar */}
-                {!downloading ? (
-                  <Button
-                    onClick={handlePrimaryDownload}
-                    variant="outline"
-                    size="sm"
-                    disabled={
-                      visibleFiles.length === 0 ||
-                      (isSelectMode && selectedFiles.size === 0) ||
-                      (showFavoritesOnly && favoriteCount === 0)
-                    }
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    {isSelectMode && selectedFiles.size > 0 ? (
-                      <>
-                        <span className="hidden sm:inline">Download {selectedFiles.size}</span>
-                        <span className="sm:hidden">Download {selectedFiles.size}</span>
-                      </>
-                    ) : showFavoritesOnly ? (
-                      <>
-                        <span className="hidden sm:inline">Download favorites ({favoriteCount})</span>
-                        <span className="sm:hidden">Favorites ({favoriteCount})</span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="hidden sm:inline">Download All</span>
-                        <span className="sm:hidden">Download</span>
-                      </>
-                    )}
-                  </Button>
-                ) : (
-                  <div className="relative w-40 h-9 bg-foreground/5 rounded-md overflow-hidden border border-border">
-                    <div
-                      className="absolute left-0 top-0 h-full bg-foreground/12 transition-[width] duration-200 ease-out overflow-hidden"
-                      style={{ width: `${downloadProgress}%` }}
-                    >
-                      <div className="absolute inset-y-0 left-0 w-20 animate-shimmer-bar bg-white/30 dark:bg-white/12" />
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-muted-foreground text-xs font-medium">Downloading…</span>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={() => setShowFavoritesOnly((v) => !v)}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <Heart
-                      className={`mr-2 h-4 w-4 ${
-                        showFavoritesOnly ? "fill-red-500 text-red-500" : ""
-                      }`}
-                    />
-                    {showFavoritesOnly ? `All photos` : `Favorites (${favoriteCount})`}
-                  </Button>
-                  {isSelectMode && (
-                    <Button
-                      onClick={toggleSelectAll}
-                      variant="ghost"
-                      size="sm"
-                      className="px-2"
-                      disabled={downloading || displayedImageFiles.length === 0}
-                      aria-label={
-                        selectedFiles.size === displayedImageFiles.length
-                          ? "Deselect all"
-                          : "Select all"
-                      }
-                    >
-                      {selectedFiles.size === displayedImageFiles.length ? "None" : "All"}
-                    </Button>
-                  )}
-                  <Button
-                    onClick={() => {
-                      if (!isSelectMode) {
-                        setIsSelectMode(true);
-                        setSelectedFiles(new Set());
-                        return;
-                      }
-
-                      // Exit selection mode (download happens via the left download button)
-                      setIsSelectMode(false);
-                      setSelectedFiles(new Set());
-                    }}
-                    variant="outline"
-                    size="sm"
-                    disabled={downloading}
-                  >
-                    {!isSelectMode ? "Select" : "Done"}
-                  </Button>
-                </div>
+          {/* ===== Urgentie-banner (≤14 dagen) ===== */}
+          {expiryInfo && expiryInfo.daysLeft <= 14 && (
+            <div className="mx-auto max-w-[1800px] px-4 sm:px-6 pt-5">
+              <div
+                className={`rounded-xl px-4 py-3 text-sm flex items-start gap-2.5 border ${
+                  expiryInfo.daysLeft <= 3
+                    ? "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900"
+                    : "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900"
+                }`}
+              >
+                <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <span>
+                  {expiryInfo.hoursLeft <= 0
+                    ? "This link has expired"
+                    : expiryInfo.hoursLeft <= 24
+                    ? `This link expires today at ${expiryInfo.expires.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
+                    : expiryInfo.daysLeft === 1
+                    ? "This link expires tomorrow"
+                    : `This link expires in ${expiryInfo.daysLeft} days`}
+                  {" — download your files before then."}
+                </span>
               </div>
+            </div>
+          )}
 
+          {/* ===== Full-bleed masonry ===== */}
+          {imageFiles.length > 0 && (
+            <main className="px-1 sm:px-2 py-6 sm:py-8 pb-24 sm:pb-10">
               {imageFolders.map((folder) => (
-                <div key={folder} className="mb-8">
+                <section key={folder} className="mb-8">
                   {hasImageFolders && (
-                    <div className="mb-4 flex items-center justify-between gap-3 group">
-                      <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 min-w-0">
-                        <span className="truncate">{folder}</span>
-                        <span className="text-sm font-normal text-gray-500">({imagesByFolder[folder].length})</span>
-                      </h3>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
-                        aria-label={`Download folder ${folder}`}
+                    <div className="mb-3 mt-2 px-3 sm:px-4 flex items-baseline justify-between gap-3">
+                      <h2 className="text-lg sm:text-xl font-semibold tracking-tight truncate">
+                        {folder}
+                        <span className="ml-2 text-sm font-normal text-neutral-500 dark:text-neutral-400">
+                          {imagesByFolder[folder].length}
+                        </span>
+                      </h2>
+                      <button
                         onClick={() =>
-                          // Echte mappen gaan via de folder-route (kant-en-klare
-                          // zip uit R2); root-foto's ("Main") hebben geen map-pad
-                          // en gebruiken de selectie-zip.
                           folder === "Main"
                             ? downloadKeysAsZip(
                                 imagesByFolder[folder].map((f) => f.key),
@@ -1248,355 +851,179 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
                               )
                             : downloadFolder(folder)
                         }
-                        disabled={downloading || imagesByFolder[folder].length === 0}
+                        disabled={downloading}
+                        className="inline-flex items-center gap-1.5 text-sm whitespace-nowrap text-neutral-600 dark:text-neutral-300 hover:text-black dark:hover:text-white underline underline-offset-4 decoration-neutral-300 dark:decoration-neutral-600 hover:decoration-current transition-colors disabled:opacity-50"
                       >
-                        <Download className="h-4 w-4" />
-                      </Button>
+                        <Download className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Download folder</span>
+                        <span className="sm:hidden">Folder</span>
+                      </button>
                     </div>
                   )}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="columns-2 md:columns-3 xl:columns-4 2xl:columns-5 gap-1 sm:gap-2">
                     {imagesByFolder[folder].map((file, index) => {
                       const displayName = file.name.split("/").pop() || file.name;
-                      const isSelected = selectedFiles.has(file.key);
                       return (
-                        <div
+                        <figure
                           key={`${file.key}-${index}`}
-                          className="group relative bg-[hsl(var(--card))] rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden"
+                          className="group relative mb-1 sm:mb-2 break-inside-avoid overflow-hidden bg-neutral-100 dark:bg-neutral-900 cursor-zoom-in"
+                          style={{ aspectRatio: thumbAspectRatios[file.key] ?? 1.5, ...NO_SAVE_STYLE }}
+                          onContextMenu={(e) => e.preventDefault()}
+                          onDragStart={(e) => e.preventDefault()}
+                          onClick={() => openLightboxAt(file.key)}
                         >
-                          {/* Checkbox */}
-                          {isSelectMode && (
-                            <div className="absolute top-2 left-2 z-10">
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => toggleSelectFile(file.key)}
-                                className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                              />
+                          {thumbnailUrls[file.key] ? (
+                            <Image
+                              src={thumbnailUrls[file.key]}
+                              alt={displayName}
+                              fill
+                              className="object-cover pointer-events-none transition-transform duration-500 group-hover:scale-[1.03]"
+                              sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 20vw"
+                              loading="lazy"
+                              quality={75}
+                              unoptimized={isPreOptimizedApiImage(thumbnailUrls[file.key])}
+                              draggable={false}
+                              onLoadingComplete={(img) => {
+                                const w = img?.naturalWidth || 0;
+                                const h = img?.naturalHeight || 0;
+                                if (!w || !h) return;
+                                const ratio = w / h;
+                                setThumbAspectRatios((prev) => {
+                                  if (prev[file.key]) return prev;
+                                  return { ...prev, [file.key]: ratio };
+                                });
+                              }}
+                            />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <ImageIcon className="h-10 w-10 text-neutral-300 dark:text-neutral-700" />
                             </div>
                           )}
 
-                          {/* Ster-rating */}
-                          {!isSelectMode && (
-                            <button
-                              onClick={(e) => toggleRating(file.key, e)}
-                              className="absolute top-2 left-2 z-10 p-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-all duration-200 group/star"
-                              title="Favorite"
-                              aria-label="Toggle favorite"
-                            >
-                              <Heart
-                                className={`h-4 w-4 transition-all duration-200 ${
-                                  ratings[file.key]
-                                    ? "fill-red-500 text-red-500"
-                                    : "text-white group-hover/star:fill-white/50"
-                                }`}
-                              />
-                            </button>
-                          )}
-
-                          {/* Thumbnail */}
-                          <div
-                            className={`bg-[hsl(var(--muted))] flex items-center justify-center overflow-hidden relative select-none w-full ${
-                              isSelectMode ? "cursor-pointer" : "cursor-zoom-in"
-                            }`}
-                            style={{ aspectRatio: thumbAspectRatios[file.key] ?? 1 }}
-                            onContextMenu={(e) => e.preventDefault()}
-                            onDragStart={(e) => e.preventDefault()}
-                            onClick={() => {
-                              if (isSelectMode) {
-                                toggleSelectFile(file.key);
-                              } else {
-                                openLightboxAt(file.key);
-                              }
+                          {/* Hover: subtiele gradient + downloadknop (altijd donker) */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
+                          <button
+                            className="absolute right-2 top-2 z-10 p-2 rounded-full bg-black/35 text-white opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-black/70 backdrop-blur-sm transition-all"
+                            title="Download photo"
+                            aria-label="Download photo"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              downloadSingle(file.key, displayName);
                             }}
+                            disabled={downloadingFile === file.key}
                           >
-                            {thumbnailUrls[file.key] ? (
-                              <Image
-                                src={thumbnailUrls[file.key]}
-                                alt={file.name}
-                                fill
-                                className="object-cover pointer-events-none transition-transform duration-300 group-hover:scale-110"
-                                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                                loading="lazy"
-                                quality={75}
-                                unoptimized={isPreOptimizedApiImage(thumbnailUrls[file.key])}
-                                draggable={false}
-                                onContextMenu={(e) => e.preventDefault()}
-                                onLoadingComplete={(img) => {
-                                  const w = img?.naturalWidth || 0;
-                                  const h = img?.naturalHeight || 0;
-                                  if (!w || !h) return;
-                                  const ratio = w / h;
-                                  setThumbAspectRatios((prev) => {
-                                    if (prev[file.key]) return prev;
-                                    return { ...prev, [file.key]: ratio };
-                                  });
-                                }}
-                              />
-                            ) : (
-                              <ImageIcon className="h-12 w-12 text-gray-300" />
-                            )}
-
-                            {/* Hover overlay met file info (altijd donker, geen dark: overrides) */}
-                            {!isSelectMode && (
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
-                                <p className="text-white text-sm font-medium truncate">{displayName}</p>
-                                <p className="text-white/80 text-xs">{formatBytes(file.size)}</p>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Direct download knop (thumb) */}
-                          {!isSelectMode && (
-                            <button
-                              className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-sm transition-all duration-200 group/download transform hover:scale-110 focus:scale-110 active:scale-95"
-                              title="Download image"
-                              aria-label="Download image"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                downloadSingle(file.key, displayName);
-                              }}
-                              disabled={downloadingFile === file.key}
-                            >
-                              <Download className="h-5 w-5 text-white drop-shadow" />
-                            </button>
-                          )}
-                        </div>
+                            <Download className="h-4 w-4" />
+                          </button>
+                        </figure>
                       );
                     })}
                   </div>
-                </div>
+                </section>
               ))}
-            </div>
+            </main>
           )}
 
-          {/* Bestanden-sectie */}
+          {/* ===== Bestanden ===== */}
           {otherFiles.length > 0 && (
-            <div className="mb-12">
-              <h2 className="text-2xl font-bold text-[hsl(var(--foreground))] mb-6 flex items-center gap-2">
-                📁 Files
-                <span className="text-sm font-normal text-gray-500">({otherFiles.length})</span>
+            <section className={`mx-auto max-w-[1800px] px-4 sm:px-6 pb-24 sm:pb-14 ${imageFiles.length === 0 ? "pt-8" : ""}`}>
+              <h2 className="text-lg sm:text-xl font-semibold tracking-tight mb-4">
+                Files
+                <span className="ml-2 text-sm font-normal text-neutral-500 dark:text-neutral-400">{otherFiles.length}</span>
               </h2>
 
               <div className="space-y-4">
                 {otherFileFolders.map((folder) => (
-                  folder === ROOT_FILES_FOLDER ? (
-                    <div
-                      key={folder}
-                      className="bg-[hsl(var(--card))] rounded-lg shadow-sm border border-[hsl(var(--border))]"
-                    >
-                      <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                        {otherFilesByFolder[folder].map((file, index) => {
-                          const displayName = file.name.split("/").pop() || file.name;
-                          const ext = displayName.split(".").pop()?.toLowerCase();
-                          const isDownloadingThis = downloadingFile === file.key && fileDownloadPhase !== "idle";
-                          return (
-                            <div
-                              key={`${file.key}-${index}`}
-                              className={`relative p-4 flex items-center justify-between transition-colors cursor-pointer overflow-hidden ${
-                                isDownloadingThis ? "" : "hover:bg-gray-50"
-                              }`}
-                              role="button"
-                              tabIndex={0}
-                              onClick={() => downloadSingle(file.key, displayName, true)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" || e.key === " ") {
-                                  e.preventDefault();
-                                  downloadSingle(file.key, displayName, true);
-                                }
-                              }}
-                            >
-                              {isDownloadingThis && (
-                                <>
-                                  <div className="absolute inset-0 bg-foreground/3" />
-                                  <div
-                                    className="absolute left-0 top-0 bottom-0 bg-foreground/8 transition-[width] duration-200 ease-out overflow-hidden"
-                                    style={{ width: `${fileDownloadProgress}%` }}
-                                  >
-                                    <div className="absolute inset-y-0 left-0 w-20 animate-shimmer-bar bg-white/22 dark:bg-white/12" />
-                                  </div>
-                                </>
-                              )}
-
-                              <div className="relative z-10 flex items-center gap-3 flex-1 min-w-0">
-                                {getFileIcon(displayName)}
-                                <div className="min-w-0 flex-1">
-                                  <p
-                                    className="text-sm font-medium text-[hsl(var(--foreground))] truncate"
-                                    title={displayName}
-                                  >
-                                    {displayName}
-                                  </p>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    {formatBytes(file.size)} {ext && `• ${ext.toUpperCase()}`}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="relative z-10 flex-shrink-0">
-                                {isDownloadingThis ? (
-                                  <span className="text-xs font-semibold text-muted-foreground tabular-nums">
-                                    {fileDownloadProgress}%
-                                  </span>
-                                ) : (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      downloadSingle(file.key, displayName, true);
-                                    }}
-                                    disabled={downloadingFile === file.key}
-                                  >
-                                    <Download className="h-4 w-4" />
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ) : (
-                    <div
-                      key={folder}
-                      className="bg-[hsl(var(--card))] rounded-lg shadow-sm border border-[hsl(var(--border))]"
-                    >
-                      <div className="p-4 flex items-center justify-between border-b border-[hsl(var(--border))]">
+                  <div
+                    key={folder}
+                    className="rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden"
+                  >
+                    {folder !== ROOT_FILES_FOLDER && (
+                      <div className="px-4 py-3 flex items-center justify-between gap-3 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900">
+                        <p className="font-semibold truncate">{folder}</p>
                         <button
-                          onClick={() => toggleFolder(folder)}
-                          className="flex items-center gap-3 flex-1 text-left hover:bg-gray-50 -m-2 p-2 rounded transition-colors"
+                          onClick={() => downloadFolder(folder)}
+                          className="inline-flex items-center gap-1.5 text-sm whitespace-nowrap text-neutral-600 dark:text-neutral-300 hover:text-black dark:hover:text-white underline underline-offset-4 decoration-neutral-300 dark:decoration-neutral-600 hover:decoration-current transition-colors"
                         >
-                          {collapsedFolders[folder] ? (
-                            <ChevronRight className="h-5 w-5 text-gray-500" />
-                          ) : (
-                            <ChevronDown className="h-5 w-5 text-gray-500" />
-                          )}
-                          <div className="flex-1">
-                            <p className="font-semibold text-[hsl(var(--foreground))]">{folder}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {otherFilesByFolder[folder].length} file
-                              {otherFilesByFolder[folder].length !== 1 ? "s" : ""}
-                            </p>
-                          </div>
-                        </button>
-                        <Button size="sm" variant="outline" className="ml-4" onClick={() => downloadFolder(folder)}>
-                          <Download className="h-4 w-4 mr-2" />
+                          <Download className="h-3.5 w-3.5" />
                           Download folder
-                        </Button>
+                        </button>
                       </div>
-
-                      {!collapsedFolders[folder] && (
-                        <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                          {otherFilesByFolder[folder].map((file, index) => {
-                            const displayName = file.name.split("/").pop() || file.name;
-                            const ext = displayName.split(".").pop()?.toLowerCase();
-                            const isDownloadingThis = downloadingFile === file.key && fileDownloadPhase !== "idle";
-                            return (
-                              <div
-                                key={`${file.key}-${index}`}
-                                className={`relative p-4 flex items-center justify-between transition-colors cursor-pointer overflow-hidden ${
-                                  isDownloadingThis ? "" : "hover:bg-gray-50"
-                                }`}
-                                role="button"
-                                tabIndex={0}
-                                onClick={() => downloadSingle(file.key, displayName, true)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter" || e.key === " ") {
-                                    e.preventDefault();
-                                    downloadSingle(file.key, displayName, true);
-                                  }
-                                }}
-                              >
-                                {isDownloadingThis && (
-                                  <>
-                                    <div className="absolute inset-0 bg-foreground/3" />
-                                    <div
-                                      className="absolute left-0 top-0 bottom-0 bg-foreground/8 transition-[width] duration-200 ease-out overflow-hidden"
-                                      style={{ width: `${fileDownloadProgress}%` }}
-                                    >
-                                      <div className="absolute inset-y-0 left-0 w-20 animate-shimmer-bar bg-white/22 dark:bg-white/12" />
-                                    </div>
-                                  </>
-                                )}
-
-                                <div className="relative z-10 flex items-center gap-3 flex-1 min-w-0">
-                                  {getFileIcon(displayName)}
-                                  <div className="min-w-0 flex-1">
-                                    <p
-                                      className="text-sm font-medium text-[hsl(var(--foreground))] truncate"
-                                      title={displayName}
-                                    >
-                                      {displayName}
-                                    </p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                                      {formatBytes(file.size)} {ext && `• ${ext.toUpperCase()}`}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div className="relative z-10 flex-shrink-0">
-                                  {isDownloadingThis ? (
-                                    <span className="text-xs font-semibold text-muted-foreground tabular-nums">
-                                      {fileDownloadProgress}%
-                                    </span>
-                                  ) : (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        downloadSingle(file.key, displayName, true);
-                                      }}
-                                      disabled={downloadingFile === file.key}
-                                    >
-                                      <Download className="h-4 w-4" />
-                                    </Button>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
+                    )}
+                    <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                      {otherFilesByFolder[folder].map((file, index) => {
+                        const displayName = file.name.split("/").pop() || file.name;
+                        const ext = displayName.split(".").pop()?.toLowerCase();
+                        return (
+                          <button
+                            key={`${file.key}-${index}`}
+                            onClick={() => downloadSingle(file.key, displayName)}
+                            disabled={downloadingFile === file.key}
+                            className="w-full flex items-center justify-between gap-4 px-4 py-3.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors group disabled:opacity-60"
+                          >
+                            <span className="flex items-center gap-3 min-w-0">
+                              {getFileIcon(displayName)}
+                              <span className="min-w-0">
+                                <span className="block truncate text-sm font-medium" title={displayName}>
+                                  {displayName}
+                                </span>
+                                <span className="block text-xs text-neutral-500 dark:text-neutral-400">
+                                  {formatBytes(file.size)} {ext && `· ${ext.toUpperCase()}`}
+                                </span>
+                              </span>
+                            </span>
+                            <Download className="h-4 w-4 flex-shrink-0 text-neutral-400 group-hover:text-black dark:group-hover:text-white transition-colors" />
+                          </button>
+                        );
+                      })}
                     </div>
-                  )
+                  </div>
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
-          {/* Lightbox mount */}
-          {lightboxOpen && lightboxImages.length > 0 && (
-            <Lightbox
-              open={lightboxOpen}
-              onOpenChange={setLightboxOpen}
-              images={lightboxImages}
-              index={currentIndex}
-              onIndexChange={setCurrentIndex}
-              enableFavorite
-              isFavorite={(_, idx) => {
-                const file = displayedImageFiles[idx];
-                if (!file) return false;
-                return !!ratings[file.key];
-              }}
-              onToggleFavorite={(_, idx) => {
-                const file = displayedImageFiles[idx];
-                if (!file) return;
-                toggleRatingByKey(file.key);
-              }}
-              enableDownload
-              onDownload={(current, idx) => {
-                // Download via jouw download API (tracking + correcte filename)
-                const file = displayedImageFiles[idx];
-                if (!file) return;
-                const name = (file?.name.split("/").pop() || `image-${idx + 1}`).toString();
-                downloadSingle(file.key, name);
-              }}
-              protectImages
-              protectMessage="Please use the download icon — if you save the image this way, you're only saving a low-resolution preview."
-            />
-          )}
+          {/* Footer-regel */}
+          <p className="text-center text-xs text-neutral-400 dark:text-neutral-500 pb-28 sm:pb-8 px-6">
+            Photography by Wouter Vellekoop ·{" "}
+            <a href="https://www.wouter.photo" className="underline underline-offset-2 hover:text-neutral-600 dark:hover:text-neutral-300">
+              wouter.photo
+            </a>
+          </p>
         </div>
+
+        {/* ===== Mobiele sticky bottom-bar: één knop ===== */}
+        {!loadingThumbnails && visibleFiles.length > 0 && (
+          <div className="sm:hidden fixed bottom-0 inset-x-0 z-50 border-t border-neutral-200 dark:border-neutral-800 bg-white/95 dark:bg-black/90 backdrop-blur-md px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <button
+              onClick={downloadAll}
+              disabled={downloading}
+              className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-full bg-black text-white dark:bg-white dark:text-black font-medium disabled:opacity-60"
+            >
+              <Download className="h-4 w-4" />
+              {downloading ? "Preparing…" : `Download all${totalSize > 0 ? ` (${formatBytes(totalSize)})` : ""}`}
+            </button>
+          </div>
+        )}
+
+        {/* ===== Lightbox ===== */}
+        {lightboxOpen && lightboxImages.length > 0 && (
+          <Lightbox
+            open={lightboxOpen}
+            onOpenChange={setLightboxOpen}
+            images={lightboxImages}
+            index={currentIndex}
+            onIndexChange={setCurrentIndex}
+            enableDownload
+            onDownload={(current, idx) => {
+              const file = imageFiles[idx];
+              if (!file) return;
+              const name = (file?.name.split("/").pop() || `image-${idx + 1}`).toString();
+              downloadSingle(file.key, name);
+            }}
+            protectImages
+            protectMessage="Please use the download icon — if you save the image this way, you're only saving a low-resolution preview."
+          />
+        )}
       </div>
     </div>
   );

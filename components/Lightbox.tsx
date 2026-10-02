@@ -303,6 +303,7 @@ export function Lightbox({
             aria-hidden="true"
             className="absolute inset-0 m-auto max-w-full max-h-full object-contain"
             draggable={false}
+            style={{ WebkitTouchCallout: "none", userSelect: "none" } as React.CSSProperties}
           />
         )}
         {/* afbeelding met object-contain */}
@@ -311,6 +312,7 @@ export function Lightbox({
           alt={current.alt ?? ""}
           className="absolute z-10 inset-0 m-auto max-w-full max-h-full object-contain drop-shadow-lg transition-opacity duration-300"
           draggable={false}
+          style={{ WebkitTouchCallout: "none", userSelect: "none" } as React.CSSProperties}
         />
       </div>
 

@@ -43,12 +43,13 @@ export default function Header() {
     if (pathname === '/portrait-photographer') return 'PHOTO'
     if (pathname === '/about') return 'ABOUT'
     if (pathname === '/algemene-voorwaarden') return 'ABOUT'
+    if (pathname === '/blog' || pathname.startsWith('/blog/')) return 'BLOG'
     if (pathname.startsWith('/admin')) return 'ADMIN'
     if (pathname === '/not-found' || /^\/[a-zA-Z0-9-]+$/.test(pathname)) return 'DOWNLOAD'
     return 'PHOTO'
   })()
 
-  const baseCycle = ['PORTFOLIO', 'CONCERTS', 'EVENTS', 'MISC', 'ABOUT', 'PHOTO', 'DOWNLOAD']
+  const baseCycle = ['PORTFOLIO', 'CONCERTS', 'EVENTS', 'MISC', 'ABOUT', 'BLOG', 'PHOTO', 'DOWNLOAD']
   // In de admin toont het logo WOUTER.ADMIN i.p.v. WOUTER.DOWNLOAD; vervang die
   // suffix ook in de cyclus zodat "download" er nergens even doorheen flitst.
   const cycleSource = targetSuffix === 'ADMIN' ? baseCycle.map((s) => (s === 'DOWNLOAD' ? 'ADMIN' : s)) : baseCycle
@@ -138,6 +139,13 @@ export default function Header() {
           className={isHome ? 'hover:text-white/80' : 'hover:text-gray-600 dark:hover:text-gray-300'}
         >
           About
+        </Link>
+
+        <Link
+          href="/blog"
+          className={isHome ? 'hover:text-white/80' : 'hover:text-gray-600 dark:hover:text-gray-300'}
+        >
+          Blog
         </Link>
 
         <a

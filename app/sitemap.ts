@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { getCachedPortfolioGalleryData } from '@/lib/portfolioCache'
+import { getAllPosts } from '@/lib/blog'
 
 const BASE = 'https://www.wouter.photo'
 
@@ -31,6 +32,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/portfolio/commercial', priority: 0.8, changeFrequency: 'monthly' },
     { path: '/portfolio/all', priority: 0.7, changeFrequency: 'monthly' },
     { path: '/shop', priority: 0.6, changeFrequency: 'weekly' },
+    { path: '/blog', priority: 0.7, changeFrequency: 'weekly' },
     { path: '/shop/batchcrop', priority: 0.6, changeFrequency: 'monthly' },
     { path: '/shop/export-every-x', priority: 0.6, changeFrequency: 'monthly' },
     { path: '/shop/stage-fix-v6', priority: 0.6, changeFrequency: 'monthly' },
@@ -48,5 +50,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified,
     changeFrequency: e.changeFrequency,
     priority: e.priority,
-  }))
+  })).concat(
+    getAllPosts().map((post) => ({
+      url: `${BASE}/blog/${post.slug}`,
+      lastModified: new Date(post.updated ?? post.date),
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+    }))
+  )
 }

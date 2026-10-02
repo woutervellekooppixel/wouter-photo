@@ -57,7 +57,7 @@ export default function AdminDashboard() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [failedUploadFiles, setFailedUploadFiles] = useState<FailedFile[]>([]);
   const [failedUploadSlug, setFailedUploadSlug] = useState<string>("");
-  const [expiryDays, setExpiryDays] = useState<number>(31);
+  const [expiryDays, setExpiryDays] = useState<number>(10);
   const [useDefaultHero, setUseDefaultHero] = useState<boolean>(false);
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
@@ -1404,7 +1404,7 @@ export default function AdminDashboard() {
                   value={expiryDays}
                   onChange={(e) => {
                     const v = parseInt(e.target.value, 10);
-                    setExpiryDays(Number.isFinite(v) ? Math.min(Math.max(v, 1), 365) : 31);
+                    setExpiryDays(Number.isFinite(v) ? Math.min(Math.max(v, 1), 365) : 10);
                   }}
                   className="w-28"
                 />
@@ -1700,11 +1700,11 @@ export default function AdminDashboard() {
                               Verloopt: {formatDate(expiresAt)}
                               {' '}
                               <button
-                                onClick={() => extendExpiry(upload.slug, 31)}
+                                onClick={() => extendExpiry(upload.slug, 10)}
                                 className="text-neutral-600 dark:text-neutral-300 hover:text-black dark:hover:text-white underline"
-                                title="Verleng de vervaldatum met 31 dagen"
+                                title="Verleng de vervaldatum met 10 dagen"
                               >
-                                +31 dagen
+                                +10 dagen
                               </button>
                             </p>
                           );
