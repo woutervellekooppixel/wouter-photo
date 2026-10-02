@@ -68,17 +68,29 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
   const [heroUrl, setHeroUrl] = useState<string | null>(null);
   const [heroObjectPosition, setHeroObjectPosition] = useState<string>("50% 35%");
 
-  // Sticky actiebalk zodra de cover-hero uit beeld is
+  // Sticky actiebalk zodra de cover-hero uit beeld is. De site-header
+  // (WOUTER.DOWNLOAD-menubalk) blijft gewoon staan — klanten moeten naar
+  // wouter.photo kunnen doorklikken — dus de actiebalk schuift eronder.
   const [showBar, setShowBar] = useState(false);
+  const [siteHeaderHeight, setSiteHeaderHeight] = useState(0);
   const heroSectionRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    const measure = () => {
+      const header = document.querySelector<HTMLElement>("body > header");
+      setSiteHeaderHeight(header?.offsetHeight ?? 0);
+    };
     const onScroll = () => {
       const bottom = heroSectionRef.current?.getBoundingClientRect().bottom ?? 0;
-      setShowBar(bottom < 56);
+      setShowBar(bottom < 120);
     };
+    measure();
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", measure);
     onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", measure);
+    };
   }, []);
 
   // Fake loader percentage voor de intro (bewust behouden)
@@ -632,8 +644,6 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
       onDragStart={(e) => e.preventDefault()}
       style={NO_SAVE_STYLE}
     >
-      {/* Eigen top op de downloadpagina: site-header verbergen */}
-      <style>{`body > header { display: none !important; }`}</style>
 
       <div className="relative z-10">
         {/* ===== Intro-overlay (bewust ongewijzigd) ===== */}
@@ -745,11 +755,12 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
           </div>
         )}
 
-        {/* ===== Sticky actiebalk (na de hero) ===== */}
+        {/* ===== Sticky actiebalk (na de hero, ónder de site-header) ===== */}
         <div
-          className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
-            showBar ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
+          className={`fixed inset-x-0 z-50 transition-all duration-300 ${
+            showBar ? "translate-y-0 opacity-100" : "-translate-y-[200%] opacity-0 pointer-events-none"
           }`}
+          style={{ top: siteHeaderHeight }}
         >
           <div className="border-b border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-black/85 backdrop-blur-md">
             <div className="mx-auto max-w-[1800px] px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
@@ -779,13 +790,7 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
                 draggable={false}
               />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/30" />
-
-            <div className="absolute left-5 top-5 sm:left-8 sm:top-7">
-              <p className="text-[11px] tracking-[0.2em] text-white/80 select-none">
-                <span className="font-bold">WOUTER</span>.DOWNLOAD
-              </p>
-            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/15" />
 
             <div className="absolute inset-x-0 bottom-0 p-5 sm:p-10">
               <div className="mx-auto max-w-[1800px] flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5">
