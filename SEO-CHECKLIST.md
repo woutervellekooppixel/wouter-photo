@@ -28,7 +28,7 @@
 - [x] **Content Length**: Voldoende content per pagina
 
 ### Analytics & Tracking
-- [x] **Google Analytics 4**: GA4 implementation (G-SGRS9782NB)
+- [x] **Google Analytics 4**: GA4 implementation (G-HG8V3YX4Q9)
 - [x] **Google Tag Manager**: GTM setup (GTM-K55DF7SN)
 - [x] **Event Tracking**: Blog views, portfolio interactions
 - [x] **Core Web Vitals**: Performance metrics tracking

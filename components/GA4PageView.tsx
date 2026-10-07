@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
-const GA4_MEASUREMENT_ID = "G-SGRS9782NB";
+const GA4_MEASUREMENT_ID = "G-HG8V3YX4Q9";
 
 export default function GA4PageView() {
   const pathname = usePathname();
