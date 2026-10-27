@@ -836,7 +836,7 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
 
           {/* ===== Full-bleed masonry ===== */}
           {imageFiles.length > 0 && (
-            <main className="px-1 sm:px-2 py-6 sm:py-8 pb-24 sm:pb-10">
+            <main className="px-1.5 sm:px-2.5 py-6 sm:py-8 pb-24 sm:pb-10">
               {imageFolders.map((folder) => (
                 <section key={folder} className="mb-8">
                   {hasImageFolders && (
@@ -865,14 +865,17 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
                       </button>
                     </div>
                   )}
-                  <div className="columns-2 md:columns-3 xl:columns-4 2xl:columns-5 gap-1 sm:gap-2">
+                  {/* Rijen van links naar rechts (justified): elke foto groeit naar verhouding,
+                      zodat een rij één hoogte heeft en niets wordt bijgesneden. --row = doelhoogte. */}
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2.5 [--row:105px] sm:[--row:170px] md:[--row:200px] xl:[--row:220px] 2xl:[--row:250px]">
                     {imagesByFolder[folder].map((file, index) => {
                       const displayName = file.name.split("/").pop() || file.name;
+                      const ratio = thumbAspectRatios[file.key] ?? 1.5;
                       return (
                         <figure
                           key={`${file.key}-${index}`}
-                          className="group relative mb-1 sm:mb-2 break-inside-avoid overflow-hidden bg-neutral-100 dark:bg-neutral-900 cursor-zoom-in"
-                          style={{ aspectRatio: thumbAspectRatios[file.key] ?? 1.5, ...NO_SAVE_STYLE }}
+                          className="group relative overflow-hidden bg-neutral-100 dark:bg-neutral-900 cursor-zoom-in"
+                          style={{ aspectRatio: ratio, flexGrow: ratio, flexBasis: `calc(var(--row) * ${ratio})`, ...NO_SAVE_STYLE }}
                           onContextMenu={(e) => e.preventDefault()}
                           onDragStart={(e) => e.preventDefault()}
                           onClick={() => openLightboxAt(file.key)}
@@ -922,6 +925,8 @@ export default function DownloadGallery({ metadata, expiresAt }: { metadata: Upl
                         </figure>
                       );
                     })}
+                    {/* Opvuller: de laatste (halve) rij wordt niet uitgerekt */}
+                    <div aria-hidden className="h-0" style={{ flexGrow: 1000, flexBasis: 0 }} />
                   </div>
                 </section>
               ))}
