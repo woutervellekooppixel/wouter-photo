@@ -18,10 +18,15 @@ import os
 import secrets
 import time
 
+import datetime as dt
+import re
+
 from fastapi import FastAPI, UploadFile, Form, Request, HTTPException
 from fastapi.responses import HTMLResponse, Response, JSONResponse
 from PIL import Image
+import numpy as np
 
+import agenda
 import render_core
 
 PIN = os.environ.get("EINK_PIN", "0000")
@@ -290,6 +295,8 @@ def frame_meta(token: str = "", vbat: str = ""):
     if not secrets.compare_digest(token, DEVICE_TOKEN):
         raise HTTPException(status_code=403)
     _noteer_vbat(vbat)
+    if _agenda_inst()["modus"] == "agenda":
+        return {"modus": "agenda"}
     l = _lijst_laad()
     item = _actueel_item(l, advance=True)
     return item or {}
@@ -303,42 +310,171 @@ _CODES = {(0,0,0): 0x0, (255,255,255): 0x1, (255,255,0): 0x2,
 
 def _png_naar_blob(png_bytes: bytes) -> bytes:
     im = Image.open(io.BytesIO(png_bytes)).convert("RGB")
+    if os.environ.get("EINK_DRAAI_180") == "1":
+        im = im.rotate(180)               # paneel ondersteboven in de lijst gemonteerd
     if im.size == (1600, 1200):
         im = im.rotate(90, expand=True)   # driver is portret 1200x1600
-    px = im.load()
-    uit = bytearray(im.width // 2 * im.height)
-    i = 0
-    for y in range(im.height):
-        for x in range(0, im.width, 2):
-            uit[i] = (_CODES.get(px[x, y], 0x1) << 4) | _CODES.get(px[x+1, y], 0x1)
-            i += 1
-    return bytes(uit)
+    arr = np.asarray(im)
+    codes = np.full(arr.shape[:2], 0x1, dtype=np.uint8)   # onbekende kleur = wit
+    for rgb, code in _CODES.items():
+        codes[np.all(arr == rgb, axis=-1)] = code
+    return ((codes[:, 0::2] << 4) | codes[:, 1::2]).tobytes()
+
+def _frame_png(vbat: str) -> bytes:
+    """Wat er vannacht op de lijst moet: verse agenda óf de foto van de dag."""
+    _noteer_vbat(vbat)
+    if _agenda_inst()["modus"] == "agenda":
+        try:
+            return _agenda_render()[0]
+        except Exception as e:  # noqa: BLE001 — lijst nooit zonder beeld laten
+            print("agenda-render mislukt:", repr(e))
+            vorige = opslag.get("agenda/panel.png")
+            if vorige is not None:
+                return vorige
+    l = _lijst_laad()
+    item = _actueel_item(l, advance=True)
+    data = (opslag.get(f"render/{item['id']}_{item['variant']}_panel.png")
+            if item else opslag.get("current/panel.png"))
+    if data is None:
+        raise HTTPException(status_code=404)
+    return data
 
 @app.get("/frame/current.bin")
 def frame_bin(token: str = "", vbat: str = ""):
     if not secrets.compare_digest(token, DEVICE_TOKEN):
         raise HTTPException(status_code=403)
-    _noteer_vbat(vbat)
-    l = _lijst_laad()
-    item = _actueel_item(l, advance=True)
-    data = (opslag.get(f"render/{item['id']}_{item['variant']}_panel.png")
-            if item else opslag.get("current/panel.png"))
-    if data is None:
-        raise HTTPException(status_code=404)
-    return Response(_png_naar_blob(data), media_type="application/octet-stream")
+    return Response(_png_naar_blob(_frame_png(vbat)), media_type="application/octet-stream")
 
 @app.get("/frame/current.png")
 def frame_blob(token: str = "", vbat: str = ""):
     if not secrets.compare_digest(token, DEVICE_TOKEN):
         raise HTTPException(status_code=403)
-    _noteer_vbat(vbat)
-    l = _lijst_laad()
-    item = _actueel_item(l, advance=True)
-    data = (opslag.get(f"render/{item['id']}_{item['variant']}_panel.png")
-            if item else opslag.get("current/panel.png"))
+    return Response(_frame_png(vbat), media_type="image/png")
+
+# --- Agenda-modus ---------------------------------------------------------
+# agenda/instellingen.json: {"modus": "foto"|"agenda",
+#                            "bronnen": [{id, naam, kleur, url}]}
+# AGENDA_ICS (env, optioneel) vult de bronnen zolang er in de app nog niets
+# is ingesteld: één per regel of gescheiden door ';', "naam|kleur|url".
+def _bronnen_uit_env():
+    uit = []
+    for i, regel in enumerate(r for r in re.split(r"[;\n]+", os.environ.get("AGENDA_ICS", ""))
+                              if r.strip()):
+        delen = [x.strip() for x in regel.split("|")]
+        kleur = delen[1] if len(delen) >= 3 and delen[1] in agenda.KLEUREN \
+            else agenda.STANDAARD_VOLGORDE[i % len(agenda.STANDAARD_VOLGORDE)]
+        uit.append({"id": f"env{i}", "naam": delen[0] if len(delen) >= 2 else f"agenda {i + 1}",
+                    "kleur": kleur, "url": delen[-1]})
+    return uit
+
+def _agenda_inst():
+    d = opslag.get("agenda/instellingen.json")
+    inst = json.loads(d) if d else {}
+    bronnen = inst.get("bronnen")
+    if bronnen is None:
+        bronnen = _bronnen_uit_env()
+    modus = inst.get("modus") or ("agenda" if bronnen else "foto")
+    return {"modus": modus, "bronnen": bronnen}
+
+def _agenda_bewaar(inst):
+    opslag.put("agenda/instellingen.json", json.dumps(inst).encode(), "application/json")
+
+def _naar_preview(img: Image.Image) -> Image.Image:
+    """Nominale paneelkleuren → zoals het paneel ze echt laat zien."""
+    a = np.asarray(img.convert("RGB"))
+    uit = np.full_like(a, 255)
+    for nom, waarg in zip(render_core.NOMINAAL, render_core.WAARGENOMEN):
+        uit[np.all(a == nom, axis=-1)] = waarg.astype(np.uint8)
+    return Image.fromarray(uit)
+
+def _png(img: Image.Image) -> bytes:
+    buf = io.BytesIO()
+    img.save(buf, format="PNG", optimize=True)
+    return buf.getvalue()
+
+def _agenda_render():
+    inst = _agenda_inst()
+    nu = dt.datetime.now(agenda.TZ).replace(tzinfo=None)
+    waarschuwingen, aantal = [], 0
+    if not inst["bronnen"]:
+        img = agenda.leeg_scherm("Nog geen agenda gekoppeld — voeg er een toe in de app")
+    else:
+        afspraken, waarschuwingen = agenda.verzamel(
+            inst["bronnen"], nu.date(), opslag.get,
+            lambda k, v: opslag.put(k, v, "text/calendar"))
+        s = opslag.get("status/device.json")
+        pct = json.loads(s).get("pct") if s else None
+        img = agenda.render_maand(nu.date(), afspraken, bijgewerkt=nu, accu_pct=pct,
+                                  waarschuwingen=waarschuwingen)
+        aantal = len(afspraken)
+    panel = _png(img)
+    opslag.put("agenda/panel.png", panel, "image/png")
+    opslag.put("agenda/preview.png", _png(_naar_preview(img)), "image/png")
+    meta = {"tijd": int(time.time()), "aantal": aantal, "waarschuwingen": waarschuwingen}
+    opslag.put("agenda/meta.json", json.dumps(meta).encode(), "application/json")
+    return panel, meta
+
+def _url_kort(url: str) -> str:
+    m = re.match(r"^(?:https?|webcal)://([^/]+)", url)
+    return f"{m.group(1) if m else '?'} …{url[-10:]}"
+
+@app.get("/api/agenda")
+def agenda_info(request: Request):
+    check_auth(request)
+    inst = _agenda_inst()
+    m = opslag.get("agenda/meta.json")
+    return {"modus": inst["modus"],
+            "bronnen": [{"id": b["id"], "naam": b["naam"], "kleur": b["kleur"],
+                         "url": _url_kort(b["url"])} for b in inst["bronnen"]],
+            "laatst": json.loads(m) if m else None,
+            "kleuren": list(agenda.KLEUREN)}
+
+@app.post("/api/agenda")
+def agenda_actie(request: Request, actie: str = Form(...), modus: str = Form(""),
+                 naam: str = Form(""), url: str = Form(""), kleur: str = Form(""),
+                 id: str = Form("")):
+    check_auth(request)
+    inst = _agenda_inst()
+    if actie == "modus" and modus in ("foto", "agenda"):
+        inst["modus"] = modus
+    elif actie == "toevoegen":
+        url = url.strip()
+        if not re.match(r"^(https|webcal)://", url):
+            raise HTTPException(status_code=400, detail="Plak het volledige iCal-adres (begint met https://)")
+        bron_id = secrets.token_hex(4)
+        try:
+            opslag.put(f"agenda/cache/{bron_id}.ics", agenda.haal_ics(url), "text/calendar")
+        except Exception:  # noqa: BLE001
+            raise HTTPException(status_code=400, detail="Op dat adres staat geen agenda (of hij is niet bereikbaar)")
+        if kleur not in agenda.KLEUREN:
+            gebruikt = {b["kleur"] for b in inst["bronnen"]}
+            kleur = next((k for k in agenda.STANDAARD_VOLGORDE if k not in gebruikt), "blauw")
+        inst["bronnen"].append({"id": bron_id, "naam": naam.strip()[:40] or "Agenda",
+                                "kleur": kleur, "url": url})
+    elif actie == "verwijder":
+        inst["bronnen"] = [b for b in inst["bronnen"] if b["id"] != id]
+    elif actie == "kleur" and kleur in agenda.KLEUREN:
+        for b in inst["bronnen"]:
+            if b["id"] == id:
+                b["kleur"] = kleur
+    else:
+        raise HTTPException(status_code=400, detail="onbekende actie")
+    _agenda_bewaar(inst)
+    return {"ok": True}
+
+@app.post("/api/agenda/ververs")
+def agenda_ververs(request: Request):
+    check_auth(request)
+    return _agenda_render()[1]
+
+@app.get("/api/agenda/preview.png")
+def agenda_preview(request: Request):
+    check_auth(request)
+    data = opslag.get("agenda/preview.png")
     if data is None:
-        raise HTTPException(status_code=404)
-    return Response(data, media_type="image/png")
+        _agenda_render()
+        data = opslag.get("agenda/preview.png")
+    return Response(data, media_type="image/png", headers={"Cache-Control": "no-store"})
 
 # --- UI -------------------------------------------------------------------
 from ui_html import UI

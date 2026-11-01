@@ -103,6 +103,33 @@ UI = r"""<!doctype html>
   .sheet .peek { display: flex; gap: 12px; align-items: center; margin-bottom: 4px; }
   .sheet .peek img { width: 84px; height: 63px; object-fit: cover; border-radius: 8px; }
   .sheet .peek div { font-size: 13.5px; color: var(--dim); }
+
+  /* --- modus + agenda --- */
+  .modus { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px;
+           background: var(--kaart); border: 1px solid var(--rand); border-radius: 14px; }
+  .modus button { border-radius: 10px; padding: 10px; font-size: 15px; font-weight: 600;
+                  background: transparent; color: var(--dim); }
+  .modus button.aan { background: var(--tekst); color: #141414; }
+  .bron { display: flex; align-items: center; gap: 11px; padding: 9px 2px;
+          border-bottom: 1px solid var(--rand); }
+  .bron:last-child { border-bottom: 0; }
+  .stip { width: 16px; height: 16px; border-radius: 5px; flex: none; border: 0; padding: 0; }
+  .bron .naam { flex: 1; min-width: 0; font-size: 15px; }
+  .bron .naam small { display: block; color: var(--dim); font-size: 12px; overflow: hidden;
+                      text-overflow: ellipsis; white-space: nowrap; }
+  .bron .weg { background: #262624; color: #cfccc5; border-radius: 9px; padding: 6px 11px;
+               font-size: 13px; }
+  .veld { background: #000; color: var(--tekst); border: 1px solid var(--rand);
+          border-radius: 11px; padding: 12px; font: inherit; font-size: 15px; width: 100%; }
+  .kleurkeuze { display: flex; gap: 10px; }
+  .kleurkeuze .stip { width: 34px; height: 34px; border-radius: 10px;
+                      outline: 2px solid transparent; outline-offset: 2px; }
+  .kleurkeuze .stip.aan { outline-color: var(--tekst); }
+  details summary { cursor: pointer; color: var(--tekst); font-weight: 600; font-size: 15px;
+                    list-style: none; padding: 4px 2px; }
+  details summary::-webkit-details-marker { display: none; }
+  .uitleg { color: var(--dim); font-size: 12.5px; line-height: 1.45; }
+  .waarschuwing { color: #e8b3ac; font-size: 13px; text-align: center; }
 </style>
 </head>
 <body>
@@ -122,6 +149,47 @@ UI = r"""<!doctype html>
 
   <!-- HOME -->
   <section id="s-home" class="verborgen" style="display:flex; flex-direction:column; gap:16px">
+    <div class="modus">
+      <button id="m-foto">Foto's</button>
+      <button id="m-agenda">Agenda</button>
+    </div>
+
+    <!-- AGENDA -->
+    <div id="agenda-deel" class="verborgen" style="display:flex; flex-direction:column; gap:16px">
+      <div>
+        <div class="hangt-label" style="padding:0 4px 6px">Zo komt hij vannacht op de lijst</div>
+        <div class="hero">
+          <div class="leeg" id="ag-leeg"><div class="spinner"></div><span>Agenda ophalen…</span></div>
+          <img id="ag-img" class="verborgen" alt="">
+        </div>
+        <div class="status" id="ag-info" style="margin-top:8px"></div>
+      </div>
+      <div class="waarschuwing verborgen" id="ag-waarschuwing"></div>
+      <section class="kaart">
+        <div class="strip-kop"><h2>Agenda's</h2></div>
+        <div id="bronnen"></div>
+        <details id="ag-toevoegen">
+          <summary>＋ Agenda toevoegen</summary>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:12px">
+            <input class="veld" id="ag-naam" placeholder="Naam, bijv. Werk" maxlength="40">
+            <input class="veld" id="ag-url" placeholder="Geheim adres in iCal-indeling"
+                   inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false">
+            <div class="kleurkeuze" id="ag-kleuren"></div>
+            <button class="knop" id="b-ag-toevoegen">Toevoegen</button>
+            <div class="status" id="ag-status"></div>
+            <div class="uitleg">Waar vind je dat adres? Google Agenda op de computer →
+              ⚙︎ Instellingen → klik links op de agenda → <i>Agenda integreren</i> →
+              kopieer <i>Geheim adres in iCal-indeling</i> (eindigt op <code>basic.ics</code>).
+              Deel dat adres met niemand: wie het heeft, kan de agenda lezen.</div>
+          </div>
+        </details>
+      </section>
+      <button class="knop stil" id="b-ag-ververs">Voorbeeld vernieuwen</button>
+      <div class="status">Elke nacht om 4 uur haalt de lijst de agenda op.<br>
+        Druk op de RST-knop van de lijst om meteen te verversen.</div>
+    </div>
+
+    <div id="foto-deel" style="display:flex; flex-direction:column; gap:16px">
     <div>
       <div class="hangt-label" style="padding:0 4px 6px">Hangt nu</div>
       <div class="hero" id="hero">
@@ -145,6 +213,7 @@ UI = r"""<!doctype html>
     <input type="file" id="file" accept="image/*" multiple class="verborgen">
     <button class="knop" id="b-toevoegen">＋ Foto's toevoegen</button>
     <div class="status">Elke nacht om 4 uur wisselt de lijst vanzelf</div>
+    </div>
   </section>
 
   <!-- CROP + STIJL (per foto) -->
@@ -210,11 +279,13 @@ const dagLabel = i => i === 0 ? "nu" : i === 1 ? "vannacht" : `over ${i} nachten
 // ---------- home ----------
 async function laadHome() {
   try {
-    const [cur, bieb] = await Promise.all([
+    const [cur, bieb, ag] = await Promise.all([
       (await api("/api/current")).json(),
       (await api("/api/bibliotheek")).json(),
+      (await api("/api/agenda")).json(),
     ]);
     toon("s-home");
+    toonAgenda(ag);
     // hero
     if (cur.id) {
       $("hero-img").src = `${API}/api/preview/${cur.id}/${cur.variant}`;
@@ -255,6 +326,131 @@ async function laadStatus() {
     }
   } catch (e) {}
 }
+
+// ---------- agenda ----------
+// kleuren zoals het paneel ze laat zien (render_core.WAARGENOMEN)
+const KLEURHEX = { blauw: "#374173", groen: "#4b6e4b", rood: "#963732",
+                   geel: "#c8af3c", zwart: "#1e1e20" };
+let agData = null, agKleur = null;
+
+function foutTekst(e) {
+  try { return JSON.parse(e.message).detail || e.message; } catch (_) { return e.message; }
+}
+
+function toonAgenda(ag) {
+  agData = ag;
+  const isAg = ag.modus === "agenda";
+  $("m-agenda").classList.toggle("aan", isAg);
+  $("m-foto").classList.toggle("aan", !isAg);
+  $("agenda-deel").classList.toggle("verborgen", !isAg);
+  $("foto-deel").classList.toggle("verborgen", isAg);
+
+  $("bronnen").innerHTML = "";
+  if (!ag.bronnen.length) {
+    $("bronnen").innerHTML = '<div class="uitleg" style="padding:2px">Nog geen agenda gekoppeld.</div>';
+    $("ag-toevoegen").open = true;
+  }
+  ag.bronnen.forEach(b => {
+    const r = document.createElement("div");
+    r.className = "bron";
+    r.innerHTML = `<button class="stip" title="Andere kleur"></button>
+      <div class="naam"><span></span><small></small></div><button class="weg">Weg</button>`;
+    r.querySelector(".stip").style.background = KLEURHEX[b.kleur];
+    r.querySelector(".naam span").textContent = b.naam;
+    r.querySelector(".naam small").textContent = b.url;
+    r.querySelector(".stip").onclick = () => {
+      const k = ag.kleuren, volgende = k[(k.indexOf(b.kleur) + 1) % k.length];
+      agActie({ actie: "kleur", id: b.id, kleur: volgende }, true);
+    };
+    r.querySelector(".weg").onclick = () => {
+      if (confirm(`"${b.naam}" loskoppelen van de lijst?`))
+        agActie({ actie: "verwijder", id: b.id }, true);
+    };
+    $("bronnen").appendChild(r);
+  });
+
+  if (!agKleur) agKleur = ag.kleuren.find(k => !ag.bronnen.some(b => b.kleur === k)) || "blauw";
+  tekenKleurkeuze();
+
+  const w = (ag.laatst && ag.laatst.waarschuwingen) || [];
+  $("ag-waarschuwing").textContent = w.length ? "Niet bijgewerkt: " + w.join(" · ") : "";
+  $("ag-waarschuwing").classList.toggle("verborgen", !w.length);
+  if (isAg) laadAgendaBeeld(ag.laatst);
+}
+
+function tekenKleurkeuze() {
+  $("ag-kleuren").innerHTML = "";
+  agData.kleuren.forEach(k => {
+    const b = document.createElement("button");
+    b.className = "stip" + (k === agKleur ? " aan" : "");
+    b.style.background = KLEURHEX[k];
+    b.title = k;
+    b.onclick = () => { agKleur = k; tekenKleurkeuze(); };
+    $("ag-kleuren").appendChild(b);
+  });
+}
+
+function zetAgendaInfo(laatst) {
+  const t = new Date(laatst.tijd * 1000).toLocaleString("nl-NL",
+    { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  $("ag-info").textContent = `bijgewerkt ${t} · ${laatst.aantal} afspraken`;
+}
+
+function laadAgendaBeeld(laatst) {
+  const src = `${API}/api/agenda/preview.png?t=${laatst ? laatst.tijd : Date.now()}`;
+  if ($("ag-img").dataset.src === src) return;
+  $("ag-img").dataset.src = src;
+  $("ag-leeg").classList.remove("verborgen");
+  $("ag-img").onload = () => {
+    $("ag-img").classList.remove("verborgen");
+    $("ag-leeg").classList.add("verborgen");
+    if (!laatst) api("/api/agenda").then(r => r.json())
+      .then(a => { if (a.laatst) zetAgendaInfo(a.laatst); }).catch(() => {});
+  };
+  $("ag-img").src = src;
+  if (laatst) zetAgendaInfo(laatst);
+}
+
+async function agVernieuw() {
+  $("ag-img").dataset.src = "";
+  $("ag-img").classList.add("verborgen");
+  $("ag-info").textContent = "";
+  $("ag-leeg").classList.remove("verborgen");
+  try { await api("/api/agenda/ververs", { method: "POST" }); }
+  catch (e) { if (e.message !== "login") alert("Vernieuwen mislukt: " + foutTekst(e)); }
+  laadHome();
+}
+
+async function agActie(velden, vernieuw) {
+  const fd = new FormData();
+  for (const [k, v] of Object.entries(velden)) fd.append(k, v);
+  try { await api("/api/agenda", { method: "POST", body: fd }); }
+  catch (e) { if (e.message !== "login") alert(foutTekst(e)); return; }
+  if (vernieuw) agVernieuw(); else laadHome();
+}
+
+$("m-agenda").onclick = () => agActie({ actie: "modus", modus: "agenda" });
+$("m-foto").onclick = () => agActie({ actie: "modus", modus: "foto" });
+$("b-ag-ververs").onclick = agVernieuw;
+$("b-ag-toevoegen").onclick = async () => {
+  const url = $("ag-url").value.trim();
+  if (!url) { $("ag-status").textContent = "Plak eerst het iCal-adres"; return; }
+  $("b-ag-toevoegen").disabled = true;
+  $("ag-status").textContent = "Agenda controleren…";
+  try {
+    const fd = new FormData();
+    fd.append("actie", "toevoegen"); fd.append("naam", $("ag-naam").value);
+    fd.append("url", url); fd.append("kleur", agKleur);
+    await api("/api/agenda", { method: "POST", body: fd });
+    $("ag-naam").value = ""; $("ag-url").value = ""; $("ag-status").textContent = "";
+    $("ag-toevoegen").open = false;
+    agKleur = null;
+    agVernieuw();
+  } catch (e) {
+    $("ag-status").textContent = foutTekst(e);
+  }
+  $("b-ag-toevoegen").disabled = false;
+};
 
 // ---------- actiemenu ----------
 let sheetItem = null;

@@ -23,7 +23,8 @@
   "functions": {
     "api/lijst.py": {
       "maxDuration": 60,
-      "memory": 1769
+      "memory": 1769,
+      "includeFiles": "api/_lijst/**"
     }
   }
 }
