@@ -14,3 +14,6 @@ allfiles.txt
 /public/sitemap-*.xml
 /public/robots.txt
 .vercel
+
+# Python
+__pycache__/
