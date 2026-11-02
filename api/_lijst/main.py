@@ -392,6 +392,22 @@ def _png(img: Image.Image) -> bytes:
     img.save(buf, format="PNG", optimize=True)
     return buf.getvalue()
 
+# Weer van vandaag (Open-Meteo); standaard 's-Gravenzande, aan te passen met
+# WEER_LAT / WEER_LON. Mislukt het ophalen, dan de laatste van vandaag uit
+# R2 — en anders gewoon geen weerblok (de agenda gaat altijd voor).
+def _weer(vandaag: dt.date):
+    try:
+        lat = float(os.environ.get("WEER_LAT", "52.0017"))
+        lon = float(os.environ.get("WEER_LON", "4.1653"))
+        w = agenda.haal_weer(lat, lon)
+        opslag.put("agenda/weer.json", json.dumps(w).encode(), "application/json")
+        return w
+    except Exception as e:  # noqa: BLE001
+        print("weer ophalen mislukt:", repr(e))
+        oud = opslag.get("agenda/weer.json")
+        w = json.loads(oud) if oud else None
+        return w if w and w.get("datum") == vandaag.isoformat() else None
+
 def _agenda_render():
     inst = _agenda_inst()
     nu = dt.datetime.now(agenda.TZ).replace(tzinfo=None)
@@ -405,7 +421,8 @@ def _agenda_render():
         s = opslag.get("status/device.json")
         pct = json.loads(s).get("pct") if s else None
         img = agenda.render_maand(nu.date(), afspraken, bijgewerkt=nu, accu_pct=pct,
-                                  waarschuwingen=waarschuwingen)
+                                  waarschuwingen=waarschuwingen, weer=_weer(nu.date()),
+                                  zwartwit=True)
         aantal = len(afspraken)
     panel = _png(img)
     opslag.put("agenda/panel.png", panel, "image/png")

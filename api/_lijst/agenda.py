@@ -261,6 +261,127 @@ def _tekstkleur_op(kleur):
     return ZWART if kleur in (GEEL, WIT) else WIT
 
 
+# --- Weer (Open-Meteo, gratis, geen sleutel) ---------------------------------
+WEER_TEKST = [  # (WMO-codes, icoon, omschrijving)
+    ((0,), "zon", "zonnig"),
+    ((1, 2), "half", "half bewolkt"),
+    ((3,), "wolk", "bewolkt"),
+    ((45, 48), "mist", "mist"),
+    ((51, 53, 55, 56, 57), "motregen", "motregen"),
+    ((61, 63, 65, 66, 67, 80, 81, 82), "regen", "regen"),
+    ((71, 73, 75, 77, 85, 86), "sneeuw", "sneeuw"),
+    ((95, 96, 99), "onweer", "onweer"),
+]
+
+
+def weer_info(code: int) -> tuple[str, str]:
+    for codes, icoon, tekst in WEER_TEKST:
+        if code in codes:
+            return icoon, tekst
+    return "wolk", "bewolkt"
+
+
+def haal_weer(lat: float, lon: float, timeout: float = 8) -> dict:
+    """Verwachting voor vandaag: {datum, code, max, min, regen}."""
+    import json
+    url = ("https://api.open-meteo.com/v1/forecast"
+           f"?latitude={lat:.4f}&longitude={lon:.4f}"
+           "&daily=weather_code,temperature_2m_max,temperature_2m_min,"
+           "precipitation_probability_max&timezone=Europe%2FAmsterdam&forecast_days=1")
+    req = urllib.request.Request(url, headers={"User-Agent": "wouter.photo-fotolijst/1.0"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        d = json.loads(r.read())["daily"]
+    return {"datum": d["time"][0], "code": int(d["weather_code"][0]),
+            "max": round(d["temperature_2m_max"][0]), "min": round(d["temperature_2m_min"][0]),
+            "regen": d.get("precipitation_probability_max", [None])[0]}
+
+
+def _icoon_masker(soort: str, s: int) -> Image.Image:
+    """Lijn-icoon op 4× resolutie getekend, dan verkleind en gedrempeld."""
+    import math
+    from PIL import ImageChops, ImageFilter
+    S = s * 4
+    t = max(2, round(S * 0.055))      # lijndikte
+    m = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(m)
+
+    def morf(img, n, filt):
+        for _ in range(n):
+            img = img.filter(filt(3))
+        return img
+
+    def zon(cx, cy, r, stralen=True):
+        d.ellipse((cx - r, cy - r, cx + r, cy + r), outline=255, width=t)
+        if stralen:
+            for i in range(8):
+                a = i * math.pi / 4
+                r1, r2 = r * 1.45, r * 1.95
+                d.line((cx + r1 * math.cos(a), cy + r1 * math.sin(a),
+                        cx + r2 * math.cos(a), cy + r2 * math.sin(a)), fill=255, width=t)
+
+    def wolk(dx=0.0, dy=0.0):
+        """Eén strakke omtrek: gevulde vereniging min de 'geërodeerde' versie;
+        wat eronder lag (zon) wordt met een kleine marge weggepoetst."""
+        nonlocal m, d
+        vul = Image.new("L", (S, S), 0)
+        dv = ImageDraw.Draw(vul)
+        onder = (dy + 0.70) * S
+        for x, y, r in ((0.50, 0.44, 0.20), (0.29, onder / S - dy - 0.14, 0.14),
+                        (0.71, onder / S - dy - 0.15, 0.15)):
+            X, Y, R = (dx + x) * S, (dy + y) * S, r * S
+            dv.ellipse((X - R, Y - R, X + R, Y + R), fill=255)
+        dv.rectangle(((dx + 0.29) * S, (dy + 0.50) * S, (dx + 0.71) * S, onder), fill=255)
+        binnen = morf(vul, t, ImageFilter.MinFilter)
+        rand = ImageChops.subtract(vul, binnen)
+        marge = morf(vul, t, ImageFilter.MaxFilter)
+        m = ImageChops.subtract(m, marge)          # zon achter de wolk weg
+        m = ImageChops.lighter(m, rand)
+        d = ImageDraw.Draw(m)
+
+    if soort == "zon":
+        zon(S * 0.5, S * 0.5, S * 0.2)
+    elif soort == "half":
+        zon(S * 0.36, S * 0.33, S * 0.14)
+        wolk(0.08, 0.10)
+    elif soort == "mist":
+        for i, y in enumerate((0.3, 0.45, 0.6, 0.75)):
+            x0 = 0.18 if i % 2 == 0 else 0.26
+            d.line((S * x0, S * y, S * (x0 + 0.56), S * y), fill=255, width=t)
+    else:
+        wolk(0, -0.10)
+        if soort == "regen":
+            for x in (0.35, 0.52, 0.69):
+                d.line((S * x, S * 0.70, S * (x - 0.07), S * 0.90), fill=255, width=t)
+        elif soort == "motregen":
+            for x, y in ((0.33, 0.74), (0.5, 0.78), (0.67, 0.74), (0.42, 0.89), (0.59, 0.89)):
+                r = t * 0.85
+                d.ellipse((S * x - r, S * y - r, S * x + r, S * y + r), fill=255)
+        elif soort == "sneeuw":
+            for x, y in ((0.30, 0.78), (0.52, 0.88), (0.72, 0.76)):
+                r = S * 0.075
+                for k in range(3):
+                    a = math.pi / 2 + k * math.pi / 3
+                    d.line((S * x - r * math.cos(a), S * y - r * math.sin(a),
+                            S * x + r * math.cos(a), S * y + r * math.sin(a)),
+                           fill=255, width=max(2, round(t * 0.7)))
+        elif soort == "onweer":
+            d.polygon([(S * 0.53, S * 0.62), (S * 0.40, S * 0.80), (S * 0.50, S * 0.80),
+                       (S * 0.44, S * 0.97), (S * 0.62, S * 0.74), (S * 0.52, S * 0.74),
+                       (S * 0.58, S * 0.62)], fill=255)
+    m = m.resize((s, s), Image.LANCZOS)
+    return m.point(lambda v: 255 if v >= 110 else 0).convert("1")
+
+
+def _accu_icoon(d: ImageDraw.ImageDraw, x: int, y: int, pct: int):
+    """Batterijtje van 30×14 met vulling, linksboven op (x, y)."""
+    w, h = 28, 14
+    d.rectangle((x, y, x + w, y + h), outline=ZWART, width=2)
+    d.rectangle((x + w + 1, y + 4, x + w + 3, y + h - 4), fill=ZWART)
+    vul = round((w - 6) * max(0, min(100, pct)) / 100)
+    if vul > 0:
+        d.rectangle((x + 3, y + 3, x + 3 + vul, y + h - 3), fill=ZWART)
+
+
 # --- Maandweergave -----------------------------------------------------------
 # Maatvoering in paneelpixels (1600×1200, ~150 dpi). Het lijstvenster valt
 # 0,5 mm (≈3 px) over het beeld; marges houden daar ruim rekening mee.
@@ -274,9 +395,13 @@ SLOT_H = 28            # hoogte van één afspraakregel / balk
 def render_maand(vandaag: dt.date, afspraken: list[Afspraak], *,
                  bijgewerkt: dt.datetime | None = None,
                  accu_pct: int | None = None,
-                 waarschuwingen: list[str] | None = None) -> Image.Image:
+                 waarschuwingen: list[str] | None = None,
+                 weer: dict | None = None,
+                 zwartwit: bool = True) -> Image.Image:
     img = Image.new("RGB", (BREED, HOOG), WIT)
     d = ImageDraw.Draw(img)
+    kl = (lambda naam: ZWART) if zwartwit else (lambda naam: KLEUREN.get(naam, BLAUW))
+    accent = ZWART if zwartwit else ROOD
 
     start, eind = maandbereik(vandaag)
     weken = ((eind - start).days + 1) // 7
@@ -285,35 +410,57 @@ def render_maand(vandaag: dt.date, afspraken: list[Afspraak], *,
     rij_h = (HOOG - MB - GRID_TOP) / weken
     slots = max(1, int((rij_h - DAGNUM_H - 4) // SLOT_H))
 
-    # ---- kop --------------------------------------------------------------
+    # ---- kop: maand links ---------------------------------------------------
     f_maand, f_jaar = font("Bold", 76), font("Regular", 76)
     maand = MAANDEN[vandaag.month - 1].capitalize()
     _tekst(img, (ML - 3, 104), maand, f_maand, ZWART, anchor="ls")
     _tekst(img, (ML - 3 + f_maand.getlength(maand) + 22, 104), str(vandaag.year),
-           f_jaar, ROOD, anchor="ls")
+           f_jaar, accent, anchor="ls")
+    f_klein = font("Regular", 17)
+    for i, w in enumerate((waarschuwingen or [])[:2]):
+        _tekst(img, (ML, 134 + 22 * i), _pas(f"! niet bijgewerkt: {w}", f_klein, 640),
+               f_klein, accent, anchor="ls")
 
-    f_klein = font("Regular", 21)
-    regels = []
+    # ---- kop rechtsboven: klein statusregeltje (accu + bijgewerkt) ---------
+    xr = BREED - MR
+    status = ""
     if bijgewerkt:
-        regels.append((f"bijgewerkt {DAGEN_KORT[bijgewerkt.weekday()]} "
-                       f"{bijgewerkt.day} {MAANDEN[bijgewerkt.month - 1][:3]} "
-                       f"{bijgewerkt:%H:%M}", ZWART, False))
-    if accu_pct is not None and accu_pct <= 20:
-        regels.append((f"accu {accu_pct}% — graag opladen", ROOD, False))
-    for w in (waarschuwingen or [])[:2]:
-        regels.append((f"niet bijgewerkt: {w}", ROOD, False))
-    y = 104 - 30 * (len(regels) - 1)
-    for tekst, kleur, grijs in regels:
-        _tekst(img, (BREED - MR, y), _pas(tekst, f_klein, 620), f_klein, kleur,
-               anchor="rs", grijs=grijs)
-        y += 30
+        status = (f"bijgewerkt {DAGEN_KORT[bijgewerkt.weekday()]} {bijgewerkt.day} "
+                  f"{MAANDEN[bijgewerkt.month - 1][:3]} {bijgewerkt:%H:%M}")
+    if status:
+        _tekst(img, (xr, 34), status, f_klein, ZWART, anchor="rs")
+        xr_s = xr - f_klein.getlength(status) - 18
+    else:
+        xr_s = xr
+    if accu_pct is not None:
+        f_pct = font("SemiBold", 17) if accu_pct <= 20 else f_klein
+        pct = f"{accu_pct}%" + (" opladen" if accu_pct <= 20 else "")
+        _tekst(img, (xr_s, 34), pct, f_pct, ZWART, anchor="rs")
+        _accu_icoon(d, round(xr_s - f_pct.getlength(pct) - 40), 21, accu_pct)
+
+    # ---- kop rechts: het weer van vandaag ----------------------------------
+    if weer:
+        icoon, omschrijving = weer_info(weer["code"])
+        f_max, f_min, f_oms = font("Bold", 46), font("Regular", 30), font("Regular", 19)
+        t_max, t_min = f"{weer['max']}°", f" / {weer['min']}°"
+        breedte = f_max.getlength(t_max) + f_min.getlength(t_min)
+        _tekst(img, (xr, 104), t_min, f_min, ZWART, anchor="rs")
+        _tekst(img, (xr - f_min.getlength(t_min), 104), t_max, f_max, ZWART, anchor="rs")
+        oms = omschrijving
+        if weer.get("regen") is not None and weer["regen"] >= 20:
+            oms += f" · {weer['regen']}% kans op regen"
+        _tekst(img, (xr, 132), oms, f_oms, ZWART, anchor="rs")
+        s_ic = 68
+        ix, iy = round(xr - breedte - 14 - s_ic), 46
+        m = _icoon_masker(icoon, s_ic)
+        img.paste(ZWART, (ix, iy, ix + s_ic, iy + s_ic), m)
 
     # ---- weekdagen --------------------------------------------------------
     f_wd = font("SemiBold", 20)
     _tekst(img, (ML + WEEKKOLOM / 2, 160), "wk", f_wd, ZWART, anchor="ms", grijs=True)
     for i, naam in enumerate(DAGEN_KORT):
         _tekst(img, (x0 + i * cel_b + 12, 160), naam.upper(), f_wd,
-               ROOD if i >= 5 else ZWART, anchor="ls")
+               accent if i >= 5 else ZWART, anchor="ls")
 
     # ---- raster -----------------------------------------------------------
     d.rectangle((ML, GRID_TOP - 2, BREED - MR, GRID_TOP), fill=ZWART)
@@ -338,6 +485,8 @@ def render_maand(vandaag: dt.date, afspraken: list[Afspraak], *,
     f_balk = font("SemiBold", 19)
     f_tijd, f_titel = font("SemiBold", 19), font("Regular", 19)
     f_meer = font("SemiBold", 18)
+    vandaag_vak = None
+    inspring = 12 if zwartwit else 26     # zonder kleurbolletje: tekst direct na de rand
 
     for w in range(weken):
         wk_start = start + dt.timedelta(days=7 * w)
@@ -378,7 +527,11 @@ def render_maand(vandaag: dt.date, afspraken: list[Afspraak], *,
             cx = x0 + k * cel_b
             # dagnummer
             nx, ny = cx + 12, ry + 8
-            if dag == vandaag:
+            if dag == vandaag and zwartwit:
+                _tekst(img, (nx, ny), str(dag.day), f_dag_vet, ZWART, anchor="lt")
+                vandaag_vak = (round(cx) + 1, round(ry) + (1 if w else 1),
+                               round(cx + cel_b) - 1, round(ry + rij_h) - 1)
+            elif dag == vandaag:
                 tekst = str(dag.day)
                 bw = f_dag_vet.getlength(tekst)
                 r = 21
@@ -404,9 +557,10 @@ def render_maand(vandaag: dt.date, afspraken: list[Afspraak], *,
                 s = vrij[j]
                 j += 1
                 ty = ry + DAGNUM_H + s * SLOT_H
-                kleur = KLEUREN.get(a.kleur, BLAUW)
-                d.rounded_rectangle((cx + 10, ty + 9, cx + 19, ty + 18), radius=2, fill=kleur)
-                tx = cx + 26
+                if not zwartwit:
+                    d.rounded_rectangle((cx + 10, ty + 9, cx + 19, ty + 18), radius=2,
+                                        fill=kl(a.kleur))
+                tx = cx + inspring
                 tijd = a.tijd
                 _tekst(img, (tx, ty + 20), tijd, f_tijd, ZWART, anchor="ls")
                 tx += f_tijd.getlength(tijd) + 7
@@ -415,8 +569,8 @@ def render_maand(vandaag: dt.date, afspraken: list[Afspraak], *,
                         and j < len(vrij) and vrij[j] == s + 1):
                     r1, r2 = _breek(a.titel, f_titel, ruimte)
                     _tekst(img, (tx, ty + 20), r1, f_titel, ZWART, anchor="ls")
-                    _tekst(img, (cx + 26, ty + SLOT_H + 20),
-                           _pas(r2, f_titel, cel_b - 34), f_titel, ZWART, anchor="ls")
+                    _tekst(img, (cx + inspring, ty + SLOT_H + 20),
+                           _pas(r2, f_titel, cel_b - inspring - 8), f_titel, ZWART, anchor="ls")
                     j += 1
                     reserve -= 1
                 else:
@@ -429,7 +583,7 @@ def render_maand(vandaag: dt.date, afspraken: list[Afspraak], *,
 
         # balken tekenen (na de dagnummers, zodat ze er nooit onder vallen)
         for a, baan, d0, d1 in geplaatst:
-            kleur = KLEUREN.get(a.kleur, BLAUW)
+            kleur = kl(a.kleur)
             loopt_door_links = a.eerste_dag < wk_start
             loopt_door_rechts = a.laatste_dag > wk_eind
             bx0 = x0 + d0 * cel_b + (1 if loopt_door_links else 7)
@@ -444,6 +598,14 @@ def render_maand(vandaag: dt.date, afspraken: list[Afspraak], *,
             titel = a.titel if a.hele_dag else f"{a.tijd} {a.titel}"
             _tekst(img, (bx0 + 9, by0 + 19), _pas(titel, f_balk, bx1 - bx0 - 16),
                    f_balk, _tekstkleur_op(kleur), anchor="ls")
+
+    # ---- vandaag diapositief: het hele vakje omkeren (zwart ↔ wit) ----------
+    if vandaag_vak:
+        from PIL import ImageOps
+        x_a, y_a, x_b, y_b = vandaag_vak
+        y_a = max(y_a, GRID_TOP + 1)
+        vak = img.crop((x_a, y_a, x_b, y_b))
+        img.paste(ImageOps.invert(vak), (x_a, y_a))
 
     return img
 
