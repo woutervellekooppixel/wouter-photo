@@ -6,13 +6,12 @@ UI = r"""<!doctype html>
 <meta name="theme-color" content="#101010">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Fotolijst</title>
+<title>Agendalijst</title>
 <style>
   :root {
     color-scheme: dark;
     --bg: #101010; --kaart: #1a1a19; --rand: #2a2a28;
-    --tekst: #edeae3; --dim: #8f8c85; --accent: #edeae3;
-    --groen: #7fae7f;
+    --tekst: #edeae3; --dim: #8f8c85;
   }
   * { box-sizing: border-box; margin: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
@@ -28,63 +27,41 @@ UI = r"""<!doctype html>
 
   .kaart { background: var(--kaart); border: 1px solid var(--rand); border-radius: 18px;
            padding: 16px; display: flex; flex-direction: column; gap: 13px; }
+  .kop { font-size: 13px; letter-spacing: .12em; text-transform: uppercase;
+         color: var(--dim); font-weight: 600; padding: 0 2px; }
 
   button { font: inherit; border: 0; cursor: pointer; }
   .knop { background: var(--tekst); color: #141414; border-radius: 12px; padding: 15px;
           font-size: 16px; font-weight: 650; width: 100%; text-align: center; }
   .knop.stil { background: #262624; color: #cfccc5; }
-  .knop.gevaar { background: #3a2523; color: #e8b3ac; }
   .knop:disabled { opacity: .35; }
 
   .status { color: var(--dim); font-size: 13.5px; text-align: center; min-height: 1.3em; }
+  .uitleg { color: var(--dim); font-size: 12.5px; line-height: 1.45; }
+  .waarschuwing { color: #e8b3ac; font-size: 13px; text-align: center; }
 
-  /* --- hero: wat er nu hangt --- */
   .hero { position: relative; border-radius: 14px; overflow: hidden; background: #000;
           aspect-ratio: 4/3; }
   .hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .hero .leeg { position: absolute; inset: 0; display: flex; flex-direction: column;
                 align-items: center; justify-content: center; gap: 6px; color: var(--dim); }
-  .hero .strook { position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 14px 10px;
-                  background: linear-gradient(transparent, rgba(0,0,0,.72));
-                  display: flex; justify-content: space-between; align-items: flex-end;
-                  font-size: 13px; color: #eee; }
-  .hangt-label { font-size: 11px; letter-spacing: .14em; color: var(--dim);
-                 text-transform: uppercase; }
+  .label { font-size: 11px; letter-spacing: .14em; color: var(--dim); text-transform: uppercase;
+           padding: 0 4px 6px; }
 
-  /* --- roulatie-strip --- */
-  .strip-kop { display: flex; justify-content: space-between; align-items: baseline; padding: 0 2px; }
-  .strip-kop h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase;
-                  color: var(--dim); font-weight: 600; }
-  .strip { display: flex; gap: 10px; overflow-x: auto; padding: 2px;
-           scroll-snap-type: x proximity; scrollbar-width: none; }
-  .strip::-webkit-scrollbar { display: none; }
-  .tegel { position: relative; flex: 0 0 128px; border-radius: 10px; overflow: hidden;
-           scroll-snap-align: start; background: #000; border: 2px solid transparent; padding: 0; }
-  .tegel.nu { border-color: var(--groen); }
-  .tegel img { width: 128px; height: 96px; object-fit: cover; display: block; }
-  .tegel .dag { position: absolute; top: 5px; left: 5px; background: rgba(0,0,0,.62);
-                color: #fff; font-size: 10.5px; padding: 1px 7px; border-radius: 99px; }
-  .tegel.nu .dag { background: var(--groen); color: #10240f; font-weight: 650; }
-  .tegel .wie { position: absolute; left: 0; right: 0; bottom: 0; padding: 8px 6px 3px;
-                background: linear-gradient(transparent, rgba(0,0,0,.7));
-                color: #ddd; font-size: 10.5px; text-align: left; }
-
-  /* --- crop --- */
-  .cropvlak { position: relative; border-radius: 12px; overflow: hidden; touch-action: none; }
-  .cropvlak canvas { width: 100%; display: block; background: #000; }
-  .crophint { position: absolute; inset: 0; display: flex; align-items: center;
-              justify-content: center; pointer-events: none; opacity: 0; transition: opacity .3s; }
-  .crophint.zichtbaar { opacity: 1; }
-  .crophint span { background: rgba(0,0,0,.6); color: #fff; padding: 8px 16px;
-                   border-radius: 99px; font-size: 14px; }
-
-  .stijlkeuze { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .stijlkeuze button { border-radius: 11px; padding: 12px; font-size: 15px; font-weight: 600;
-                       background: #262624; color: #cfccc5; border: 2px solid transparent; }
-  .stijlkeuze button.aan { background: var(--tekst); color: #141414; }
-
-  .resultaat { border-radius: 12px; overflow: hidden; }
-  .resultaat img { width: 100%; display: block; }
+  .bron { display: flex; align-items: center; gap: 11px; padding: 9px 2px;
+          border-bottom: 1px solid var(--rand); }
+  .bron:last-child { border-bottom: 0; }
+  .bron .naam { flex: 1; min-width: 0; font-size: 15px; }
+  .bron .naam small { display: block; color: var(--dim); font-size: 12px; overflow: hidden;
+                      text-overflow: ellipsis; white-space: nowrap; }
+  .bron .weg { background: #262624; color: #cfccc5; border-radius: 9px; padding: 6px 11px;
+               font-size: 13px; }
+  .veld { background: #000; color: var(--tekst); border: 1px solid var(--rand);
+          border-radius: 11px; padding: 12px; font: inherit; font-size: 15px; width: 100%; }
+  .rij { display: grid; grid-template-columns: 1fr 110px; gap: 8px; }
+  details summary { cursor: pointer; font-weight: 600; font-size: 15px; list-style: none;
+                    padding: 4px 2px; }
+  details summary::-webkit-details-marker { display: none; }
 
   input[type=password] { background: #000; color: var(--tekst); border: 1px solid var(--rand);
         border-radius: 12px; padding: 15px; font-size: 20px; width: 100%; text-align: center;
@@ -93,49 +70,12 @@ UI = r"""<!doctype html>
   .spinner { margin: 14px auto; width: 30px; height: 30px; border: 3px solid #2c2c2a;
              border-top-color: var(--tekst); border-radius: 50%; animation: d 1s linear infinite; }
   @keyframes d { to { transform: rotate(360deg); } }
-
-  /* --- actiemenu (sheet) --- */
-  .sheet-achter { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex;
-                  align-items: flex-end; justify-content: center; z-index: 20; }
-  .sheet { background: #1d1d1b; border-radius: 18px 18px 0 0; padding: 18px 16px
-           calc(18px + env(safe-area-inset-bottom)); width: 100%; max-width: 460px;
-           display: flex; flex-direction: column; gap: 10px; }
-  .sheet .peek { display: flex; gap: 12px; align-items: center; margin-bottom: 4px; }
-  .sheet .peek img { width: 84px; height: 63px; object-fit: cover; border-radius: 8px; }
-  .sheet .peek div { font-size: 13.5px; color: var(--dim); }
-
-  /* --- modus + agenda --- */
-  .modus { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px;
-           background: var(--kaart); border: 1px solid var(--rand); border-radius: 14px; }
-  .modus button { border-radius: 10px; padding: 10px; font-size: 15px; font-weight: 600;
-                  background: transparent; color: var(--dim); }
-  .modus button.aan { background: var(--tekst); color: #141414; }
-  .bron { display: flex; align-items: center; gap: 11px; padding: 9px 2px;
-          border-bottom: 1px solid var(--rand); }
-  .bron:last-child { border-bottom: 0; }
-  .stip { width: 16px; height: 16px; border-radius: 5px; flex: none; border: 0; padding: 0; }
-  .bron .naam { flex: 1; min-width: 0; font-size: 15px; }
-  .bron .naam small { display: block; color: var(--dim); font-size: 12px; overflow: hidden;
-                      text-overflow: ellipsis; white-space: nowrap; }
-  .bron .weg { background: #262624; color: #cfccc5; border-radius: 9px; padding: 6px 11px;
-               font-size: 13px; }
-  .veld { background: #000; color: var(--tekst); border: 1px solid var(--rand);
-          border-radius: 11px; padding: 12px; font: inherit; font-size: 15px; width: 100%; }
-  .kleurkeuze { display: flex; gap: 10px; }
-  .kleurkeuze .stip { width: 34px; height: 34px; border-radius: 10px;
-                      outline: 2px solid transparent; outline-offset: 2px; }
-  .kleurkeuze .stip.aan { outline-color: var(--tekst); }
-  details summary { cursor: pointer; color: var(--tekst); font-weight: 600; font-size: 15px;
-                    list-style: none; padding: 4px 2px; }
-  details summary::-webkit-details-marker { display: none; }
-  .uitleg { color: var(--dim); font-size: 12.5px; line-height: 1.45; }
-  .waarschuwing { color: #e8b3ac; font-size: 13px; text-align: center; }
 </style>
 </head>
 <body>
 <main>
   <header>
-    <h1>FOTOLIJST</h1>
+    <h1>AGENDALIJST</h1>
     <div class="sub" id="apparaat"></div>
   </header>
 
@@ -149,121 +89,60 @@ UI = r"""<!doctype html>
 
   <!-- HOME -->
   <section id="s-home" class="verborgen" style="display:flex; flex-direction:column; gap:16px">
-    <div class="modus">
-      <button id="m-foto">Foto's</button>
-      <button id="m-agenda">Agenda</button>
-    </div>
-
-    <!-- AGENDA -->
-    <div id="agenda-deel" class="verborgen" style="display:flex; flex-direction:column; gap:16px">
-      <div>
-        <div class="hangt-label" style="padding:0 4px 6px">Zo komt hij vannacht op de lijst</div>
-        <div class="hero">
-          <div class="leeg" id="ag-leeg"><div class="spinner"></div><span>Agenda ophalen…</span></div>
-          <img id="ag-img" class="verborgen" alt="">
-        </div>
-        <div class="status" id="ag-info" style="margin-top:8px"></div>
-      </div>
-      <div class="waarschuwing verborgen" id="ag-waarschuwing"></div>
-      <section class="kaart">
-        <div class="strip-kop"><h2>Agenda's</h2></div>
-        <div id="bronnen"></div>
-        <details id="ag-toevoegen">
-          <summary>＋ Agenda toevoegen</summary>
-          <div style="display:flex; flex-direction:column; gap:10px; margin-top:12px">
-            <input class="veld" id="ag-naam" placeholder="Naam, bijv. Werk" maxlength="40">
-            <input class="veld" id="ag-url" placeholder="Geheim adres in iCal-indeling"
-                   inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false">
-            <div class="kleurkeuze" id="ag-kleuren"></div>
-            <button class="knop" id="b-ag-toevoegen">Toevoegen</button>
-            <div class="status" id="ag-status"></div>
-            <div class="uitleg">Waar vind je dat adres? Google Agenda op de computer →
-              ⚙︎ Instellingen → klik links op de agenda → <i>Agenda integreren</i> →
-              kopieer <i>Geheim adres in iCal-indeling</i> (eindigt op <code>basic.ics</code>).
-              Deel dat adres met niemand: wie het heeft, kan de agenda lezen.</div>
-          </div>
-        </details>
-      </section>
-      <button class="knop stil" id="b-ag-ververs">Voorbeeld vernieuwen</button>
-      <div class="status">Elke nacht om 4 uur haalt de lijst de agenda op.<br>
-        Druk op de RST-knop van de lijst om meteen te verversen.</div>
-    </div>
-
-    <div id="foto-deel" style="display:flex; flex-direction:column; gap:16px">
     <div>
-      <div class="hangt-label" style="padding:0 4px 6px">Hangt nu</div>
-      <div class="hero" id="hero">
-        <div class="leeg" id="hero-leeg"><span style="font-size:34px">🖼️</span>
-          <span>Nog geen foto — voeg de eerste toe</span></div>
-        <img id="hero-img" class="verborgen" alt="">
-        <div class="strook verborgen" id="hero-strook">
-          <span id="hero-info"></span><span id="hero-volgende"></span>
+      <div class="label">Zo komt hij vannacht op de lijst</div>
+      <div class="hero">
+        <div class="leeg" id="ag-leeg"><div class="spinner"></div><span>Agenda ophalen…</span></div>
+        <img id="ag-img" class="verborgen" alt="">
+      </div>
+      <div class="status" id="ag-info" style="margin-top:8px"></div>
+    </div>
+    <div class="waarschuwing verborgen" id="ag-waarschuwing"></div>
+
+    <section class="kaart">
+      <div class="kop">Agenda's</div>
+      <div id="bronnen"></div>
+      <details id="ag-toevoegen">
+        <summary>＋ Agenda toevoegen</summary>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:12px">
+          <input class="veld" id="ag-naam" placeholder="Naam, bijv. BernyWouty" maxlength="40">
+          <input class="veld" id="ag-url" placeholder="Geheim adres in iCal-indeling"
+                 inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false">
+          <button class="knop" id="b-ag-toevoegen">Toevoegen</button>
+          <div class="status" id="ag-status"></div>
+          <div class="uitleg">Google Agenda op de computer → ⚙︎ Instellingen → klik links op de
+            agenda → <i>Agenda integreren</i> → kopieer <i>Geheim adres in iCal-indeling</i>
+            (eindigt op <code>basic.ics</code>). Deel dat adres met niemand.</div>
         </div>
+      </details>
+    </section>
+
+    <section class="kaart">
+      <div class="kop">Afvalkalender (HVC)</div>
+      <div class="rij">
+        <input class="veld" id="af-postcode" placeholder="Postcode" maxlength="7"
+               autocapitalize="characters" autocomplete="postal-code">
+        <input class="veld" id="af-nummer" placeholder="Nr." maxlength="8" inputmode="numeric">
       </div>
-    </div>
+      <button class="knop stil" id="b-afval">Opslaan</button>
+      <div class="status" id="af-status"></div>
+    </section>
 
-    <div>
-      <div class="strip-kop">
-        <h2>Roulatie</h2>
-        <span id="strip-info" style="color:var(--dim); font-size:12px"></span>
-      </div>
-      <div class="strip" id="strip"></div>
-    </div>
-
-    <input type="file" id="file" accept="image/*" multiple class="verborgen">
-    <button class="knop" id="b-toevoegen">＋ Foto's toevoegen</button>
-    <div class="status">Elke nacht om 4 uur wisselt de lijst vanzelf</div>
-    </div>
-  </section>
-
-  <!-- CROP + STIJL (per foto) -->
-  <section id="s-crop" class="kaart verborgen">
-    <div class="status" id="crop-teller"></div>
-    <div class="cropvlak" id="cropvlak">
-      <canvas id="crop-canvas" width="880" height="660"></canvas>
-      <div class="crophint" id="crophint"><span>← sleep om uit te snijden →</span></div>
-    </div>
-    <div class="stijlkeuze">
-      <button id="st-kleur" class="aan">Kleur</button>
-      <button id="st-zw">Zwart-wit</button>
-    </div>
-    <button class="knop" id="b-render">Maak 'm klaar →</button>
-    <button class="knop stil" id="b-crop-skip">Deze overslaan</button>
-  </section>
-
-  <!-- WACHTEN -->
-  <section id="s-wachten" class="kaart verborgen">
-    <div class="spinner"></div>
-    <div class="status" id="wacht-status">Renderen voor e-ink…</div>
-  </section>
-
-  <!-- RESULTAAT -->
-  <section id="s-result" class="kaart verborgen">
-    <div class="resultaat"><img id="result-img" alt=""></div>
-    <div class="status">Zo komt hij op de lijst</div>
-    <button class="knop" id="b-in-roulatie">In de roulatie</button>
-    <button class="knop stil" id="b-nu-tonen">Nu meteen tonen</button>
+    <button class="knop stil" id="b-ag-ververs">Voorbeeld vernieuwen</button>
+    <div class="status">Elke nacht om 4 uur haalt de lijst de agenda op.<br>
+      Druk op de RST-knop van de lijst om meteen te verversen.</div>
   </section>
 </main>
-
-<div id="sheet-achter" class="sheet-achter verborgen">
-  <div class="sheet">
-    <div class="peek"><img id="sheet-img" alt=""><div id="sheet-info"></div></div>
-    <button class="knop" id="sheet-nu">Nu op de lijst</button>
-    <button class="knop gevaar" id="sheet-weg">Verwijderen</button>
-    <button class="knop stil" id="sheet-sluit">Sluiten</button>
-  </div>
-</div>
 
 <script>
 const $ = id => document.getElementById(id);
 const API = location.pathname.startsWith("/lijst") ? "/lijst" : "";
-const secties = ["s-pin","s-home","s-crop","s-wachten","s-result"];
+const secties = ["s-pin", "s-home"];
 function toon(id) { secties.forEach(s => $(s).classList.toggle("verborgen", s !== id)); }
 
 // PWA: manifest + icoon via JS zodat het pad overal klopt
-for (const [rel, href] of [["manifest", API+"/manifest.json"],
-                           ["apple-touch-icon", API+"/icon.png"]]) {
+for (const [rel, href] of [["manifest", API + "/manifest.json"],
+                           ["apple-touch-icon", API + "/icon.png"]]) {
   const l = document.createElement("link"); l.rel = rel; l.href = href;
   document.head.appendChild(l);
 }
@@ -274,44 +153,57 @@ async function api(pad, opties) {
   if (!r.ok) throw new Error(await r.text());
   return r;
 }
-const dagLabel = i => i === 0 ? "nu" : i === 1 ? "vannacht" : `over ${i} nachten`;
+function foutTekst(e) {
+  try { return JSON.parse(e.message).detail || e.message; } catch (_) { return e.message; }
+}
 
 // ---------- home ----------
 async function laadHome() {
   try {
-    const [cur, bieb, ag] = await Promise.all([
-      (await api("/api/current")).json(),
-      (await api("/api/bibliotheek")).json(),
-      (await api("/api/agenda")).json(),
-    ]);
+    const ag = await (await api("/api/agenda")).json();
     toon("s-home");
     toonAgenda(ag);
-    // hero
-    if (cur.id) {
-      $("hero-img").src = `${API}/api/preview/${cur.id}/${cur.variant}`;
-      $("hero-img").classList.remove("verborgen");
-      $("hero-leeg").classList.add("verborgen");
-      $("hero-strook").classList.remove("verborgen");
-      $("hero-info").textContent = `door ${cur.door}`;
-      $("hero-volgende").textContent = cur.volgende ? `vannacht → ${cur.volgende.door}` : "";
-    } else {
-      $("hero-img").classList.add("verborgen");
-      $("hero-leeg").classList.remove("verborgen");
-      $("hero-strook").classList.add("verborgen");
-    }
-    // strip
-    $("strip").innerHTML = "";
-    $("strip-info").textContent = bieb.items.length ? `${bieb.items.length} foto's` : "";
-    bieb.items.forEach((it, i) => {
-      const t = document.createElement("button");
-      t.className = "tegel" + (i === 0 ? " nu" : "");
-      t.innerHTML = `<img src="${API}/api/preview/${it.id}/${it.variant}" loading="lazy">
-        <span class="dag">${dagLabel(i)}</span><span class="wie">${it.door}</span>`;
-      t.onclick = () => openSheet(it);
-      $("strip").appendChild(t);
-    });
     laadStatus();
   } catch (e) { /* pin-scherm staat al */ }
+}
+
+function toonAgenda(ag) {
+  $("bronnen").innerHTML = "";
+  if (!ag.bronnen.length) {
+    $("bronnen").innerHTML = '<div class="uitleg" style="padding:2px">Nog geen agenda gekoppeld.</div>';
+    $("ag-toevoegen").open = true;
+  }
+  ag.bronnen.forEach(b => {
+    const r = document.createElement("div");
+    r.className = "bron";
+    r.innerHTML = `<div class="naam"><span></span><small></small></div><button class="weg">Weg</button>`;
+    r.querySelector(".naam span").textContent = b.naam;
+    r.querySelector(".naam small").textContent = b.url;
+    r.querySelector(".weg").onclick = () => {
+      if (confirm(`"${b.naam}" loskoppelen van de lijst?`))
+        agActie({ actie: "verwijder", id: b.id })
+          .catch(e => { if (e.message !== "login") alert(foutTekst(e)); });
+    };
+    $("bronnen").appendChild(r);
+  });
+
+  // afvaladres
+  if (document.activeElement !== $("af-postcode") && document.activeElement !== $("af-nummer")) {
+    $("af-postcode").value = (ag.afval && ag.afval.postcode) || "";
+    $("af-nummer").value = (ag.afval && ag.afval.huisnummer) || "";
+  }
+  $("af-status").textContent = ag.afval && ag.afval.postcode
+    ? (ag.afval_data != null ? `${ag.afval_data} ophaaldagen gevonden` : "gekoppeld")
+    : "Vul je adres in voor de containertjes in de agenda";
+
+  zetWaarschuwing(ag.laatst);
+  laadAgendaBeeld(ag.laatst);
+}
+
+function zetWaarschuwing(laatst) {
+  const w = (laatst && laatst.waarschuwingen) || [];
+  $("ag-waarschuwing").textContent = w.length ? "Niet bijgewerkt: " + w.join(" · ") : "";
+  $("ag-waarschuwing").classList.toggle("verborgen", !w.length);
 }
 
 async function laadStatus() {
@@ -322,75 +214,12 @@ async function laadStatus() {
       $("apparaat").textContent = `${ik} ${s.pct}%`;
     } else if (s.tijd) {
       const d = new Date(s.tijd * 1000);
-      $("apparaat").textContent = `gezien ${d.toLocaleDateString("nl-NL",{day:"numeric",month:"short"})}`;
+      $("apparaat").textContent = `gezien ${d.toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}`;
     }
   } catch (e) {}
 }
 
-// ---------- agenda ----------
-// kleuren zoals het paneel ze laat zien (render_core.WAARGENOMEN)
-const KLEURHEX = { blauw: "#374173", groen: "#4b6e4b", rood: "#963732",
-                   geel: "#c8af3c", zwart: "#1e1e20" };
-let agData = null, agKleur = null;
-
-function foutTekst(e) {
-  try { return JSON.parse(e.message).detail || e.message; } catch (_) { return e.message; }
-}
-
-function toonAgenda(ag) {
-  agData = ag;
-  const isAg = ag.modus === "agenda";
-  $("m-agenda").classList.toggle("aan", isAg);
-  $("m-foto").classList.toggle("aan", !isAg);
-  $("agenda-deel").classList.toggle("verborgen", !isAg);
-  $("foto-deel").classList.toggle("verborgen", isAg);
-
-  $("bronnen").innerHTML = "";
-  if (!ag.bronnen.length) {
-    $("bronnen").innerHTML = '<div class="uitleg" style="padding:2px">Nog geen agenda gekoppeld.</div>';
-    $("ag-toevoegen").open = true;
-  }
-  ag.bronnen.forEach(b => {
-    const r = document.createElement("div");
-    r.className = "bron";
-    r.innerHTML = `<button class="stip" title="Andere kleur"></button>
-      <div class="naam"><span></span><small></small></div><button class="weg">Weg</button>`;
-    r.querySelector(".stip").style.background = KLEURHEX[b.kleur];
-    r.querySelector(".naam span").textContent = b.naam;
-    r.querySelector(".naam small").textContent = b.url;
-    r.querySelector(".stip").onclick = () => {
-      const k = ag.kleuren, volgende = k[(k.indexOf(b.kleur) + 1) % k.length];
-      agActie({ actie: "kleur", id: b.id, kleur: volgende }, true);
-    };
-    r.querySelector(".weg").onclick = () => {
-      if (confirm(`"${b.naam}" loskoppelen van de lijst?`))
-        agActie({ actie: "verwijder", id: b.id }, true);
-    };
-    $("bronnen").appendChild(r);
-  });
-
-  if (!agKleur) agKleur = ag.kleuren.find(k => !ag.bronnen.some(b => b.kleur === k)) || "blauw";
-  tekenKleurkeuze();
-
-  const w = (ag.laatst && ag.laatst.waarschuwingen) || [];
-  $("ag-waarschuwing").textContent = w.length ? "Niet bijgewerkt: " + w.join(" · ") : "";
-  $("ag-waarschuwing").classList.toggle("verborgen", !w.length);
-  if (isAg) laadAgendaBeeld(ag.laatst);
-}
-
-function tekenKleurkeuze() {
-  $("ag-kleuren").innerHTML = "";
-  agData.kleuren.forEach(k => {
-    const b = document.createElement("button");
-    b.className = "stip" + (k === agKleur ? " aan" : "");
-    b.style.background = KLEURHEX[k];
-    b.title = k;
-    b.onclick = () => { agKleur = k; tekenKleurkeuze(); };
-    $("ag-kleuren").appendChild(b);
-  });
-}
-
-function zetAgendaInfo(laatst) {
+function zetInfo(laatst) {
   const t = new Date(laatst.tijd * 1000).toLocaleString("nl-NL",
     { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   $("ag-info").textContent = `bijgewerkt ${t} · ${laatst.aantal} afspraken`;
@@ -405,13 +234,14 @@ function laadAgendaBeeld(laatst) {
     $("ag-img").classList.remove("verborgen");
     $("ag-leeg").classList.add("verborgen");
     if (!laatst) api("/api/agenda").then(r => r.json())
-      .then(a => { if (a.laatst) zetAgendaInfo(a.laatst); }).catch(() => {});
+      .then(a => { if (a.laatst) { zetInfo(a.laatst); zetWaarschuwing(a.laatst); } })
+      .catch(() => {});
   };
   $("ag-img").src = src;
-  if (laatst) zetAgendaInfo(laatst);
+  if (laatst) zetInfo(laatst);
 }
 
-async function agVernieuw() {
+async function vernieuw() {
   $("ag-img").dataset.src = "";
   $("ag-img").classList.add("verborgen");
   $("ag-info").textContent = "";
@@ -421,57 +251,40 @@ async function agVernieuw() {
   laadHome();
 }
 
-async function agActie(velden, vernieuw) {
+async function agActie(velden) {
   const fd = new FormData();
   for (const [k, v] of Object.entries(velden)) fd.append(k, v);
-  try { await api("/api/agenda", { method: "POST", body: fd }); }
-  catch (e) { if (e.message !== "login") alert(foutTekst(e)); return; }
-  if (vernieuw) agVernieuw(); else laadHome();
+  await api("/api/agenda", { method: "POST", body: fd });
+  await vernieuw();
 }
 
-$("m-agenda").onclick = () => agActie({ actie: "modus", modus: "agenda" });
-$("m-foto").onclick = () => agActie({ actie: "modus", modus: "foto" });
-$("b-ag-ververs").onclick = agVernieuw;
+$("b-ag-ververs").onclick = vernieuw;
+
 $("b-ag-toevoegen").onclick = async () => {
   const url = $("ag-url").value.trim();
   if (!url) { $("ag-status").textContent = "Plak eerst het iCal-adres"; return; }
   $("b-ag-toevoegen").disabled = true;
   $("ag-status").textContent = "Agenda controleren…";
   try {
-    const fd = new FormData();
-    fd.append("actie", "toevoegen"); fd.append("naam", $("ag-naam").value);
-    fd.append("url", url); fd.append("kleur", agKleur);
-    await api("/api/agenda", { method: "POST", body: fd });
+    await agActie({ actie: "toevoegen", naam: $("ag-naam").value, url });
     $("ag-naam").value = ""; $("ag-url").value = ""; $("ag-status").textContent = "";
     $("ag-toevoegen").open = false;
-    agKleur = null;
-    agVernieuw();
   } catch (e) {
-    $("ag-status").textContent = foutTekst(e);
+    if (e.message !== "login") $("ag-status").textContent = foutTekst(e);
   }
   $("b-ag-toevoegen").disabled = false;
 };
 
-// ---------- actiemenu ----------
-let sheetItem = null;
-function openSheet(it) {
-  sheetItem = it;
-  $("sheet-img").src = `${API}/api/preview/${it.id}/${it.variant}`;
-  $("sheet-info").textContent = `door ${it.door} · ${it.variant === "Z" ? "zwart-wit" : "kleur"}`;
-  $("sheet-achter").classList.remove("verborgen");
-}
-$("sheet-sluit").onclick = () => $("sheet-achter").classList.add("verborgen");
-$("sheet-achter").onclick = e => { if (e.target === $("sheet-achter")) $("sheet-sluit").onclick(); };
-$("sheet-nu").onclick = async () => {
-  const fd = new FormData(); fd.append("actie", "nu"); fd.append("id", sheetItem.id);
-  await api("/api/bibliotheek", { method: "POST", body: fd });
-  $("sheet-sluit").onclick(); laadHome();
-};
-$("sheet-weg").onclick = async () => {
-  if (!confirm("Deze foto uit de roulatie halen?")) return;
-  const fd = new FormData(); fd.append("actie", "verwijder"); fd.append("id", sheetItem.id);
-  await api("/api/bibliotheek", { method: "POST", body: fd });
-  $("sheet-sluit").onclick(); laadHome();
+$("b-afval").onclick = async () => {
+  $("b-afval").disabled = true;
+  $("af-status").textContent = "Adres opzoeken bij HVC…";
+  try {
+    await agActie({ actie: "afval", postcode: $("af-postcode").value,
+                    huisnummer: $("af-nummer").value });
+  } catch (e) {
+    if (e.message !== "login") $("af-status").textContent = foutTekst(e);
+  }
+  $("b-afval").disabled = false;
 };
 
 // ---------- login ----------
@@ -484,117 +297,6 @@ $("b-login").onclick = async () => {
   } catch (e) { $("pin-status").textContent = "Die is niet goed"; }
 };
 $("pin").addEventListener("keydown", e => { if (e.key === "Enter") $("b-login").onclick(); });
-
-// ---------- foto's toevoegen (meerdere tegelijk) ----------
-let wachtrij = [], wachtIndex = 0;
-let origImg = null, cropPos = 0.5, stijl = "kleur", fotoId = null;
-
-$("b-toevoegen").onclick = () => $("file").click();
-$("file").onchange = () => {
-  wachtrij = Array.from($("file").files);
-  $("file").value = "";
-  if (wachtrij.length) { wachtIndex = 0; volgendeFoto(); }
-};
-
-async function volgendeFoto() {
-  if (wachtIndex >= wachtrij.length) { laadHome(); return; }
-  const f = wachtrij[wachtIndex];
-  fotoId = null; cropPos = 0.5; stijl = "kleur";
-  zetStijlKnoppen();
-  const bmp = await createImageBitmap(f);
-  const schaal = Math.min(1, 2400 / Math.max(bmp.width, bmp.height));
-  const c = document.createElement("canvas");
-  c.width = Math.round(bmp.width * schaal);
-  c.height = Math.round(bmp.height * schaal);
-  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
-  origImg = c;
-  $("crop-teller").textContent = wachtrij.length > 1
-    ? `Foto ${wachtIndex + 1} van ${wachtrij.length}` : "Uitsnede";
-  tekenCrop();
-  const kanSchuiven = Math.abs(origImg.width / origImg.height - 4/3) > 0.01;
-  $("crophint").classList.toggle("zichtbaar", kanSchuiven);
-  setTimeout(() => $("crophint").classList.remove("zichtbaar"), 2200);
-  toon("s-crop");
-}
-
-function tekenCrop() {
-  const ctx = $("crop-canvas").getContext("2d");
-  const W = 880, H = 660, doel = 4/3;
-  const w = origImg.width, h = origImg.height;
-  let sx = 0, sy = 0, sw = w, sh = h;
-  if (w / h > doel) { sw = h * doel; sx = (w - sw) * cropPos; }
-  else { sh = w / doel; sy = (h - sh) * cropPos; }
-  ctx.filter = stijl === "zw" ? "grayscale(1)" : "none";
-  ctx.drawImage(origImg, sx, sy, sw, sh, 0, 0, W, H);
-  ctx.filter = "none";
-}
-
-// uitsnede kiezen door op het beeld zelf te slepen
-let sleep0 = null;
-$("cropvlak").addEventListener("pointerdown", e => {
-  sleep0 = { x: e.clientX, y: e.clientY, pos: cropPos };
-  $("cropvlak").setPointerCapture(e.pointerId);
-});
-$("cropvlak").addEventListener("pointermove", e => {
-  if (!sleep0 || !origImg) return;
-  const r = $("cropvlak").getBoundingClientRect();
-  const liggend = origImg.width / origImg.height > 4/3;
-  const frac = liggend ? (e.clientX - sleep0.x) / r.width : (e.clientY - sleep0.y) / r.height;
-  cropPos = Math.min(1, Math.max(0, sleep0.pos - frac * 1.6));
-  tekenCrop();
-});
-["pointerup", "pointercancel"].forEach(ev =>
-  $("cropvlak").addEventListener(ev, () => { sleep0 = null; }));
-
-function zetStijlKnoppen() {
-  $("st-kleur").classList.toggle("aan", stijl === "kleur");
-  $("st-zw").classList.toggle("aan", stijl === "zw");
-}
-$("st-kleur").onclick = () => { stijl = "kleur"; zetStijlKnoppen(); tekenCrop(); };
-$("st-zw").onclick = () => { stijl = "zw"; zetStijlKnoppen(); tekenCrop(); };
-$("b-crop-skip").onclick = () => { wachtIndex++; volgendeFoto(); };
-
-// ---------- renderen ----------
-let resultVariant = "C";
-$("b-render").onclick = async () => {
-  $("wacht-status").textContent = wachtrij.length > 1
-    ? `Renderen — foto ${wachtIndex + 1} van ${wachtrij.length} (±15 sec)`
-    : "Renderen voor e-ink… (±15 sec)";
-  toon("s-wachten");
-  try {
-    if (!fotoId) {
-      const blob = await new Promise(res => origImg.toBlob(res, "image/jpeg", 0.9));
-      const fd = new FormData(); fd.append("foto", blob, "foto.jpg");
-      fotoId = (await (await api("/api/upload", { method: "POST", body: fd })).json()).id;
-    }
-    const fd2 = new FormData();
-    fd2.append("id", fotoId);
-    fd2.append("crop_pos", cropPos);
-    fd2.append("stijl", stijl);
-    resultVariant = (await (await api("/api/render", { method: "POST", body: fd2 })).json()).variant;
-    $("result-img").src = `${API}/api/preview/${fotoId}/${resultVariant}?t=${Date.now()}`;
-    toon("s-result");
-  } catch (e) {
-    alert("Renderen mislukt: " + e.message);
-    toon("s-crop");
-  }
-};
-
-async function plaats(modus) {
-  let naam = localStorage.getItem("eink_naam");
-  if (!naam) {
-    naam = prompt("Wie ben jij? (voor bij de foto)") || "?";
-    localStorage.setItem("eink_naam", naam);
-  }
-  const fd = new FormData();
-  fd.append("id", fotoId); fd.append("variant", resultVariant);
-  fd.append("door", naam); fd.append("modus", modus);
-  await api("/api/kies", { method: "POST", body: fd });
-  wachtIndex++;
-  volgendeFoto();
-}
-$("b-in-roulatie").onclick = () => plaats("roulatie");
-$("b-nu-tonen").onclick = () => plaats("nu");
 
 toon("s-pin");
 laadHome();

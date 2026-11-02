@@ -1,10 +1,9 @@
 """
-Fotolijst-app: telefoon-webapp om de foto op de e-ink lijst te wisselen.
-
-Flow: PIN → foto uploaden (client verkleint naar max 2400px) → crop-hint
-schuiven → drie varianten renderen → kiezen → "current" klaarzetten.
-De lijst (Pi-poller, straks FireBeetle) haalt /frame/current.png op met een
-device-token.
+Agendalijst: de e-ink lijst toont een rollend weekoverzicht uit Google Agenda
+(huidige week in het midden), met het weer, zon op/onder en de HVC-afvalkalender.
+De telefoon-app beheert de agenda's en het afvaladres; de lijst haalt elke
+nacht om 04:00 /frame/current.bin op met een device-token.
+(De fotofunctie is op 2 nov 2026 verwijderd; zie git-historie.)
 
 Storage: lokaal (./data) of S3/R2, gestuurd door env:
   EINK_PIN           toegangscode voor de app (verplicht)
@@ -21,7 +20,7 @@ import time
 import datetime as dt
 import re
 
-from fastapi import FastAPI, UploadFile, Form, Request, HTTPException
+from fastapi import FastAPI, Form, Request, HTTPException
 from fastapi.responses import HTMLResponse, Response, JSONResponse
 from PIL import Image
 import numpy as np
@@ -107,133 +106,11 @@ def login(pin: str = Form(...)):
     r.set_cookie(COOKIE, _cookie_waarde(), max_age=180 * 24 * 3600, httponly=True, samesite="lax")
     return r
 
-# --- Upload & render ------------------------------------------------------
-@app.post("/api/upload")
-async def upload(request: Request, foto: UploadFile):
-    check_auth(request)
-    data = await foto.read()
-    if len(data) > 8 * 1024 * 1024:
-        raise HTTPException(status_code=413, detail="foto te groot")
-    im = Image.open(io.BytesIO(data))  # validatie
-    im.verify()
-    foto_id = f"{int(time.time())}-{secrets.token_hex(4)}"
-    opslag.put(f"orig/{foto_id}.jpg", data, "image/jpeg")
-    return {"id": foto_id}
-
-@app.post("/api/render")
-def render(request: Request, id: str = Form(...), crop_pos: float = Form(0.5),
-           stijl: str = Form("kleur")):
-    check_auth(request)
-    data = opslag.get(f"orig/{id}.jpg")
-    if data is None:
-        raise HTTPException(status_code=404, detail="foto onbekend")
-    im = Image.open(io.BytesIO(data))
-    variant = "Z" if stijl == "zw" else "C"   # Z = zwart-wit, C = zacht kleur
-    panel, preview = render_core.render_variant(im, variant, crop_pos)
-    for naam, img in (("panel", panel), ("preview", preview)):
-        buf = io.BytesIO()
-        img.save(buf, format="PNG")
-        opslag.put(f"render/{id}_{variant}_{naam}.png", buf.getvalue(), "image/png")
-    return {"ok": True, "variant": variant}
-
-@app.get("/api/preview/{id}/{variant}")
-def preview(request: Request, id: str, variant: str):
-    check_auth(request)
-    data = opslag.get(f"render/{id}_{variant}_preview.png")
-    if data is None:
-        raise HTTPException(status_code=404)
-    return Response(data, media_type="image/png")
-
-# --- Roulatie (altijd aan: dagelijks wisselen is het beste voor het paneel) --
-# lijst.json: {"items": [{id, variant, door, tijd}], "pointer": 0,
-#              "laatste_dag": "2026-08-09"}  (mode-veld uit oudere versies wordt genegeerd)
-def _lijst_laad():
-    d = opslag.get("lijst.json")
-    l = json.loads(d) if d else {}
-    return {"items": l.get("items", []), "pointer": l.get("pointer", 0),
-            "laatste_dag": l.get("laatste_dag", "")}
-
-def _lijst_bewaar(l):
-    opslag.put("lijst.json", json.dumps(l).encode(), "application/json")
-
-def _actueel_item(l, advance=False):
-    """advance=True alleen bij device-fetch: nieuwe dag = volgende foto."""
-    if not l["items"]:
-        return None
-    if advance:
-        vandaag = time.strftime("%Y-%m-%d")
-        if l["laatste_dag"] != vandaag:
-            if l["laatste_dag"]:   # niet doorschuiven bij de allereerste fetch
-                l["pointer"] = (l["pointer"] + 1) % len(l["items"])
-            l["laatste_dag"] = vandaag
-            _lijst_bewaar(l)
-    return l["items"][l["pointer"] % len(l["items"])]
-
-def _speelvolgorde(l):
-    n = len(l["items"])
-    if not n:
-        return []
-    p = l["pointer"] % n
-    return l["items"][p:] + l["items"][:p]
-
-@app.post("/api/kies")
-def kies(request: Request, id: str = Form(...), variant: str = Form(...),
-         door: str = Form("?"), modus: str = Form("roulatie")):
-    check_auth(request)
-    panel = opslag.get(f"render/{id}_{variant}_panel.png")
-    if panel is None:
-        raise HTTPException(status_code=404, detail="render onbekend")
-    item = {"id": id, "variant": variant, "door": door, "tijd": int(time.time())}
-    l = _lijst_laad()
-    huidig = _actueel_item(l)
-    l["items"] = [i for i in l["items"] if i["id"] != id] + [item]
-    if modus == "nu":
-        l["pointer"] = len(l["items"]) - 1
-        l["laatste_dag"] = time.strftime("%Y-%m-%d")
-    else:
-        # de foto die nu hangt moet blijven hangen, ook al verschoof de lijst
-        l["pointer"] = next((i for i, it in enumerate(l["items"])
-                             if huidig and it["id"] == huidig["id"]), 0)
-    _lijst_bewaar(l)
-    return {"ok": True}
-
-@app.get("/api/bibliotheek")
-def bibliotheek(request: Request):
-    check_auth(request)
-    l = _lijst_laad()
-    actueel = _actueel_item(l)
-    return {"items": _speelvolgorde(l),
-            "actueel_id": actueel["id"] if actueel else None}
-
-@app.post("/api/bibliotheek")
-def bibliotheek_actie(request: Request, actie: str = Form(...), id: str = Form("")):
-    check_auth(request)
-    l = _lijst_laad()
-    idx = next((i for i, it in enumerate(l["items"]) if it["id"] == id), None)
-    if actie == "verwijder" and idx is not None:
-        del l["items"][idx]
-        if idx < l["pointer"] or l["pointer"] >= len(l["items"]):
-            l["pointer"] = max(0, l["pointer"] - 1) % max(1, len(l["items"]))
-    elif actie == "nu" and idx is not None:
-        l["pointer"] = idx
-        l["laatste_dag"] = time.strftime("%Y-%m-%d")
-    _lijst_bewaar(l)
-    return {"ok": True}
-
-@app.get("/api/current")
-def current(request: Request):
-    check_auth(request)
-    l = _lijst_laad()
-    item = _actueel_item(l)
-    volgorde = _speelvolgorde(l)
-    return {**(item or {}), "aantal": len(l["items"]),
-            "volgende": volgorde[1] if len(volgorde) > 1 else None}
-
 # --- PWA: manifest + icoon -------------------------------------------------
 @app.get("/manifest.json")
 def manifest():
     return JSONResponse({
-        "name": "Fotolijst", "short_name": "Fotolijst",
+        "name": "Agendalijst", "short_name": "Agenda",
         "start_url": "/lijst", "scope": "/lijst", "display": "standalone",
         "background_color": "#101010", "theme_color": "#101010",
         "icons": [{"src": "/lijst/icon.png", "sizes": "512x512", "type": "image/png"}],
@@ -295,11 +172,7 @@ def frame_meta(token: str = "", vbat: str = ""):
     if not secrets.compare_digest(token, DEVICE_TOKEN):
         raise HTTPException(status_code=403)
     _noteer_vbat(vbat)
-    if _agenda_inst()["modus"] == "agenda":
-        return {"modus": "agenda"}
-    l = _lijst_laad()
-    item = _actueel_item(l, advance=True)
-    return item or {}
+    return {"modus": "agenda"}
 
 # Raw blob voor de FireBeetle: 4 bpp paletcodes, 2 pixels per byte,
 # 600 bytes per rij (eerste 300 = linkerhelft/CS_M, laatste 300 = CS_S),
@@ -321,23 +194,16 @@ def _png_naar_blob(png_bytes: bytes) -> bytes:
     return ((codes[:, 0::2] << 4) | codes[:, 1::2]).tobytes()
 
 def _frame_png(vbat: str) -> bytes:
-    """Wat er vannacht op de lijst moet: verse agenda óf de foto van de dag."""
+    """Wat er vannacht op de lijst moet: een vers gerenderde agenda."""
     _noteer_vbat(vbat)
-    if _agenda_inst()["modus"] == "agenda":
-        try:
-            return _agenda_render()[0]
-        except Exception as e:  # noqa: BLE001 — lijst nooit zonder beeld laten
-            print("agenda-render mislukt:", repr(e))
-            vorige = opslag.get("agenda/panel.png")
-            if vorige is not None:
-                return vorige
-    l = _lijst_laad()
-    item = _actueel_item(l, advance=True)
-    data = (opslag.get(f"render/{item['id']}_{item['variant']}_panel.png")
-            if item else opslag.get("current/panel.png"))
-    if data is None:
-        raise HTTPException(status_code=404)
-    return data
+    try:
+        return _agenda_render()[0]
+    except Exception as e:  # noqa: BLE001 — lijst nooit zonder beeld laten
+        print("agenda-render mislukt:", repr(e))
+        vorige = opslag.get("agenda/panel.png")
+        if vorige is not None:
+            return vorige
+        return _png(agenda.leeg_scherm("Agenda tijdelijk niet beschikbaar"))
 
 @app.get("/frame/current.bin")
 def frame_bin(token: str = "", vbat: str = ""):
@@ -351,9 +217,9 @@ def frame_blob(token: str = "", vbat: str = ""):
         raise HTTPException(status_code=403)
     return Response(_frame_png(vbat), media_type="image/png")
 
-# --- Agenda-modus ---------------------------------------------------------
-# agenda/instellingen.json: {"modus": "foto"|"agenda",
-#                            "bronnen": [{id, naam, kleur, url}]}
+# --- Agenda ---------------------------------------------------------------
+# agenda/instellingen.json: {"bronnen": [{id, naam, kleur, url}],
+#                            "afval": {"postcode": "1234AB", "huisnummer": "5"}}
 # AGENDA_ICS (env, optioneel) vult de bronnen zolang er in de app nog niets
 # is ingesteld: één per regel of gescheiden door ';', "naam|kleur|url".
 def _bronnen_uit_env():
@@ -373,8 +239,7 @@ def _agenda_inst():
     bronnen = inst.get("bronnen")
     if bronnen is None:
         bronnen = _bronnen_uit_env()
-    modus = inst.get("modus") or ("agenda" if bronnen else "foto")
-    return {"modus": modus, "bronnen": bronnen}
+    return {"bronnen": bronnen, "afval": inst.get("afval") or {}}
 
 def _agenda_bewaar(inst):
     opslag.put("agenda/instellingen.json", json.dumps(inst).encode(), "application/json")
@@ -408,22 +273,50 @@ def _weer(vandaag: dt.date):
         w = json.loads(oud) if oud else None
         return w if w and w.get("datum") == vandaag.isoformat() else None
 
+# Afval: HVC-inzamelkalender voor het adres uit de app, hooguit één keer per
+# dag opgehaald (cache in R2). Lukt het niet, dan de vorige cache.
+def _afval(inst, vandaag: dt.date):
+    adres = inst.get("afval") or {}
+    if not adres.get("postcode") or not adres.get("huisnummer"):
+        return None, None
+    sleutel = f"{adres['postcode']}-{adres['huisnummer']}"
+    oud = opslag.get("agenda/afval.json")
+    cache = json.loads(oud) if oud else {}
+    if cache.get("adres") == sleutel and cache.get("opgehaald") == vandaag.isoformat():
+        return cache.get("data"), None
+    van, tot = agenda.weekbereik(vandaag)
+    try:
+        data = agenda.haal_afval_hvc(adres["postcode"], adres["huisnummer"],
+                                     van, tot + dt.timedelta(days=28))
+        opslag.put("agenda/afval.json", json.dumps(
+            {"adres": sleutel, "opgehaald": vandaag.isoformat(), "data": data}).encode(),
+            "application/json")
+        return data, None
+    except Exception as e:  # noqa: BLE001
+        print("afval ophalen mislukt:", repr(e))
+        if cache.get("adres") == sleutel:
+            return cache.get("data"), None
+        return None, f"afvalkalender: {e.__class__.__name__}"
+
 def _agenda_render():
     inst = _agenda_inst()
     nu = dt.datetime.now(agenda.TZ).replace(tzinfo=None)
-    waarschuwingen, aantal = [], 0
-    if not inst["bronnen"]:
-        img = agenda.leeg_scherm("Nog geen agenda gekoppeld — voeg er een toe in de app")
-    else:
+    waarschuwingen, afspraken = [], []
+    if inst["bronnen"]:
         afspraken, waarschuwingen = agenda.verzamel(
             inst["bronnen"], nu.date(), opslag.get,
             lambda k, v: opslag.put(k, v, "text/calendar"))
-        s = opslag.get("status/device.json")
-        pct = json.loads(s).get("pct") if s else None
-        img = agenda.render_maand(nu.date(), afspraken, bijgewerkt=nu, accu_pct=pct,
-                                  waarschuwingen=waarschuwingen, weer=_weer(nu.date()),
-                                  zwartwit=True)
-        aantal = len(afspraken)
+    else:
+        waarschuwingen.append("nog geen agenda gekoppeld")
+    afval, afval_fout = _afval(inst, nu.date())
+    if afval_fout:
+        waarschuwingen.append(afval_fout)
+    s = opslag.get("status/device.json")
+    pct = json.loads(s).get("pct") if s else None
+    img = agenda.render_agenda(nu.date(), afspraken, bijgewerkt=nu, accu_pct=pct,
+                               waarschuwingen=waarschuwingen, weer=_weer(nu.date()),
+                               afval=afval, zwartwit=True)
+    aantal = len(afspraken)
     panel = _png(img)
     opslag.put("agenda/panel.png", panel, "image/png")
     opslag.put("agenda/preview.png", _png(_naar_preview(img)), "image/png")
@@ -440,20 +333,37 @@ def agenda_info(request: Request):
     check_auth(request)
     inst = _agenda_inst()
     m = opslag.get("agenda/meta.json")
-    return {"modus": inst["modus"],
+    afv = opslag.get("agenda/afval.json")
+    afv = json.loads(afv) if afv else {}
+    return {"afval": inst["afval"],
+            "afval_data": len((afv.get("data") or {})) if afv.get("adres") else None,
             "bronnen": [{"id": b["id"], "naam": b["naam"], "kleur": b["kleur"],
                          "url": _url_kort(b["url"])} for b in inst["bronnen"]],
             "laatst": json.loads(m) if m else None,
             "kleuren": list(agenda.KLEUREN)}
 
 @app.post("/api/agenda")
-def agenda_actie(request: Request, actie: str = Form(...), modus: str = Form(""),
+def agenda_actie(request: Request, actie: str = Form(...),
                  naam: str = Form(""), url: str = Form(""), kleur: str = Form(""),
-                 id: str = Form("")):
+                 id: str = Form(""), postcode: str = Form(""), huisnummer: str = Form("")):
     check_auth(request)
     inst = _agenda_inst()
-    if actie == "modus" and modus in ("foto", "agenda"):
-        inst["modus"] = modus
+    if actie == "afval":
+        pc = re.sub(r"\s", "", postcode).upper()
+        nr = huisnummer.strip()
+        if not pc and not nr:
+            inst["afval"] = {}
+        elif not re.fullmatch(r"\d{4}[A-Z]{2}", pc) or not re.match(r"\d+", nr):
+            raise HTTPException(status_code=400, detail="Vul een postcode (1234AB) en huisnummer in")
+        else:
+            try:
+                van, tot = agenda.weekbereik(dt.date.today())
+                agenda.haal_afval_hvc(pc, nr, van, tot)
+            except Exception:  # noqa: BLE001
+                raise HTTPException(status_code=400,
+                                    detail="HVC kent dit adres niet (of is even niet bereikbaar)")
+            inst["afval"] = {"postcode": pc, "huisnummer": nr}
+            opslag.put("agenda/afval.json", b"{}", "application/json")   # cache leeg
     elif actie == "toevoegen":
         url = url.strip()
         if not re.match(r"^(https|webcal)://", url):
