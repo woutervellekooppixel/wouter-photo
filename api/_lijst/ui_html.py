@@ -129,7 +129,8 @@ UI = r"""<!doctype html>
     </section>
 
     <button class="knop stil" id="b-ag-ververs">Voorbeeld vernieuwen</button>
-    <div class="status">Elke nacht om 4 uur haalt de lijst de agenda op.<br>
+    <div class="status">Om 3 uur 's nachts maakt de lijst het paneel schoon en rust hij op wit;
+      om 5 uur haalt hij de nieuwe agenda op.<br>
       Druk op de RST-knop van de lijst om meteen te verversen.</div>
   </section>
 </main>

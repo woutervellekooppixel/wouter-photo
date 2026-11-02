@@ -22,7 +22,10 @@ De e-ink lijst (wouter.photo/lijst, FastAPI in `api/_lijst/`) is sinds 2 nov 202
 - **Afval:** containertjes in de dagvakjes.
   - Bron 1: HVC-inzamelkalender via de Opzet-API (`/rest/adressen/{pc}-{nr}` → bagId → `afvalstromen` + `kalender/{jaar}`), met een dagcache in `agenda/afval.json`. Het adres staat in de app en bewust niet in de code (repo is openbaar).
   - Bron 2: agenda-afspraken die alleen over afval gaan ("Restafval", "Gft").
-- **Board:** haalt om 04:00 `current.bin` op; die wordt dan vers gerenderd. Bij een fout krijgt het board de vorige render.
+- **Board (firmware-branch `nachtrust` in eink-fotolijst, 2 nov 2026):**
+  - 03:00: maakt het paneel schoon (zwart, dan wit, zonder wifi) en rust 2 uur op wit, tegen nagloeien.
+  - 05:00: haalt `current.bin` op; die wordt dan vers gerenderd. Bij een fout krijgt het board de vorige render.
+  - RST: haalt direct op, zonder schoonmaak. Oude firmware: 04:00.
 - **Fonts:** Inter (OFL) in `api/_lijst/fonts/`. `vercel.json` heeft `includeFiles` voor `api/_lijst/**`.
 - **Draaien:** env `EINK_DRAAI_180=1` draait het paneelbeeld.
 - **Overige projectcontext** (hardware, firmware, 3D-lijst) staat in de repo `eink-fotolijst`.
