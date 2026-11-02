@@ -11,9 +11,14 @@ Grote audit + fix-ronde afgerond (26 juli 2026, 4 commits: pakketten A-D): origi
 ## Agendalijst (/lijst) - e-ink lijst
 
 De e-ink lijst (wouter.photo/lijst, FastAPI in `api/_lijst/`) is sinds 2 nov 2026 puur een agenda. De fotofunctie is verwijderd; oude foto's staan nog in R2 onder `lijst/`.
-- **Weergave:** rollend overzicht in `agenda.py` (`render_agenda`), met de huidige week in het midden (2 weken terug, 2 vooruit). Zwart-wit; het vakje van vandaag is omgekeerd (diapositief).
+- **Weergave (standaard sinds 2 nov):** weekoverzicht in `agenda.py` (`render_week`), naar een horizontale weekplanner (ontwerp 3, met de Inter-typografie van ontwerp 2).
+  - Links zeven dagregels: cijfer, weekdag, dagweer, afspraken in 2 kolommen, afval, "+N meer".
+  - Rechts een zijkolom: vandaag per 2 uur, minikalender, volgende week.
+  - Zwart-wit; vandaag is een diapositieve regel.
+  - Env `AGENDA_WEERGAVE=rollend` geeft de vorige weergave terug (`render_agenda`: 5 weken, huidige in het midden).
+- **Ontwerpvoorstellen** (1 week-tijdlijn, 2 vandaag-dashboard, 3 papieren week) zijn op 2 nov als beelden gedeeld; gekozen is 3 met de letters van 2.
 - **Agenda's:** geheime iCal-adressen, beheerd in de app (R2 `lijst/agenda/instellingen.json`; optioneel env `AGENDA_ICS` "naam|kleur|url;...").
-- **Weer:** Open-Meteo, per uur van 07 tot 23 uur, plus zon op/onder in de statusregel. Standaard 's-Gravenzande; aan te passen met `WEER_LAT`/`WEER_LON`. Cache in R2 `agenda/weer.json`.
+- **Weer:** Open-Meteo: per uur van 07 tot 23 uur voor vandaag, dagweer voor de hele week (`past_days`), en zon op/onder in de statusregel. Standaard 's-Gravenzande; aan te passen met `WEER_LAT`/`WEER_LON`. Cache in R2 `agenda/weer.json`.
 - **Afval:** containertjes in de dagvakjes.
   - Bron 1: HVC-inzamelkalender via de Opzet-API (`/rest/adressen/{pc}-{nr}` → bagId → `afvalstromen` + `kalender/{jaar}`), met een dagcache in `agenda/afval.json`. Het adres staat in de app en bewust niet in de code (repo is openbaar).
   - Bron 2: agenda-afspraken die alleen over afval gaan ("Restafval", "Gft").
