@@ -313,9 +313,12 @@ def _agenda_render():
         waarschuwingen.append(afval_fout)
     s = opslag.get("status/device.json")
     pct = json.loads(s).get("pct") if s else None
-    img = agenda.render_agenda(nu.date(), afspraken, bijgewerkt=nu, accu_pct=pct,
-                               waarschuwingen=waarschuwingen, weer=_weer(nu.date()),
-                               afval=afval, zwartwit=True)
+    opties = dict(bijgewerkt=nu, accu_pct=pct, waarschuwingen=waarschuwingen,
+                  weer=_weer(nu.date()), afval=afval)
+    if os.environ.get("AGENDA_WEERGAVE") == "rollend":   # vorige weergave (5 weken)
+        img = agenda.render_agenda(nu.date(), afspraken, zwartwit=True, **opties)
+    else:                                                 # weekoverzicht
+        img = agenda.render_week(nu.date(), afspraken, **opties)
     aantal = len(afspraken)
     panel = _png(img)
     opslag.put("agenda/panel.png", panel, "image/png")

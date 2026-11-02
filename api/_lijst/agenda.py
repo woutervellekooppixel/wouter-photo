@@ -294,30 +294,43 @@ def weer_info(code: int) -> tuple[str, str]:
 
 
 def haal_weer(lat: float, lon: float, timeout: float = 8) -> dict:
-    """Verwachting voor vandaag: {datum, code, max, min, regen}."""
+    """Weer van vandaag (per uur 07–23) + dagweer voor de hele week (ma–zo,
+    voorbije dagen via past_days)."""
     import json
+    vandaag = dt.datetime.now(TZ).date()
+    terug = vandaag.weekday()
     url = ("https://api.open-meteo.com/v1/forecast"
            f"?latitude={lat:.4f}&longitude={lon:.4f}"
            "&daily=weather_code,temperature_2m_max,temperature_2m_min,"
            "precipitation_probability_max,sunrise,sunset"
            "&hourly=temperature_2m,weather_code,is_day,precipitation_probability"
-           "&timezone=Europe%2FAmsterdam&forecast_days=1")
+           f"&timezone=Europe%2FAmsterdam&past_days={terug}&forecast_days={7 - terug}")
     req = urllib.request.Request(url, headers={"User-Agent": "wouter.photo-fotolijst/1.0"})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         alles = json.loads(r.read())
     d, h = alles["daily"], alles.get("hourly") or {}
+    dagen = {}
+    for i, datum in enumerate(d.get("time", [])):
+        dagen[datum] = {"code": int(d["weather_code"][i]),
+                        "max": round(d["temperature_2m_max"][i]),
+                        "min": round(d["temperature_2m_min"][i])}
+    i_v = d["time"].index(vandaag.isoformat()) if vandaag.isoformat() in d.get("time", []) else 0
     uren = []
     for i, tijd in enumerate(h.get("time", [])):
+        if tijd[:10] != vandaag.isoformat():
+            continue
         uur = int(tijd[11:13])
         if UUR_VAN <= uur <= UUR_TOT:
             uren.append({"uur": uur, "code": int(h["weather_code"][i]),
                          "temp": round(h["temperature_2m"][i]),
-                         "dag": int(h.get("is_day", [1] * 24)[i]),
-                         "regen": (h.get("precipitation_probability") or [None] * 24)[i]})
-    return {"uren": uren, "datum": d["time"][0], "code": int(d["weather_code"][0]),
-            "max": round(d["temperature_2m_max"][0]), "min": round(d["temperature_2m_min"][0]),
-            "regen": d.get("precipitation_probability_max", [None])[0],
-            "op": _uur(d.get("sunrise", [None])[0]), "onder": _uur(d.get("sunset", [None])[0])}
+                         "dag": int((h.get("is_day") or [1] * len(h["time"]))[i]),
+                         "regen": (h.get("precipitation_probability") or [None] * len(h["time"]))[i]})
+    return {"datum": vandaag.isoformat(), "uren": uren, "dagen": dagen,
+            "code": int(d["weather_code"][i_v]),
+            "max": round(d["temperature_2m_max"][i_v]), "min": round(d["temperature_2m_min"][i_v]),
+            "regen": (d.get("precipitation_probability_max") or [None] * (i_v + 1))[i_v],
+            "op": _uur((d.get("sunrise") or [None] * (i_v + 1))[i_v]),
+            "onder": _uur((d.get("sunset") or [None] * (i_v + 1))[i_v])}
 
 
 def _uur(iso: str | None) -> str | None:
@@ -813,6 +826,212 @@ def render_agenda(vandaag: dt.date, afspraken: list[Afspraak], *,
 
 
 render_maand = render_agenda   # oude naam
+
+
+# --- Weekoverzicht (huidige weergave) ------------------------------------------
+# Opbouw naar de horizontale weekplanner (Hobonichi Weeks): links zeven
+# dagregels, rechts een zijkolom met het weer van vandaag, een minikalender
+# en volgende week. Letters: alleen Inter (vet cijfer, regular weekdag,
+# kleine kopjes in hoofdletters met een lijn eronder).
+def _stippel(d, x0, y, x1, stap=3):
+    for x in range(round(x0), round(x1), stap):
+        d.point((x, round(y)), fill=ZWART)
+
+
+def _nacht(soort: str, is_dag) -> str:
+    return soort if is_dag else {"zon": "maan", "half": "maan_half"}.get(soort, soort)
+
+
+def render_week(vandaag: dt.date, afspraken: list[Afspraak], *,
+                bijgewerkt: dt.datetime | None = None,
+                accu_pct: int | None = None,
+                waarschuwingen: list[str] | None = None,
+                weer: dict | None = None,
+                afval: dict[str, list[str]] | None = None) -> Image.Image:
+    import calendar
+    from PIL import ImageOps
+    img = Image.new("RGB", (BREED, HOOG), WIT)
+    d = ImageDraw.Draw(img)
+    ML_, MR_ = 44, 44
+    SPLIT = 1080
+    maandag = vandaag - dt.timedelta(days=vandaag.weekday())
+    weer = weer or {}
+
+    def plak(soort, x, y, s_):
+        x, y = round(x), round(y)
+        img.paste(ZWART, (x, y, x + s_, y + s_), _icoon_masker(soort, s_))
+
+    def kopje(tekst, x0, x1, y):
+        _tekst(img, (x0, y), tekst, font("SemiBold", 21), ZWART, anchor="ls")
+        d.line((x0, y + 12, x1, y + 12), fill=ZWART, width=2)
+
+    # ---- afval: HVC + afspraken die alleen over afval gaan --------------------
+    afval_dag: dict[dt.date, list[str]] = {}
+    for datum, labels in (afval or {}).items():
+        afval_dag.setdefault(dt.date.fromisoformat(datum), [])
+        afval_dag[dt.date.fromisoformat(datum)] += [x for x in labels]
+    gewoon = []
+    for a in afspraken:
+        soort = afval_uit_titel(a.titel)
+        if soort:
+            afval_dag.setdefault(a.eerste_dag, []).append(soort)
+        else:
+            gewoon.append(a)
+    for k in afval_dag:
+        afval_dag[k] = [x for x in AFVAL_VOLGORDE if x in afval_dag[k]]
+
+    def op_dag(dag):
+        bal = sorted((a for a in gewoon if a.is_balk and a.eerste_dag <= dag <= a.laatste_dag),
+                     key=lambda a: (a.eerste_dag, a.titel))
+        tim = sorted((a for a in gewoon if not a.is_balk and a.eerste_dag == dag),
+                     key=lambda a: (a.begin, a.titel))
+        return bal, tim
+
+    # ---- kop ----------------------------------------------------------------
+    f_m, f_j = font("Bold", 84), font("Regular", 84)
+    maand = MAANDEN[vandaag.month - 1].capitalize()
+    _tekst(img, (ML_ - 4, 106), maand, f_m, ZWART, anchor="ls")
+    _tekst(img, (ML_ - 4 + f_m.getlength(maand) + 24, 106), str(vandaag.year), f_j, ZWART, anchor="ls")
+    _tekst(img, (SPLIT - 8, 106), f"week {vandaag.isocalendar().week}", font("Regular", 36),
+           ZWART, anchor="rs", grijs=True)
+
+    # statusregel rechtsboven: zon op/onder · accu · bijgewerkt
+    fk = font("Regular", 17)
+    xr, y_st = BREED - MR_, 34
+    if bijgewerkt:
+        st = (f"bijgewerkt {DAGEN_KORT[bijgewerkt.weekday()]} {bijgewerkt.day} "
+              f"{MAANDEN[bijgewerkt.month - 1][:3]} {bijgewerkt:%H:%M}")
+        _tekst(img, (xr, y_st), st, fk, ZWART, anchor="rs")
+        xr -= fk.getlength(st) + 22
+    if accu_pct is not None:
+        f_pct = font("SemiBold", 17) if accu_pct <= 20 else fk
+        pct = f"{accu_pct}%" + (" opladen" if accu_pct <= 20 else "")
+        _tekst(img, (xr, y_st), pct, f_pct, ZWART, anchor="rs")
+        xr -= f_pct.getlength(pct) + 38
+        _accu_icoon(d, round(xr), y_st - 13, accu_pct)
+        xr -= 22
+    for soort in ("onder", "op"):
+        if weer.get(soort):
+            _tekst(img, (xr, y_st), weer[soort], fk, ZWART, anchor="rs")
+            xr -= fk.getlength(weer[soort]) + 26
+            plak(soort, xr, y_st - 19, 22)
+            xr -= 16
+    for i, w in enumerate((waarschuwingen or [])[:1]):
+        _tekst(img, (SPLIT - 8, 62), _pas(f"! niet bijgewerkt: {w}", fk, 420), fk, ZWART, anchor="rs")
+    d.line((ML_, 132, BREED - MR_, 132), fill=ZWART, width=3)
+
+    # ---- links: zeven dagregels -------------------------------------------------
+    y0, y1 = 142, HOOG - 40
+    rh = (y1 - y0) / 7
+    DATUM_B = 132
+    f_tijd, f_titel, f_balk = font("SemiBold", 21), font("Regular", 21), font("SemiBold", 21)
+    dagweer = weer.get("dagen") or {}
+    for k in range(7):
+        dag = maandag + dt.timedelta(days=k)
+        ry = y0 + k * rh
+        if k:
+            _stippel(d, ML_, ry, SPLIT - 8)
+        _tekst(img, (ML_ + 2, ry + 78), str(dag.day), font("Bold", 72), ZWART, anchor="ls")
+        _tekst(img, (ML_ + 4, ry + 108), DAGEN_LANG[k], font("Regular", 22), ZWART, anchor="ls")
+        dw = dagweer.get(dag.isoformat())
+        if dw:
+            plak(weer_info(dw["code"])[0], ML_ + DATUM_B - 44, ry + 14, 40)
+            _tekst(img, (ML_ + DATUM_B - 24, ry + 74), f"{dw['max']}°", font("SemiBold", 18),
+                   ZWART, anchor="ms")
+
+        bal, tim = op_dag(dag)
+        x_l = ML_ + DATUM_B + 26
+        regels = [("■", a.titel) for a in bal] + [(a.tijd, a.titel) for a in tim]
+        kolb = (SPLIT - 16 - x_l) / 2
+        perkol = max(1, int((rh - 28) // 32))
+        plaats = perkol * 2
+        if len(regels) > plaats:   # laatste plek wordt "+N meer"
+            regels = regels[:plaats - 1] + [("+", f"+{len(regels) - plaats + 1} meer")]
+        for i, (tijd, titel) in enumerate(regels):
+            cx = x_l + (i // perkol) * kolb
+            cy = ry + 40 + (i % perkol) * 32
+            if tijd == "■":
+                bw = min(kolb - 14, f_balk.getlength(titel) + 22)
+                d.rounded_rectangle((round(cx), round(cy - 21), round(cx + bw), round(cy + 7)),
+                                    radius=6, fill=ZWART)
+                _tekst(img, (cx + 10, cy), _pas(titel, f_balk, kolb - 36), f_balk, WIT, anchor="ls")
+            elif tijd == "+":
+                _tekst(img, (cx, cy), titel, f_tijd, ZWART, anchor="ls")
+            else:
+                _tekst(img, (cx, cy), tijd, f_tijd, ZWART, anchor="ls")
+                _tekst(img, (cx + 70, cy), _pas(titel, f_titel, kolb - 84), f_titel, ZWART, anchor="ls")
+        xa = SPLIT - 16
+        for soort in reversed(afval_dag.get(dag, [])):
+            lb = font("SemiBold", 17).getlength(soort)
+            _tekst(img, (xa, ry + rh - 18), soort, font("SemiBold", 17), ZWART, anchor="rs")
+            plak("afval", xa - lb - 30, ry + rh - 40, 24)
+            xa -= lb + 44
+        if dag == vandaag:   # vandaag: de hele regel diapositief
+            vak = (ML_ - 6, round(ry) + 2, SPLIT - 8, round(ry + rh) - 1)
+            img.paste(ImageOps.invert(img.crop(vak)), vak[:2])
+            d = ImageDraw.Draw(img)
+
+    # ---- rechts: zijkolom ---------------------------------------------------------
+    d.line((SPLIT + 10, 148, SPLIT + 10, HOOG - 40), fill=ZWART, width=1)
+    X0, X1 = SPLIT + 40, BREED - MR_
+
+    # vandaag, om de twee uur
+    kopje("VANDAAG", X0, X1, 182)
+    uren = [u for u in weer.get("uren") or [] if u["uur"] % 2 == 1]
+    if uren:
+        kb = (X1 - X0) / len(uren)
+        for i, u in enumerate(uren):
+            mx = X0 + (i + 0.5) * kb
+            _tekst(img, (mx, 228), str(u["uur"]), font("Regular", 15), ZWART, anchor="ms", grijs=True)
+            plak(_nacht(weer_info(u["code"])[0], u.get("dag", 1)), mx - 16, 236, 32)
+            _tekst(img, (mx, 290), f"{u['temp']}°", font("SemiBold", 17), ZWART, anchor="ms")
+    elif weer.get("code") is not None:
+        plak(weer_info(weer["code"])[0], X0, 206, 64)
+        _tekst(img, (X0 + 80, 262), f"{weer['max']}° / {weer['min']}°", font("Bold", 40), ZWART, anchor="ls")
+
+    # minikalender van deze maand
+    kopje(MAANDEN[vandaag.month - 1].upper(), X0, X1, 360)
+    kw = (X1 - X0) / 7
+    for i, n in enumerate(DAGEN_KORT):
+        _tekst(img, (X0 + (i + 0.5) * kw, 402), n, font("SemiBold", 15), ZWART, anchor="ms", grijs=True)
+    weken = calendar.Calendar().monthdatescalendar(vandaag.year, vandaag.month)
+    for r, week in enumerate(weken):
+        for c, dag in enumerate(week):
+            if dag.month != vandaag.month:
+                continue
+            cx, cy = X0 + (c + 0.5) * kw, 436 + r * 40
+            if dag == vandaag:
+                d.rounded_rectangle((round(cx - 20), round(cy - 25), round(cx + 20), round(cy + 9)),
+                                    radius=7, fill=ZWART)
+                _tekst(img, (cx, cy), str(dag.day), font("Bold", 19), WIT, anchor="ms")
+            else:
+                _tekst(img, (cx, cy), str(dag.day), font("Regular", 19), ZWART, anchor="ms",
+                       grijs=dag < vandaag)
+
+    # volgende week
+    yv = 436 + len(weken) * 40 + 24
+    kopje("VOLGENDE WEEK", X0, X1, yv)
+    y = yv + 22
+    vm = maandag + dt.timedelta(days=7)
+    for k in range(7):
+        dag = vm + dt.timedelta(days=k)
+        bal, tim = op_dag(dag)
+        items = [a.titel for a in bal] + [f"{a.tijd} {a.titel}" for a in tim]
+        if afval_dag.get(dag):
+            items = [" · ".join(afval_dag[dag])] + items
+        if not items:
+            continue
+        if y + 30 > HOOG - 40:
+            break
+        _tekst(img, (X0, y + 20), f"{DAGEN_KORT[k]} {dag.day}", font("SemiBold", 18), ZWART, anchor="ls")
+        _tekst(img, (X0 + 70, y + 20), _pas(" · ".join(items), font("Regular", 18), X1 - X0 - 70),
+               font("Regular", 18), ZWART, anchor="ls")
+        y += 30
+
+    return img
+
+
+
 
 
 def leeg_scherm(boodschap: str) -> Image.Image:
